@@ -187,7 +187,7 @@ export function ProfileAvatarControl({ hasAvatar }: Props) {
         <button
           type="button"
           onClick={onClick}
-          className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-card/92 text-eid-text-secondary transition-colors hover:text-eid-fg"
+          className="eid-profile-icon-action inline-flex h-5 w-5 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-card/92 text-eid-text-secondary transition-colors hover:text-eid-fg"
           aria-label="Editar foto de perfil"
           title="Editar foto de perfil"
         >

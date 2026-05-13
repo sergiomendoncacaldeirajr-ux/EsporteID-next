@@ -3,7 +3,15 @@ import { FormAsaasParceiro } from "@/components/espaco/espaco-integracao-asaas-f
 import { getEspacoSelecionado } from "@/lib/espacos/server";
 import { ArrowRight, CheckCircle2, Clock3, Landmark, ShieldCheck, WalletCards } from "lucide-react";
 
-function statusInfo(status: string | null | undefined) {
+function statusInfo(status: string | null | undefined, walletId: string | null | undefined) {
+  if (String(walletId ?? "").trim()) {
+    return {
+      label: "Pronta para repasse",
+      detail: "Wallet ID salvo. As próximas cobranças pagas já conseguem separar o valor do espaço e da plataforma.",
+      cls: "border-emerald-500/35 bg-emerald-500/10 text-emerald-200",
+      Icon: CheckCircle2,
+    };
+  }
   const value = String(status ?? "pendente");
   if (value.includes("conect") || value.includes("ativo") || value.includes("aprov")) {
     return {
@@ -46,7 +54,7 @@ export default async function EspacoIntegracaoAsaasPage() {
     .select("id, nome_razao_social, cpf_cnpj, email, onboarding_status, asaas_account_id, wallet_id, atualizado_em, dados_bancarios_json")
     .eq("usuario_id", user.id)
     .maybeSingle();
-  const info = statusInfo(parceiro?.onboarding_status);
+  const info = statusInfo(parceiro?.onboarding_status, parceiro?.wallet_id);
   const StatusIcon = info.Icon;
   const dados = (() => {
     try {

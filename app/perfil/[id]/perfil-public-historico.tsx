@@ -124,7 +124,7 @@ export async function PerfilPublicoHistoricoSection({ profileId, viewerId, perfi
             href={`/editar/historico?from=${encodeURIComponent(`/perfil/${id}`)}`}
             title="Privacidade do histórico"
             topMode="backOnly"
-            className="relative top-0.5 inline-flex items-center justify-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2.5 py-1 text-[8px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-all hover:border-eid-primary-500/35 hover:bg-eid-primary-500/10 hover:text-eid-fg"
+            className="eid-profile-compact-action relative top-0.5 inline-flex items-center justify-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2.5 py-1 text-[8px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-all hover:border-eid-primary-500/35 hover:bg-eid-primary-500/10 hover:text-eid-fg"
           >
             <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
               <path d="M10.5 1a.75.75 0 0 1 0 1.5H5.25A2.75 2.75 0 0 0 2.5 5.25v5.5A2.75 2.75 0 0 0 5.25 13.5h5.5a2.75 2.75 0 0 0 2.75-2.75V5.5a.75.75 0 0 1 1.5 0v5.25A4.25 4.25 0 0 1 10.75 15h-5.5A4.25 4.25 0 0 1 1 10.75v-5.5A4.25 4.25 0 0 1 5.25 1h5.25Zm2.28.22a.75.75 0 0 1 1.06 0l1.94 1.94a.75.75 0 0 1 0 1.06l-5.47 5.47a.75.75 0 0 1-.33.2l-2.4.66a.75.75 0 0 1-.92-.92l.66-2.4a.75.75 0 0 1 .2-.33l5.47-5.47Z" />
@@ -296,7 +296,7 @@ export async function PerfilPublicoHistoricoSection({ profileId, viewerId, perfi
                   title="Histórico completo"
                   fullscreen
                   topMode="backOnly"
-                  className="inline-flex min-h-[30px] items-center justify-center gap-1 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-1 text-[8px] font-bold uppercase leading-none tracking-[0.08em] text-eid-fg transition-all hover:border-eid-primary-500/50 hover:bg-eid-primary-500/18 hover:text-eid-fg"
+                  className="eid-profile-compact-action inline-flex min-h-[30px] items-center justify-center gap-1 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-1 text-[8px] font-bold uppercase leading-none tracking-[0.08em] text-eid-fg transition-all hover:border-eid-primary-500/50 hover:bg-eid-primary-500/18 hover:text-eid-fg"
                 >
                   <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3" aria-hidden>
                     <path d="M8 1.5a.75.75 0 0 1 .75.75V8h4.5a.75.75 0 0 1 0 1.5H8A.75.75 0 0 1 7.25 8V2.25A.75.75 0 0 1 8 1.5Zm0 13a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13Zm-8-6.5a8 8 0 1 1 16 0 8 8 0 0 1-16 0Z" />
@@ -327,7 +327,7 @@ export async function PerfilPublicoHistoricoSection({ profileId, viewerId, perfi
                     title="Histórico completo"
                     fullscreen
                     topMode="backOnly"
-                    className="inline-flex min-h-[30px] items-center justify-center gap-1 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-1 text-[8px] font-bold uppercase leading-none tracking-[0.08em] text-eid-fg transition-all hover:border-eid-primary-500/50 hover:bg-eid-primary-500/18 hover:text-eid-fg"
+                    className="eid-profile-compact-action inline-flex min-h-[30px] items-center justify-center gap-1 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-1 text-[8px] font-bold uppercase leading-none tracking-[0.08em] text-eid-fg transition-all hover:border-eid-primary-500/50 hover:bg-eid-primary-500/18 hover:text-eid-fg"
                   >
                     <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3" aria-hidden>
                       <path d="M8 1.5a.75.75 0 0 1 .75.75V8h4.5a.75.75 0 0 1 0 1.5H8A.75.75 0 0 1 7.25 8V2.25A.75.75 0 0 1 8 1.5Zm0 13a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13Zm-8-6.5a8 8 0 1 1 16 0 8 8 0 0 1-16 0Z" />

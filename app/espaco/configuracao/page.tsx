@@ -8,7 +8,6 @@ import {
   criarUnidadeEspacoAction,
 } from "@/app/espaco/actions";
 import { EspacoConfigForm } from "@/components/espaco/espaco-config-form";
-import { EspacoUnidadeFoto } from "@/components/espaco/espaco-unidade-foto";
 import { EspacoUnidadeLogoControl } from "@/components/espaco/espaco-unidade-logo-control";
 import { getPaaSUnidadeGateInfo } from "@/lib/espacos/paas-unidades-gate";
 import { getEspacoSelecionado } from "@/lib/espacos/server";
@@ -22,6 +21,77 @@ function moedaCentavos(value: number | null | undefined) {
     style: "currency",
     currency: "BRL",
   }).format((Number(value ?? 0) || 0) / 100);
+}
+
+const TIPO_UNIDADE_OPTIONS = [
+  ["quadra", "Quadra"],
+  ["campo", "Campo"],
+  ["sala", "Sala"],
+  ["pista", "Pista"],
+  ["arena", "Arena"],
+] as const;
+
+const SUPERFICIE_OPTIONS = [
+  ["", "Não informar"],
+  ["areia", "Areia"],
+  ["saibro", "Saibro"],
+  ["sintetico", "Sintético"],
+  ["cimento", "Cimento"],
+  ["madeira", "Madeira"],
+  ["emborrachado", "Emborrachado"],
+] as const;
+
+const STATUS_OPERACAO_OPTIONS = [
+  ["ativa", "Ativa"],
+  ["manutencao", "Manutenção"],
+  ["reservada", "Reservada"],
+] as const;
+
+const SIM_NAO_OPTIONS = [
+  ["sim", "Sim"],
+  ["nao", "Não"],
+] as const;
+
+const CAPACIDADE_OPTIONS = [1, 2, 4, 6, 8, 10, 12] as const;
+
+function ChoiceGroup({
+  name,
+  value,
+  options,
+  className = "",
+}: {
+  name: string;
+  value: string;
+  options: readonly (readonly [string, string])[];
+  className?: string;
+}) {
+  return (
+    <div className={`flex flex-wrap gap-2 ${className}`}>
+      {options.map(([optionValue, label]) => (
+        <label key={optionValue || "empty"} className="cursor-pointer">
+          <input type="radio" name={name} value={optionValue} defaultChecked={value === optionValue} className="peer sr-only" />
+          <span className="inline-flex min-h-9 items-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2 text-xs font-semibold text-eid-text-secondary transition peer-checked:border-eid-primary-500/65 peer-checked:bg-eid-primary-500/15 peer-checked:text-eid-fg">
+            {label}
+          </span>
+        </label>
+      ))}
+    </div>
+  );
+}
+
+function FieldChoice({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div>
+      <p className="mb-1.5 text-xs font-semibold text-eid-text-secondary">{label}</p>
+      {children}
+    </div>
+  );
 }
 
 function planoHerdaRegra(plano: { beneficios_json?: unknown }, key: string) {
@@ -188,7 +258,6 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
                 className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 p-4"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                  <EspacoUnidadeFoto src={u.logo_arquivo ?? null} alt={`Foto de ${u.nome}`} />
                   <form
                     action={atualizarUnidadeEspacoAction}
                     encType="multipart/form-data"
@@ -202,18 +271,13 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
                       defaultValue={u.nome}
                       className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
                     />
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      <input
-                        name="tipo_unidade"
-                        defaultValue={u.tipo_unidade}
-                        className="eid-input-dark rounded-xl px-3 py-2 text-sm"
-                      />
-                      <input
-                        name="superficie"
-                        defaultValue={u.superficie ?? ""}
-                        placeholder="Superfície"
-                        className="eid-input-dark rounded-xl px-3 py-2 text-sm"
-                      />
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <FieldChoice label="Tipo">
+                        <ChoiceGroup name="tipo_unidade" value={u.tipo_unidade ?? "quadra"} options={TIPO_UNIDADE_OPTIONS} />
+                      </FieldChoice>
+                      <FieldChoice label="Superfície">
+                        <ChoiceGroup name="superficie" value={u.superficie ?? ""} options={SUPERFICIE_OPTIONS} />
+                      </FieldChoice>
                     </div>
                     <input
                       name="modalidade"
@@ -228,55 +292,34 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
                       placeholder="Observações internas"
                       className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
                     />
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      <input
-                        type="number"
-                        name="capacidade"
-                        defaultValue={u.capacidade}
-                        className="eid-input-dark rounded-xl px-3 py-2 text-sm"
-                      />
-                      <input
-                        name="status_operacao"
-                        defaultValue={u.status_operacao}
-                        className="eid-input-dark rounded-xl px-3 py-2 text-sm"
-                      />
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <FieldChoice label="Capacidade">
+                        <ChoiceGroup
+                          name="capacidade"
+                          value={String(u.capacidade ?? 2)}
+                          options={CAPACIDADE_OPTIONS.map((item) => [String(item), String(item)] as const)}
+                        />
+                      </FieldChoice>
+                      <FieldChoice label="Status">
+                        <ChoiceGroup name="status_operacao" value={u.status_operacao ?? "ativa"} options={STATUS_OPERACAO_OPTIONS} />
+                      </FieldChoice>
                     </div>
-                    <div className="grid gap-2 text-xs sm:grid-cols-2">
-                      <label className="flex flex-col gap-1 text-eid-text-secondary">
-                        Coberta
-                        <select name="coberta" defaultValue={sim(Boolean(u.coberta))} className="eid-input-dark rounded-xl px-2 py-2">
-                          <option value="sim">Sim</option>
-                          <option value="nao">Não</option>
-                        </select>
-                      </label>
-                      <label className="flex flex-col gap-1 text-eid-text-secondary">
-                        Indoor
-                        <select name="indoor" defaultValue={sim(Boolean(u.indoor))} className="eid-input-dark rounded-xl px-2 py-2">
-                          <option value="sim">Sim</option>
-                          <option value="nao">Não</option>
-                        </select>
-                      </label>
-                      <label className="flex flex-col gap-1 text-eid-text-secondary">
-                        Iluminação
-                        <select name="iluminacao" defaultValue={sim(Boolean(u.iluminacao))} className="eid-input-dark rounded-xl px-2 py-2">
-                          <option value="sim">Sim</option>
-                          <option value="nao">Não</option>
-                        </select>
-                      </label>
-                      <label className="flex flex-col gap-1 text-eid-text-secondary">
-                        Aceita aulas
-                        <select name="aceita_aulas" defaultValue={sim(Boolean(u.aceita_aulas))} className="eid-input-dark rounded-xl px-2 py-2">
-                          <option value="sim">Sim</option>
-                          <option value="nao">Não</option>
-                        </select>
-                      </label>
-                      <label className="flex flex-col gap-1 text-eid-text-secondary sm:col-span-2">
-                        Aceita torneios
-                        <select name="aceita_torneios" defaultValue={sim(Boolean(u.aceita_torneios))} className="eid-input-dark rounded-xl px-2 py-2">
-                          <option value="sim">Sim</option>
-                          <option value="nao">Não</option>
-                        </select>
-                      </label>
+                    <div className="grid gap-3 text-xs sm:grid-cols-2">
+                      <FieldChoice label="Coberta">
+                        <ChoiceGroup name="coberta" value={sim(Boolean(u.coberta))} options={SIM_NAO_OPTIONS} />
+                      </FieldChoice>
+                      <FieldChoice label="Indoor">
+                        <ChoiceGroup name="indoor" value={sim(Boolean(u.indoor))} options={SIM_NAO_OPTIONS} />
+                      </FieldChoice>
+                      <FieldChoice label="Iluminação">
+                        <ChoiceGroup name="iluminacao" value={sim(Boolean(u.iluminacao))} options={SIM_NAO_OPTIONS} />
+                      </FieldChoice>
+                      <FieldChoice label="Aceita aulas">
+                        <ChoiceGroup name="aceita_aulas" value={sim(Boolean(u.aceita_aulas))} options={SIM_NAO_OPTIONS} />
+                      </FieldChoice>
+                      <FieldChoice label="Aceita torneios">
+                        <ChoiceGroup name="aceita_torneios" value={sim(Boolean(u.aceita_torneios))} options={SIM_NAO_OPTIONS} />
+                      </FieldChoice>
                     </div>
                     <EspacoUnidadeLogoControl currentUrl={u.logo_arquivo ?? null} />
                     <button
@@ -317,13 +360,12 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
           <fieldset disabled={!unidadeGate.podeCriarUnidade} className="grid gap-3">
             <input name="nome" placeholder="Nome da unidade" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
             <div className="grid gap-2 sm:grid-cols-2">
-              <input
-                name="tipo_unidade"
-                defaultValue="quadra"
-                placeholder="Quadra, campo..."
-                className="eid-input-dark rounded-xl px-3 py-2 text-sm"
-              />
-              <input name="superficie" placeholder="Saibro, rápida..." className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
+              <FieldChoice label="Tipo">
+                <ChoiceGroup name="tipo_unidade" value="quadra" options={TIPO_UNIDADE_OPTIONS} />
+              </FieldChoice>
+              <FieldChoice label="Superfície">
+                <ChoiceGroup name="superficie" value="" options={SUPERFICIE_OPTIONS} />
+              </FieldChoice>
             </div>
             <input name="modalidade" placeholder="Modalidade (opcional)" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
             <textarea
@@ -334,30 +376,29 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
             />
             <EspacoUnidadeLogoControl currentUrl={null} />
             <div className="grid gap-2 sm:grid-cols-2">
-              <input type="number" name="capacidade" defaultValue={4} className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
-              <input name="status_operacao" defaultValue="ativa" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
+              <FieldChoice label="Capacidade">
+                <ChoiceGroup name="capacidade" value="4" options={CAPACIDADE_OPTIONS.map((item) => [String(item), String(item)] as const)} />
+              </FieldChoice>
+              <FieldChoice label="Status">
+                <ChoiceGroup name="status_operacao" value="ativa" options={STATUS_OPERACAO_OPTIONS} />
+              </FieldChoice>
             </div>
-            <div className="flex flex-wrap gap-3 text-xs text-eid-fg">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" name="coberta" />
-                Coberta
-              </label>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" name="indoor" />
-                Indoor
-              </label>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" name="iluminacao" />
-                Iluminação
-              </label>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" name="aceita_aulas" defaultChecked />
-                Aceita aulas
-              </label>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" name="aceita_torneios" defaultChecked />
-                Aceita torneios
-              </label>
+            <div className="grid gap-3 text-xs sm:grid-cols-2">
+              <FieldChoice label="Coberta">
+                <ChoiceGroup name="coberta" value="nao" options={SIM_NAO_OPTIONS} />
+              </FieldChoice>
+              <FieldChoice label="Indoor">
+                <ChoiceGroup name="indoor" value="nao" options={SIM_NAO_OPTIONS} />
+              </FieldChoice>
+              <FieldChoice label="Iluminação">
+                <ChoiceGroup name="iluminacao" value="sim" options={SIM_NAO_OPTIONS} />
+              </FieldChoice>
+              <FieldChoice label="Aceita aulas">
+                <ChoiceGroup name="aceita_aulas" value="sim" options={SIM_NAO_OPTIONS} />
+              </FieldChoice>
+              <FieldChoice label="Aceita torneios">
+                <ChoiceGroup name="aceita_torneios" value="sim" options={SIM_NAO_OPTIONS} />
+              </FieldChoice>
             </div>
             <button type="submit" className="eid-btn-primary rounded-xl px-4 py-3 text-sm font-bold">
               Criar unidade

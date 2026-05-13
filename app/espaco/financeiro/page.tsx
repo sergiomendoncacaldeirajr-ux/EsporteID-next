@@ -26,11 +26,17 @@ function moeda(value: number | null | undefined) {
   }).format((Number(value ?? 0) || 0) / 100);
 }
 
-function asaasStatus(status: string | null | undefined, accountId: string | null | undefined) {
-  if (accountId) {
+function asaasStatus(
+  status: string | null | undefined,
+  accountId: string | null | undefined,
+  walletId: string | null | undefined
+) {
+  if (accountId || walletId) {
     return {
-      label: "Conta vinculada",
-      description: "Recebimentos prontos para split nas cobranças do espaço.",
+      label: walletId ? "Conta pronta para repasse" : "Conta vinculada",
+      description: walletId
+        ? "Wallet ID salvo. As cobranças pagas já conseguem repassar o líquido ao espaço."
+        : "Conta Asaas criada. Falta salvar o Wallet ID para liberar split de repasse.",
       tone: "ok",
       Icon: CheckCircle2,
     };
@@ -179,7 +185,11 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
       0
     );
   const pendentes = (transacoes ?? []).filter((item) => item.status === "pending").length;
-  const asaas = asaasStatus(parceiroAsaas?.onboarding_status, parceiroAsaas?.asaas_account_id);
+  const asaas = asaasStatus(
+    parceiroAsaas?.onboarding_status,
+    parceiroAsaas?.asaas_account_id,
+    parceiroAsaas?.wallet_id
+  );
   const AsaasIcon = asaas.Icon;
   const asaasTone =
     asaas.tone === "ok"

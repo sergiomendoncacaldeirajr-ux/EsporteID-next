@@ -1961,6 +1961,27 @@ select,
     padding-right: 0.9rem;
   }
 
+  /* Perfil público: ações pequenas sobre cards não devem herdar o touch target global de 44px. */
+  [data-eid-perfil-page] .eid-profile-compact-action {
+    min-height: 22px !important;
+    padding: 0.25rem 0.625rem !important;
+    font-size: 8px !important;
+    line-height: 1 !important;
+  }
+
+  [data-eid-perfil-page] .eid-profile-compact-action svg {
+    width: 0.625rem !important;
+    height: 0.625rem !important;
+  }
+
+  [data-eid-perfil-page] .eid-profile-icon-action {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    min-height: 1.25rem !important;
+    padding: 0 !important;
+    border-radius: 9999px !important;
+  }
+
   :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact])) :where(form) {
     gap: 0.6rem;
   }
