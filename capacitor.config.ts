@@ -17,6 +17,11 @@ const config: CapacitorConfig = {
       releaseType: "AAB",
     },
   },
+  plugins: {
+    PushNotifications: {
+      presentationOptions: ["badge", "sound", "alert"],
+    },
+  },
 };
 
 export default config;

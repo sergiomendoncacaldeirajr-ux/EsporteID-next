@@ -207,6 +207,17 @@ function buildNotificationPayload(n: NotificacaoRow, platform = "Outro"): string
   });
 }
 
+function androidChannelIdForPushTipo(tipo: string | null | undefined) {
+  const t = String(tipo ?? "").toLowerCase().trim();
+  if (t === "match" || t.includes("desafio")) return "eid_desafios";
+  if (t === "agenda_status" || t.includes("agenda") || t.includes("placar")) return "eid_agenda";
+  if (t.includes("ranking") || t.includes("resultado")) return "eid_ranking";
+  if (t.includes("candidatura") || t.includes("convite") || t.includes("time") || t.includes("professor")) {
+    return "eid_social";
+  }
+  return "eid_geral";
+}
+
 function buildFcmMessage(n: NotificacaoRow, token: string) {
   const payload = JSON.parse(buildNotificationPayload(n, "Android/App")) as {
     title?: string;
@@ -231,6 +242,12 @@ function buildFcmMessage(n: NotificacaoRow, token: string) {
     },
     android: {
       priority: "high" as const,
+      notification: {
+        channelId: androidChannelIdForPushTipo(payload.tipo || n.tipo),
+        icon: "ic_stat_eid_notification",
+        color: "#2563EB",
+        tag: `notif-${String(payload.notifId || n.id)}`,
+      },
     },
   };
 }

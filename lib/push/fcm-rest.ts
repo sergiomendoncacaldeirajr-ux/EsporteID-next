@@ -17,6 +17,7 @@ type FcmMessage = {
       channelId?: string;
       icon?: string;
       color?: string;
+      tag?: string;
     };
   };
 };

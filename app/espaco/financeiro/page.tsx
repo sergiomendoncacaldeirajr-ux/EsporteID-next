@@ -57,7 +57,6 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
     { data: transacoes },
     { data: assinatura },
     { data: extrato },
-    { data: auditoria },
     { data: planosPaaS },
     { data: parceiroAsaas },
   ] =
@@ -84,12 +83,6 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
           "parceiro_usuario_id",
           selectedSpace.responsavel_usuario_id ?? selectedSpace.criado_por_usuario_id ?? ""
         )
-        .order("id", { ascending: false })
-        .limit(20),
-      supabase
-        .from("espaco_auditoria")
-        .select("id, entidade_tipo, acao, motivo, criado_em")
-        .eq("espaco_generico_id", selectedSpace.id)
         .order("id", { ascending: false })
         .limit(20),
       selectedSpace.modo_monetizacao === "mensalidade_plataforma"
@@ -291,11 +284,11 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
         </div>
         ) : null}
 
-        <div className="eid-mobile-section rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
-          <h2 className="text-lg font-bold text-eid-fg">Extrato legado</h2>
-          <div className="mt-3 space-y-2">
-            {(extrato ?? []).length ? (
-              (extrato ?? []).map((item) => (
+        {(extrato ?? []).length ? (
+          <div className="eid-mobile-section rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
+            <h2 className="text-lg font-bold text-eid-fg">Repasse financeiro</h2>
+            <div className="mt-3 space-y-2">
+              {(extrato ?? []).map((item) => (
                 <div
                   key={item.id}
                   className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 p-3 text-xs text-eid-text-secondary"
@@ -308,37 +301,10 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
                     gateway R$ {Number(item.taxa_gateway ?? 0).toFixed(2).replace(".", ",")}
                   </p>
                 </div>
-              ))
-            ) : (
-              <p className="text-sm text-eid-text-secondary">
-                Sem lançamentos espelhados ainda.
-              </p>
-            )}
+              ))}
+            </div>
           </div>
-        </div>
-
-        <div className="eid-mobile-section rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
-          <h2 className="text-lg font-bold text-eid-fg">Auditoria</h2>
-          <div className="mt-3 space-y-2">
-            {(auditoria ?? []).length ? (
-              (auditoria ?? []).map((item) => (
-                <div
-                  key={item.id}
-                  className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 p-3 text-xs text-eid-text-secondary"
-                >
-                  <p className="font-semibold text-eid-fg">
-                    {item.entidade_tipo} · {item.acao}
-                  </p>
-                  <p className="mt-1">{item.motivo ?? "Sem motivo registrado."}</p>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-eid-text-secondary">
-                Auditoria ainda sem eventos.
-              </p>
-            )}
-          </div>
-        </div>
+        ) : null}
       </section>
       </div>
     </div>

@@ -24,6 +24,10 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>whatsapp</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>O EsporteID usa a câmera para você atualizar sua foto de perfil e enviar imagens quando necessário.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

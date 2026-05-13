@@ -200,7 +200,7 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
   const flashIsSuccess = admFlash === "delete_ok" || admFlash === "info_ok" || admFlash === "listagem_ok" || admFlash === "listagem_oculta";
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" data-eid-admin-locais>
       {flashMsg ? (
         <div className={`rounded-xl border px-4 py-3 text-sm ${flashIsSuccess ? "border-emerald-500/35 bg-emerald-500/10 text-emerald-100" : "border-amber-500/35 bg-amber-500/10 text-amber-100"}`} role="status">
           <p className="font-semibold">{flashMsg}</p>

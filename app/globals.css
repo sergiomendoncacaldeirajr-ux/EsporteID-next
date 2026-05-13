@@ -773,6 +773,63 @@ body.eid-capacitor-app {
   -webkit-tap-highlight-color: transparent;
 }
 
+.eid-native-startup-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 44%, color-mix(in srgb, var(--eid-primary-500) 20%, transparent), transparent 34%),
+    var(--eid-brand-ink);
+  pointer-events: none;
+  animation: eid-native-startup-out 1450ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.eid-native-startup-logo {
+  width: min(34vw, 148px);
+  height: min(34vw, 148px);
+  object-fit: contain;
+  filter: drop-shadow(0 18px 32px rgba(0, 0, 0, 0.42));
+  animation: eid-native-startup-logo 1450ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes eid-native-startup-logo {
+  0% {
+    opacity: 0;
+    transform: scale(0.88) translateY(8px);
+  }
+  34% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  72% {
+    opacity: 1;
+    transform: scale(1.025) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.04) translateY(-6px);
+  }
+}
+
+@keyframes eid-native-startup-out {
+  0%,
+  72% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eid-native-startup-shell,
+  .eid-native-startup-logo {
+    animation-duration: 400ms;
+  }
+}
+
 .eid-native-offline-shell {
   position: fixed;
   inset: auto 12px calc(12px + env(safe-area-inset-bottom, 0px));
@@ -3312,5 +3369,84 @@ a.eid-list-item:hover, button.eid-list-item:hover {
   [data-eid-admin] :where(.px-4) {
     padding-left: 0.75rem;
     padding-right: 0.75rem;
+  }
+}
+
+@media (max-width: 640px) {
+  [data-eid-admin-locais] {
+    row-gap: 1rem;
+  }
+
+  [data-eid-admin-locais] > .rounded-2xl,
+  [data-eid-admin-locais] section > .mt-4 > .rounded-2xl {
+    border-radius: var(--eid-radius-md);
+  }
+
+  [data-eid-admin-locais] section > .mt-4 > .rounded-2xl > .flex:first-child {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 0.875rem;
+  }
+
+  [data-eid-admin-locais] section > .mt-4 > .rounded-2xl > .flex:first-child > .flex:first-child {
+    width: 100%;
+    gap: 0.625rem;
+  }
+
+  [data-eid-admin-locais] section > .mt-4 > .rounded-2xl > .flex:first-child > .flex:first-child > .shrink-0 {
+    flex-shrink: 0;
+  }
+
+  [data-eid-admin-locais] section > .mt-4 > .rounded-2xl > .flex:first-child > .flex:last-child {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  [data-eid-admin-locais] section > .mt-4 > .rounded-2xl > .flex:first-child > .flex:last-child :where(a, form, button) {
+    width: 100%;
+  }
+
+  [data-eid-admin-locais] section > .mt-4 > .rounded-2xl > .flex:first-child > .flex:last-child :where(a, button) {
+    justify-content: center;
+    min-height: 2.25rem;
+    padding-inline: 0.5rem;
+    text-align: center;
+    white-space: normal;
+  }
+
+  [data-eid-admin-locais] :where(.inline-flex) {
+    max-width: 100%;
+  }
+
+  [data-eid-admin-locais] :where(.inline-flex.items-center.gap-2.rounded-lg.border) {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+
+  [data-eid-admin-locais] :where(details summary) {
+    min-height: 2.75rem;
+    padding-block: 0.75rem;
+  }
+
+  [data-eid-admin-locais] :where(details > div) {
+    padding-left: 0.875rem;
+    padding-right: 0.875rem;
+  }
+
+  [data-eid-admin-locais] :where(form.flex, form[class*="flex"]) {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  [data-eid-admin-locais] :where(form.flex select, form.flex input:not([type="hidden"]), form.flex button) {
+    width: 100%;
+  }
+
+  [data-eid-admin-locais] :where(select, input, textarea) {
+    min-height: 2.5rem;
+    font-size: 0.875rem;
   }
 }

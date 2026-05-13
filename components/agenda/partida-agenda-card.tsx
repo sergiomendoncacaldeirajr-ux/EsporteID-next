@@ -14,6 +14,7 @@ import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-perfo
 import { DESAFIO_FLOW_CTA_BLOCK_CLASS } from "@/lib/desafio/flow-ui";
 import { EidSocialAceitarButton, EidSocialRecusarButton } from "@/components/ui/eid-social-acao-buttons";
 import { createPortal } from "react-dom";
+import { Capacitor } from "@capacitor/core";
 import { EidCancelButton } from "@/components/ui/eid-cancel-button";
 import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
 import type { PartidaAgendaFormacaoLado } from "@/lib/agenda/partida-formacao-lado";
@@ -65,6 +66,13 @@ type Props = {
 
 declare global {
   interface Window {
+    eidNativeAddCalendarEvent?: (payload: {
+      title?: string;
+      location?: string | null;
+      description?: string | null;
+      startMs?: number;
+      endMs?: number;
+    }) => Promise<void>;
     EsporteIDAndroid?: {
       addCalendarEvent?: (payload: string) => void;
     };
@@ -136,14 +144,17 @@ export function PartidaAgendaCard({
   const [openCancel, setOpenCancel] = useState(false);
   const [openDesist, setOpenDesist] = useState(false);
   const [agendaActionClicked, setAgendaActionClicked] = useState<"accept" | "reject" | null>(null);
-  const [nativeCalendarAvailable, setNativeCalendarAvailable] = useState(false);
+  const [nativeCalendarPlatform, setNativeCalendarPlatform] = useState<"android" | "ios" | null>(null);
   const [state, formAction, pending] = useActionState(gerenciarCancelamentoMatch, cancelInitial);
   const [agendaState, agendaAction, agendaPending] = useActionState(responderAgendamentoPartidaAction, agendaInitial);
   useEffect(() => {
     const checkNativeCalendar = () => {
-      setNativeCalendarAvailable(
-        isNativeAndroidApp() && typeof window.EsporteIDAndroid?.addCalendarEvent === "function"
-      );
+      const platform = Capacitor.isNativePlatform() ? Capacitor.getPlatform() : isNativeAndroidApp() ? "android" : "web";
+      const available =
+        (platform === "android" || platform === "ios") &&
+        (typeof window.eidNativeAddCalendarEvent === "function" ||
+          typeof window.EsporteIDAndroid?.addCalendarEvent === "function");
+      setNativeCalendarPlatform(available ? platform : null);
     };
     checkNativeCalendar();
     window.addEventListener("eid:native-app-ready", checkNativeCalendar);
@@ -171,7 +182,7 @@ export function PartidaAgendaCard({
   const calendarTitle = `EsporteID: ${tituloLado(formacaoJ1, j1Nome)} vs ${tituloLado(formacaoJ2, j2Nome)}`;
   const calendarStartMs = dataRef ? new Date(dataRef).getTime() : Number.NaN;
   const canAddNativeCalendar =
-    nativeCalendarAvailable &&
+    nativeCalendarPlatform != null &&
     Number.isFinite(calendarStartMs) &&
     calendarStartMs > 0 &&
     Boolean(localLabel?.trim()) &&
@@ -179,14 +190,19 @@ export function PartidaAgendaCard({
 
   function handleAddNativeCalendar() {
     if (!canAddNativeCalendar) return;
+    const payload = {
+      title: calendarTitle,
+      location: localLabel,
+      description: `${esporteNome} no EsporteID. Partida #${id}.`,
+      startMs: calendarStartMs,
+      endMs: calendarStartMs + 90 * 60 * 1000,
+    };
+    if (window.eidNativeAddCalendarEvent) {
+      void window.eidNativeAddCalendarEvent(payload);
+      return;
+    }
     window.EsporteIDAndroid?.addCalendarEvent?.(
-      JSON.stringify({
-        title: calendarTitle,
-        location: localLabel,
-        description: `${esporteNome} no EsporteID. Partida #${id}.`,
-        startMs: calendarStartMs,
-        endMs: calendarStartMs + 90 * 60 * 1000,
-      })
+      JSON.stringify(payload)
     );
   }
 
@@ -315,7 +331,7 @@ export function PartidaAgendaCard({
             aria-label="Adicionar este compromisso na agenda do celular"
           >
             <CalendarPlus className="h-3 w-3" aria-hidden />
-            <span>Adicionar à agenda do celular</span>
+            <span>{nativeCalendarPlatform === "ios" ? "Adicionar à agenda do iPhone" : "Adicionar à agenda do Android"}</span>
           </button>
         </div>
       ) : null}

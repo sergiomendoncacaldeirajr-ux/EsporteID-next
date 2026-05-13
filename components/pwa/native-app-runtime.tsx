@@ -26,13 +26,58 @@ type NativeSharePayload = {
   dialogTitle?: string;
 };
 
+type NativeCalendarPayload = {
+  title?: string;
+  location?: string | null;
+  description?: string | null;
+  startMs?: number;
+  endMs?: number;
+};
+
 type NativePushData = {
   url?: unknown;
 };
 
+const EID_ANDROID_PUSH_CHANNELS = [
+  {
+    id: "eid_desafios",
+    name: "Desafios",
+    description: "Convites, disputas e ações de desafios.",
+    importance: 4,
+  },
+  {
+    id: "eid_agenda",
+    name: "Agenda e placares",
+    description: "Atualizações de agenda, placares e compromissos.",
+    importance: 4,
+  },
+  {
+    id: "eid_ranking",
+    name: "Ranking",
+    description: "Resultados, pontuação e movimentações de ranking.",
+    importance: 3,
+  },
+  {
+    id: "eid_social",
+    name: "Comunidade",
+    description: "Convites de equipe, candidaturas, aulas e comunidade.",
+    importance: 3,
+  },
+  {
+    id: "eid_geral",
+    name: "EsporteID",
+    description: "Notificações gerais do EsporteID.",
+    importance: 3,
+  },
+] as const;
+
 declare global {
   interface Window {
     eidNativeShare?: (payload?: NativeSharePayload) => Promise<void>;
+    eidNativeAddCalendarEvent?: (payload: NativeCalendarPayload) => Promise<void>;
+    EsporteIDAndroid?: {
+      addCalendarEvent?: (payload: string) => void;
+    };
   }
 }
 
@@ -71,11 +116,51 @@ function appHrefFromUrl(rawUrl: string) {
 
 function notificationHrefFromData(data: NativePushData | undefined) {
   const rawUrl = typeof data?.url === "string" ? data.url : "/comunidade#notificacoes";
+  if (rawUrl.startsWith("/") && !rawUrl.startsWith("//")) return rawUrl;
   return appHrefFromUrl(rawUrl) ?? "/comunidade#notificacoes";
 }
 
 function isExternalHttpUrl(url: URL) {
   return (url.protocol === "https:" || url.protocol === "http:") && url.origin !== window.location.origin;
+}
+
+function whatsAppUrlFromUrl(url: URL) {
+  if (url.protocol === "whatsapp:") return url.toString();
+  const host = url.hostname.replace(/^www\./, "");
+  if (host === "wa.me") {
+    const phone = url.pathname.replace(/\D/g, "");
+    return phone ? `whatsapp://send?phone=${phone}` : null;
+  }
+  if (host === "api.whatsapp.com" || host === "whatsapp.com") {
+    const phone = url.searchParams.get("phone")?.replace(/\D/g, "");
+    const text = url.searchParams.get("text");
+    const params = new URLSearchParams();
+    if (phone) params.set("phone", phone);
+    if (text) params.set("text", text);
+    const qs = params.toString();
+    return qs ? `whatsapp://send?${qs}` : "whatsapp://send";
+  }
+  return null;
+}
+
+function calendarFileHref(payload: NativeCalendarPayload) {
+  const qs = new URLSearchParams({
+    title: String(payload.title || "EsporteID"),
+    startMs: String(payload.startMs || ""),
+    endMs: String(payload.endMs || ""),
+    location: String(payload.location || ""),
+    description: String(payload.description || ""),
+  });
+  return `${window.location.origin}/api/calendar/event.ics?${qs.toString()}`;
+}
+
+function androidCalendarIntent(payload: NativeCalendarPayload) {
+  const title = encodeURIComponent(String(payload.title || "EsporteID"));
+  const location = encodeURIComponent(String(payload.location || ""));
+  const description = encodeURIComponent(String(payload.description || ""));
+  const startMs = Math.max(0, Math.floor(Number(payload.startMs ?? 0)));
+  const endMs = Math.max(startMs + 60_000, Math.floor(Number(payload.endMs ?? startMs + 90 * 60_000)));
+  return `intent:#Intent;action=android.intent.action.INSERT;type=vnd.android.cursor.item/event;S.title=${title};S.eventLocation=${location};S.description=${description};l.beginTime=${startMs};l.endTime=${endMs};end`;
 }
 
 function getNativeWarmRoutes(userId: string | null | undefined, activeContext: ActiveAppContext | undefined) {
@@ -105,6 +190,7 @@ function getNativeWarmRoutes(userId: string | null | undefined, activeContext: A
 export function NativeAppRuntime({ userId, activeContext }: Props) {
   const router = useRouter();
   const [isOffline, setIsOffline] = useState(false);
+  const [showStartup, setShowStartup] = useState(false);
 
   useEffect(() => {
     if (!isAnyNativeApp()) return;
@@ -125,16 +211,24 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
   }, []);
 
   useEffect(() => {
+    if (!isAnyNativeApp()) return;
+    setShowStartup(true);
+    const timer = window.setTimeout(() => setShowStartup(false), 1450);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     if (!isCapacitorNativeApp()) return;
     let cleanup = false;
 
     async function configureNativeShell() {
-      const [{ StatusBar, Style }, { Keyboard, KeyboardResize }, { Network }, { App }, { Browser }] = await Promise.all([
+      const [{ StatusBar, Style }, { Keyboard, KeyboardResize }, { Network }, { App }, { Browser }, { AppLauncher }] = await Promise.all([
         import("@capacitor/status-bar"),
         import("@capacitor/keyboard"),
         import("@capacitor/network"),
         import("@capacitor/app"),
         import("@capacitor/browser"),
+        import("@capacitor/app-launcher"),
       ]);
 
       const applySystemBars = async () => {
@@ -191,6 +285,12 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
           } catch {
             return;
           }
+          const targetWhatsAppUrl = whatsAppUrlFromUrl(external);
+          if (targetWhatsAppUrl) {
+            event.preventDefault();
+            void AppLauncher.openUrl({ url: targetWhatsAppUrl }).catch(() => Browser.open({ url: external.toString() }));
+            return;
+          }
           if (isExternalHttpUrl(external)) {
             event.preventDefault();
             void Browser.open({ url: external.toString() });
@@ -202,6 +302,12 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
         try {
           url = new URL(anchor.href, window.location.href);
         } catch {
+          return;
+        }
+        const whatsAppUrl = whatsAppUrlFromUrl(url);
+        if (whatsAppUrl) {
+          event.preventDefault();
+          void AppLauncher.openUrl({ url: whatsAppUrl }).catch(() => Browser.open({ url: url.toString() }));
           return;
         }
         if (isExternalHttpUrl(url)) {
@@ -217,11 +323,35 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
       };
       document.addEventListener("click", onDocumentClick, { capture: true });
 
+      window.eidNativeAddCalendarEvent = async (payload) => {
+        if (!Number.isFinite(Number(payload.startMs))) return;
+        if (Capacitor.getPlatform() === "android") {
+          await AppLauncher.openUrl({ url: androidCalendarIntent(payload) }).catch(() =>
+            Browser.open({ url: calendarFileHref(payload) })
+          );
+          return;
+        }
+        await Browser.open({ url: calendarFileHref(payload) });
+      };
+      window.EsporteIDAndroid = {
+        ...(window.EsporteIDAndroid ?? {}),
+        addCalendarEvent: (payload) => {
+          try {
+            const parsed = JSON.parse(payload) as NativeCalendarPayload;
+            void window.eidNativeAddCalendarEvent?.(parsed);
+          } catch {
+            /* ignore */
+          }
+        },
+      };
+
       window.dispatchEvent(new CustomEvent("eid:native-app-ready"));
 
       return () => {
         themeObserver.disconnect();
         document.removeEventListener("click", onDocumentClick, { capture: true });
+        delete window.eidNativeAddCalendarEvent;
+        if (window.EsporteIDAndroid?.addCalendarEvent) delete window.EsporteIDAndroid.addCalendarEvent;
         void networkHandle.remove();
         void appStateHandle.remove();
         void backHandle.remove();
@@ -280,7 +410,19 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
     async function configureNativePush() {
       const { PushNotifications } = await import("@capacitor/push-notifications");
 
-      const [registrationHandle, registrationErrorHandle, actionHandle] = await Promise.all([
+      await Promise.allSettled(
+        EID_ANDROID_PUSH_CHANNELS.map((channel) =>
+          PushNotifications.createChannel({
+            ...channel,
+            visibility: 1,
+            lights: true,
+            lightColor: "#2563EB",
+            vibration: true,
+          })
+        )
+      );
+
+      const [registrationHandle, registrationErrorHandle, receivedHandle, actionHandle] = await Promise.all([
         PushNotifications.addListener("registration", (token) => {
           rememberAndroidFcmToken(token.value);
           if (!getAndroidNativePushOptOut()) void syncAndroidNativePushToken();
@@ -288,11 +430,17 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
         PushNotifications.addListener("registrationError", (error) => {
           console.warn("Falha ao registrar push nativo.", error);
         }),
+        PushNotifications.addListener("pushNotificationReceived", () => {
+          if (document.visibilityState === "visible") {
+            void PushNotifications.removeAllDeliveredNotifications();
+          }
+        }),
         PushNotifications.addListener("pushNotificationActionPerformed", (event) => {
+          void PushNotifications.removeAllDeliveredNotifications();
           router.push(notificationHrefFromData(event.notification.data as NativePushData | undefined));
         }),
       ]);
-      handles.push(registrationHandle, registrationErrorHandle, actionHandle);
+      handles.push(registrationHandle, registrationErrorHandle, receivedHandle, actionHandle);
 
       const permission = await PushNotifications.checkPermissions();
       const receive =
@@ -300,6 +448,7 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
       if (disposed || receive !== "granted") return;
 
       await PushNotifications.register();
+      await PushNotifications.removeAllDeliveredNotifications();
     }
 
     void configureNativePush();
@@ -387,20 +536,28 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
     window.location.reload();
   }, []);
 
-  if (!isOffline) return null;
-
   return (
-    <div className="eid-native-offline-shell" role="status" aria-live="polite">
-      <div className="eid-native-offline-card">
-        <div className="eid-native-offline-mark" aria-hidden="true" />
-        <div className="min-w-0">
-          <p className="eid-native-offline-title">Sem conexao</p>
-          <p className="eid-native-offline-text">Confira sua internet para continuar usando o EsporteID.</p>
+    <>
+      {showStartup ? (
+        <div className="eid-native-startup-shell" aria-hidden="true">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/pwa-splash-open-mark.png" alt="" className="eid-native-startup-logo" />
         </div>
-        <button type="button" className="eid-native-offline-action" onClick={handleRetry}>
-          Tentar de novo
-        </button>
-      </div>
-    </div>
+      ) : null}
+      {isOffline ? (
+        <div className="eid-native-offline-shell" role="status" aria-live="polite">
+          <div className="eid-native-offline-card">
+            <div className="eid-native-offline-mark" aria-hidden="true" />
+            <div className="min-w-0">
+              <p className="eid-native-offline-title">Sem conexao</p>
+              <p className="eid-native-offline-text">Confira sua internet para continuar usando o EsporteID.</p>
+            </div>
+            <button type="button" className="eid-native-offline-action" onClick={handleRetry}>
+              Tentar de novo
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }

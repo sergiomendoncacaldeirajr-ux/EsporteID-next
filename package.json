@@ -27,6 +27,7 @@
     "@aws-sdk/client-rekognition": "^3.1035.0",
     "@capacitor/android": "^8.3.3",
     "@capacitor/app": "^8.1.0",
+    "@capacitor/app-launcher": "^8.0.1",
     "@capacitor/browser": "^8.0.3",
     "@capacitor/camera": "^8.2.0",
     "@capacitor/cli": "^8.3.3",

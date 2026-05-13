@@ -559,7 +559,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
 
   if (onAuthPage) return null;
 
-  if (pathname.startsWith("/admin")) return null;
+  if (pathname.startsWith("/admin") || pathname.startsWith("/espaco")) return null;
 
   const isHome =
     activeContext === "organizador"
