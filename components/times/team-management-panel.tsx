@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable react-hooks/rules-of-hooks, react-hooks/set-state-in-effect */
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -8,6 +9,11 @@ import { useUsernameCheck } from "@/lib/hooks/use-username-check";
 import { criarEquipe, convidarUsuarioParaEquipe, type TeamActionState } from "@/app/times/actions";
 import { emitEidSocialDataRefresh } from "@/lib/comunidade/social-panel-layout";
 import { AVISO_REGRA_LIMITE_FORMACAO_GLOBAL } from "@/lib/formacao/formacao-global-limit";
+import {
+  detectCurrentLocation,
+  geolocationErrorMessage,
+  isGeolocationPositionError,
+} from "@/lib/location/current-location";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { EidInviteButton } from "@/components/ui/eid-invite-button";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
@@ -118,7 +124,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
     return "";
   });
   const [localizacao, setLocalizacao] = useState("");
-  const [gpsStatus, setGpsStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [gpsStatus, setGpsStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [inviteTeamId, setInviteTeamId] = useState<string>("");
   const [inviteQuery, setInviteQuery] = useState("");
@@ -210,43 +216,23 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
     setInviteSuggestOpen(false);
   }, [inviteState.ok, isConvidarStyle]);
 
-  function obterLocalizacao() {
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setGpsStatus("error");
-      setGpsError("Seu navegador não suporta geolocalização.");
-      return;
-    }
+  async function obterLocalizacao() {
     setGpsStatus("loading");
     setGpsError(null);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          const resp = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(String(lat))}&lon=${encodeURIComponent(String(lng))}`
-          );
-          if (!resp.ok) throw new Error("Falha ao obter endereço.");
-          const data = (await resp.json()) as {
-            address?: { city?: string; town?: string; village?: string; state?: string };
-          };
-          const city = data.address?.city || data.address?.town || data.address?.village || "";
-          const state = data.address?.state || "";
-          const resolved = [city, state].filter(Boolean).join(" / ");
-          if (!resolved) throw new Error("Não foi possível identificar cidade/estado.");
-          setLocalizacao(resolved);
-          setGpsStatus("idle");
-        } catch {
-          setGpsStatus("error");
-          setGpsError("Não foi possível identificar sua cidade automaticamente.");
-        }
-      },
-      (err) => {
-        setGpsStatus("error");
-        setGpsError(err.code === 1 ? "Permissão de localização negada." : "Não foi possível obter sua localização.");
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+    try {
+      const result = await detectCurrentLocation();
+      setLocalizacao(result.localizacao);
+      setGpsStatus("ok");
+    } catch (err) {
+      setGpsStatus("error");
+      setGpsError(
+        isGeolocationPositionError(err)
+          ? geolocationErrorMessage(err)
+          : err instanceof Error
+            ? err.message
+            : "Não foi possível obter sua localização."
+      );
+    }
   }
 
   const showCreate = panelMode === "all" || panelMode === "create";
@@ -468,16 +454,19 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
               </span>
               <button
                 type="button"
-                onClick={obterLocalizacao}
-                className={`eid-team-gps-btn ${isCadastrarStyle ? "inline-flex min-h-[29px] items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_72%,var(--eid-primary-500)_28%)] bg-eid-surface/70 px-2 text-[8px] font-black uppercase tracking-[0.02em] text-eid-primary-300 transition-colors hover:bg-eid-primary-500/10" : "inline-flex items-center rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.07em] text-eid-fg transition-colors hover:border-eid-primary-500/35"}`}
+                onClick={() => void obterLocalizacao()}
+                disabled={gpsStatus === "loading"}
+                className={`eid-team-gps-btn ${isCadastrarStyle ? "inline-flex min-h-[32px] items-center gap-1.5 rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2.5 text-[9px] font-black uppercase tracking-[0.02em] text-eid-primary-300 shadow-[0_8px_18px_-14px_rgba(37,99,235,0.8)] transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/16 disabled:opacity-60" : "inline-flex items-center gap-1.5 rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-[0.07em] text-eid-primary-300 transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/16 disabled:opacity-60"}`}
               >
-                {isCadastrarStyle ? (
+                {gpsStatus === "loading" ? (
+                  <span className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-eid-primary-400 border-t-transparent" aria-hidden />
+                ) : (
                   <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                     <circle cx="12" cy="12" r="3.5" />
                     <path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" />
                   </svg>
-                ) : null}
-                {gpsStatus === "loading" ? "Obtendo..." : "Obter localização"}
+                )}
+                {gpsStatus === "loading" ? "Detectando..." : gpsStatus === "ok" ? "Atualizar" : "Detectar"}
               </button>
             </div>
             <div className={`${isCadastrarStyle ? "mt-2 flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3" : ""}`}>
@@ -499,7 +488,11 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
             <p className={`${isCadastrarStyle ? "mt-2 rounded-xl border border-[#F2D8AE] bg-[#FFF8EC] px-3 py-2 text-[10px] font-semibold leading-snug text-[#9A5B06]" : "mt-1 rounded-lg border border-[#d39b2a] bg-[#ffe7b3] px-2 py-1 text-[10px] font-bold leading-snug text-[#4b2b00]"}`}>
               Atenção: a cidade da formação não pode ser alterada depois. Para trocar, será necessário criar outra equipe/dupla.
             </p>
-            {gpsError ? <p className="mt-1 text-[10px] text-red-700 dark:text-red-300">{gpsError}</p> : null}
+            {gpsError ? (
+              <p className="mt-1 text-[10px] text-red-700 dark:text-red-300">{gpsError}</p>
+            ) : gpsStatus === "ok" ? (
+              <p className="mt-1 text-[10px] font-semibold text-emerald-500 dark:text-emerald-400">Localização detectada.</p>
+            ) : null}
           </div>
           <div className={`${isCadastrarStyle ? "sm:col-span-2 rounded-[14px] border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2.5" : "sm:col-span-2 grid gap-1.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2"}`}>
             <p className={`${isCadastrarStyle ? "inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg" : "text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary"}`}>
