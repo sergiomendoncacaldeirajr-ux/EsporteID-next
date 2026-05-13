@@ -1,31 +1,60 @@
-import { NextRequest, NextResponse } from "next/server";
+type NominatimAddress = {
+  city?: string;
+  town?: string;
+  village?: string;
+  municipality?: string;
+  county?: string;
+  state?: string;
+  region?: string;
+};
 
-const NOMINATIM_UA = "EsporteID/1.0 (+https://www.esporteid.com.br; contato via site)";
+type NominatimReverseResponse = {
+  address?: NominatimAddress;
+};
 
-export async function GET(req: NextRequest) {
-  const lat = req.nextUrl.searchParams.get("lat")?.trim();
-  const lon = req.nextUrl.searchParams.get("lon")?.trim();
-  if (!lat || !lon) {
-    return NextResponse.json({ error: "missing lat or lon" }, { status: 400 });
+function pickLocation(address: NominatimAddress | undefined): string {
+  if (!address) return "";
+
+  const city =
+    address.city ||
+    address.town ||
+    address.village ||
+    address.municipality ||
+    address.county ||
+    "";
+  const state = address.state || address.region || "";
+
+  if (city && state) return `${city} - ${state}`;
+  return city || state;
+}
+
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const lat = Number(url.searchParams.get("lat"));
+  const lng = Number(url.searchParams.get("lng"));
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+    return Response.json({ error: "Coordenadas inválidas." }, { status: 400 });
   }
 
-  const url = new URL("https://nominatim.openstreetmap.org/reverse");
-  url.searchParams.set("format", "json");
-  url.searchParams.set("addressdetails", "1");
-  url.searchParams.set("accept-language", "pt-BR");
-  url.searchParams.set("countrycodes", "br");
-  url.searchParams.set("lat", lat);
-  url.searchParams.set("lon", lon);
+  const response = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?lat=${encodeURIComponent(
+      String(lat)
+    )}&lon=${encodeURIComponent(String(lng))}&format=json&addressdetails=1`,
+    {
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "EsporteID/1.0 (https://esporteid.com.br)",
+      },
+    }
+  );
 
-  const res = await fetch(url.toString(), {
-    headers: { "User-Agent": NOMINATIM_UA },
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    return NextResponse.json({ error: "upstream", status: res.status }, { status: 502 });
+  if (!response.ok) {
+    return Response.json({ error: "Não foi possível consultar a localização." }, { status: 502 });
   }
 
-  const data = (await res.json()) as Record<string, unknown>;
-  return NextResponse.json(data);
+  const data = (await response.json()) as NominatimReverseResponse;
+  const localizacao = pickLocation(data.address);
+
+  return Response.json({ localizacao });
 }

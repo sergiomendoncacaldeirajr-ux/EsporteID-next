@@ -444,22 +444,25 @@ export async function RankingStreamBody({
           <section className="relative z-[1] mt-4">
             <Link
               href={`/confrontos?tipo=${state.tipo}${selectedEsporteId ? `&esporte=${selectedEsporteId}` : ""}`}
-              className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 overflow-hidden rounded-2xl border border-eid-primary-500/25 bg-[linear-gradient(150deg,color-mix(in_srgb,var(--eid-card)_92%,var(--eid-primary-500)_8%),color-mix(in_srgb,var(--eid-surface)_90%,var(--eid-action-500)_10%))] px-3 py-3 shadow-[0_16px_38px_-32px_rgba(15,23,42,0.82)] transition hover:border-eid-primary-500/45 active:scale-[0.995]"
+              className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(160deg,color-mix(in_srgb,var(--eid-card)_95%,var(--eid-primary-500)_5%),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-2.5 py-2.5 shadow-[0_8px_28px_-24px_rgba(15,23,42,0.68)] transition hover:border-eid-primary-500/35 hover:bg-eid-primary-500/8 active:scale-[0.995]"
             >
               <span className="min-w-0">
-                <span className="block text-[9px] font-black uppercase tracking-[0.12em] text-eid-action-300">
+                <span className="inline-flex items-center rounded-full border border-eid-primary-500/25 bg-eid-primary-500/10 px-2 py-0.5 text-[7.5px] font-black uppercase tracking-[0.08em] text-eid-primary-300">
                   Central de confrontos
                 </span>
-                <span className="mt-0.5 block truncate text-[13px] font-black text-eid-fg">
-                  Próximos jogos e resultados perto de você
+                <span className="mt-1 block truncate text-[12px] font-black leading-tight text-eid-fg">
+                  Jogos e resultados perto de você
                 </span>
-                <span className="mt-1 block text-[10px] text-eid-text-secondary">
+                <span className="mt-0.5 block text-[9px] font-semibold text-eid-text-secondary">
                   {state.tipo === "individual" ? "Individual" : state.tipo === "dupla" ? "Duplas" : "Times"}
                   {esporteNomeAtual ? ` · ${esporteNomeAtual}` : ""}
                 </span>
               </span>
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-eid-action-500/35 bg-eid-action-500/15 text-eid-action-300 transition group-hover:bg-eid-action-500/22">
-                VS
+              <span className="grid h-11 w-11 place-items-center rounded-xl border border-eid-action-500/30 bg-eid-action-500/12 text-eid-action-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition group-hover:border-eid-action-500/45 group-hover:bg-eid-action-500/18">
+                <span className="text-[11px] font-black leading-none">VS</span>
+                <span className="mt-0.5 text-[6.5px] font-black uppercase leading-none tracking-[0.08em] text-eid-action-200/80">
+                  Ver
+                </span>
               </span>
             </Link>
           </section>

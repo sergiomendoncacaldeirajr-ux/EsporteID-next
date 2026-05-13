@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CalendarClock, ChevronRight, MapPin, Trophy } from "lucide-react";
+import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { sideInitial, type PublicConfronto, type ConfrontoSide } from "@/lib/confrontos/public-feed";
 
 function EidMini({ value }: { value: number | null }) {
@@ -54,11 +55,17 @@ export function ConfrontoCard({ item }: { item: PublicConfronto }) {
 
   return (
     <article className="relative overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(160deg,color-mix(in_srgb,var(--eid-card)_94%,var(--eid-primary-500)_6%),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] shadow-[0_14px_36px_-30px_rgba(15,23,42,0.75)]">
-      <Link
+      <ProfileEditDrawerTrigger
         href={detailHref}
+        fullscreen
+        topMode="backOnly"
+        openingDelayMs={0}
+        title={`Detalhes do confronto entre ${item.ladoA.name} e ${item.ladoB.name}`}
         className="absolute inset-0 z-0 outline-none ring-offset-2 ring-offset-eid-bg focus-visible:ring-2 focus-visible:ring-eid-primary-500"
         aria-label={`Detalhes do confronto entre ${item.ladoA.name} e ${item.ladoB.name}`}
-      />
+      >
+        <span className="sr-only">Abrir detalhes do confronto</span>
+      </ProfileEditDrawerTrigger>
       <div className="pointer-events-none relative z-[1] p-3">
         <div className="pointer-events-none flex items-center justify-between gap-2">
           <span className="inline-flex items-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/12 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.08em] text-eid-primary-300">

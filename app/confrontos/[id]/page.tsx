@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, CalendarClock, MapPin, Trophy } from "lucide-react";
 import { ConfrontoCard } from "@/components/confrontos/confronto-card";
+import { ConfrontoDetalheResultado } from "@/components/confrontos/confronto-detalhe-resultado";
 import { loadPublicConfrontos, normalizeConfrontoTipo, type ConfrontoTipo } from "@/lib/confrontos/public-feed";
 import { createClient } from "@/lib/supabase/server";
 
@@ -52,6 +53,8 @@ export default async function ConfrontoDetalhePage({ params }: { params: Promise
       </div>
 
       <ConfrontoCard item={item} />
+
+      {item.statusView === "encerrados" || item.placar ? <ConfrontoDetalheResultado item={item} /> : null}
 
       <section className="mt-3 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/75 p-4">
         <h1 className="text-base font-black text-eid-fg">Informações do confronto</h1>

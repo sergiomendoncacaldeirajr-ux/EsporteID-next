@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { EidConfrontoResumoModal } from "@/components/perfil/eid-confronto-resumo-modal";
+import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { fmtDataPtBr } from "@/lib/perfil/formacao-eid-stats";
 import { PROFILE_CARD_BASE, PROFILE_CARD_PAD_MD } from "@/components/perfil/profile-ui-tokens";
@@ -81,7 +81,7 @@ export function EidIndividualPartidaRow({
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(p.data_partida ?? p.data_resultado ?? p.data_registro ?? Date.now()));
+  }).format(new Date(p.data_partida ?? p.data_resultado ?? p.data_registro ?? "1970-01-01T00:00:00.000Z"));
   const placarOk =
     Number.isFinite(Number(p.placar_1)) && Number.isFinite(Number(p.placar_2));
   const selfIsJ1 = p.jogador2_id === opponentId;
@@ -134,11 +134,14 @@ export function EidIndividualPartidaRow({
         {res.label}
       </span>
       <div className="flex shrink-0 flex-col items-center justify-center">
-        <Link
+        <ProfileEditDrawerTrigger
           href={eidHref}
-          data-no-modal="1"
+          fullscreen
+          topMode="backOnly"
+          openingDelayMs={0}
+          dataNoModal
           className="rounded-full ring-2 ring-transparent transition hover:ring-eid-primary-500/40"
-          aria-label={`Estatísticas EID de ${opponentNome}`}
+          title={`Estatísticas EID de ${opponentNome}`}
         >
           {opponentAvatarUrl ? (
             <img
@@ -151,7 +154,7 @@ export function EidIndividualPartidaRow({
               {opponentNome.trim().slice(0, 1).toUpperCase() || "A"}
             </span>
           )}
-        </Link>
+        </ProfileEditDrawerTrigger>
         {typeof opponentNotaEid === "number" ? (
           <ProfileEidPerformanceSeal notaEid={opponentNotaEid} compact className="-mt-0.5 scale-110" />
         ) : null}

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { GoalsScoreboardSummary } from "@/components/placar/goals-scoreboard-summary";
 import { EidConfrontoResumoModal } from "@/components/perfil/eid-confronto-resumo-modal";
+import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { fmtDataPtBr, type PartidaColetivaRow } from "@/lib/perfil/formacao-eid-stats";
 import { parseScorePayloadFromPartidaMensagem } from "@/lib/perfil/parse-partida-score-payload";
@@ -75,7 +76,7 @@ export function EidColetivoPartidaRow({
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(p.data_partida ?? p.data_resultado ?? p.data_registro ?? Date.now()));
+  }).format(new Date(p.data_partida ?? p.data_resultado ?? p.data_registro ?? "1970-01-01T00:00:00.000Z"));
   const placarOk = Number.isFinite(Number(p.placar_1)) && Number.isFinite(Number(p.placar_2));
   const placarTxt = placarOk ? `${p.placar_1} × ${p.placar_2}` : "—";
   const scorePayload = parseScorePayloadFromPartidaMensagem(p.mensagem);
@@ -132,18 +133,21 @@ export function EidColetivoPartidaRow({
         {res.label}
       </span>
       <div className="flex shrink-0 flex-col items-center justify-center">
-        <Link
+        <ProfileEditDrawerTrigger
           href={eidOponenteHref}
-          data-no-modal="1"
+          fullscreen
+          topMode="backOnly"
+          openingDelayMs={0}
+          dataNoModal
           className="rounded-2xl ring-2 ring-transparent transition hover:ring-eid-primary-500/40"
-          aria-label={`Estatísticas EID da formação ${opponentNome}`}
+          title={`Estatísticas EID da formação ${opponentNome}`}
         >
           {opponentEscudoUrl ? (
             <img src={opponentEscudoUrl} alt="" className={AVATAR_COLETIVO} />
           ) : (
             <span className={AVATAR_FALLBACK_COLETIVO}>{opponentNome.trim().slice(0, 1).toUpperCase() || "E"}</span>
           )}
-        </Link>
+        </ProfileEditDrawerTrigger>
         {typeof opponentNotaEid === "number" && Number.isFinite(opponentNotaEid) ? (
           <ProfileEidPerformanceSeal notaEid={opponentNotaEid} compact className="-mt-0.5 scale-110" />
         ) : null}

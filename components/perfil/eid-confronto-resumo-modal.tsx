@@ -7,6 +7,7 @@ import Link from "next/link";
 import { GoalsScoreboardSummary } from "@/components/placar/goals-scoreboard-summary";
 import {
   goalsPayloadHasAny,
+  goalsTotalsBeforePenaltiesDisplay,
   pointsTotalsAccumulatedForDisplay,
   sportLooksLikeBasquete,
   type MatchScorePayload,
@@ -81,6 +82,9 @@ type ResultadoSharePayload = {
   dataHora: string;
   local: string | null;
   sportLabel: string | null;
+  mensagem?: string | null;
+  ladoAAvatarUrl?: string | null;
+  ladoBAvatarUrl?: string | null;
   backgroundDataUrl?: string | null;
   overlayPosition: { x: number; y: number };
   overlayScale: number;
@@ -189,21 +193,115 @@ function sportShareTheme(sportLabel: string | null) {
   return "ink";
 }
 
+function shareScoreSummary(payload: Pick<ResultadoSharePayload, "placar" | "mensagem">) {
+  const score = parseScorePayloadFromPartidaMensagem(payload.mensagem);
+  const fallback = cleanShareText(payload.placar, "-");
+  if (score?.type === "sets" && Array.isArray(score.sets) && score.sets.length > 0) {
+    let winsA = 0;
+    let winsB = 0;
+    const sets = score.sets.map((set) => {
+      const a = Number(set.a) || 0;
+      const b = Number(set.b) || 0;
+      if (a > b) winsA += 1;
+      if (b > a) winsB += 1;
+      const tie = set.tiebreakA || set.tiebreakB ? ` (${set.tiebreakA ?? 0}-${set.tiebreakB ?? 0})` : "";
+      return `${a}/${b}${tie}`;
+    });
+    return {
+      headline: `${winsA} x ${winsB}`,
+      detail: `Sets: ${sets.join("  ")}`,
+      extra: null as string | null,
+    };
+  }
+  if (score?.type === "gols" && score.goals && goalsPayloadHasAny(score.goals)) {
+    const base = goalsTotalsBeforePenaltiesDisplay(score.goals);
+    const penaltyA = Number(score.goals.penaltiesA ?? 0) || 0;
+    const penaltyB = Number(score.goals.penaltiesB ?? 0) || 0;
+    const overtimeA = Number(score.goals.overtimeA ?? 0) || 0;
+    const overtimeB = Number(score.goals.overtimeB ?? 0) || 0;
+    return {
+      headline: `${base.a} x ${base.b}`,
+      detail: penaltyA || penaltyB ? `Pênaltis: ${penaltyA} x ${penaltyB}` : null,
+      extra: overtimeA || overtimeB ? `Prorrogação: ${overtimeA} x ${overtimeB}` : null,
+    };
+  }
+  if (score?.type === "pontos" && score.points) {
+    const totals = pointsTotalsAccumulatedForDisplay(score.points);
+    const overtimeA = Number(score.points.overtimeA ?? 0) || 0;
+    const overtimeB = Number(score.points.overtimeB ?? 0) || 0;
+    return {
+      headline: `${totals.a} x ${totals.b}`,
+      detail: overtimeA || overtimeB ? `Prorrogação: ${overtimeA} x ${overtimeB}` : null,
+      extra: null as string | null,
+    };
+  }
+  if (score?.type === "rounds" && score.rounds) {
+    const winner = score.rounds.winner === "a" ? "Lado A" : "Lado B";
+    const method = score.rounds.method.toUpperCase();
+    return {
+      headline: fallback,
+      detail: `${winner} por ${method}`,
+      extra: `${score.rounds.items.length} round${score.rounds.items.length === 1 ? "" : "s"}`,
+    };
+  }
+  return { headline: fallback, detail: null as string | null, extra: null as string | null };
+}
+
 function drawDefaultSportBackground(ctx: CanvasRenderingContext2D, payload: ResultadoSharePayload, colors: { ink: string; surface: string; primary: string; action: string }) {
   const theme = sportShareTheme(payload.sportLabel);
   const gradient = ctx.createLinearGradient(0, 0, 1080, 1920);
-  gradient.addColorStop(0, colors.ink);
-  gradient.addColorStop(0.56, colors.surface);
-  gradient.addColorStop(1, colors.ink);
+  if (theme === "field") {
+    gradient.addColorStop(0, "#062516");
+    gradient.addColorStop(0.48, "#0f4a2e");
+    gradient.addColorStop(1, colors.ink);
+  } else if (theme === "court") {
+    gradient.addColorStop(0, colors.ink);
+    gradient.addColorStop(0.48, "#153f86");
+    gradient.addColorStop(1, "#482313");
+  } else if (theme === "basket") {
+    gradient.addColorStop(0, "#20120b");
+    gradient.addColorStop(0.54, "#8a3c12");
+    gradient.addColorStop(1, colors.ink);
+  } else if (theme === "track") {
+    gradient.addColorStop(0, colors.ink);
+    gradient.addColorStop(0.56, "#7a1f24");
+    gradient.addColorStop(1, "#101827");
+  } else if (theme === "sand") {
+    gradient.addColorStop(0, "#122d45");
+    gradient.addColorStop(0.58, "#936833");
+    gradient.addColorStop(1, colors.ink);
+  } else {
+    gradient.addColorStop(0, colors.ink);
+    gradient.addColorStop(0.56, colors.surface);
+    gradient.addColorStop(1, colors.ink);
+  }
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 1080, 1920);
 
   ctx.save();
-  ctx.globalAlpha = 0.38;
-  ctx.strokeStyle = theme === "basket" || theme === "sand" ? colors.action : colors.primary;
-  ctx.lineWidth = 10;
+  ctx.globalAlpha = 0.22;
+  ctx.fillStyle = "#ffffff";
+  for (let i = 0; i < 36; i += 1) {
+    const x = (i * 173) % 1080;
+    const y = (i * 307) % 1920;
+    ctx.beginPath();
+    ctx.arc(x, y, 1.8 + (i % 4), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalAlpha = 0.48;
+  ctx.strokeStyle = theme === "basket" || theme === "sand" ? "rgba(255,255,255,0.62)" : "rgba(255,255,255,0.46)";
+  ctx.lineWidth = 8;
   if (theme === "field") {
+    for (let x = 90; x < 990; x += 180) {
+      ctx.fillStyle = x % 360 === 90 ? "rgba(255,255,255,0.035)" : "rgba(0,0,0,0.035)";
+      ctx.fillRect(x, 260, 180, 1400);
+    }
     ctx.strokeRect(90, 300, 900, 1320);
+    ctx.strokeRect(90, 540, 190, 840);
+    ctx.strokeRect(800, 540, 190, 840);
     ctx.beginPath();
     ctx.moveTo(90, 960);
     ctx.lineTo(990, 960);
@@ -213,6 +311,8 @@ function drawDefaultSportBackground(ctx: CanvasRenderingContext2D, payload: Resu
     ctx.stroke();
   } else if (theme === "court") {
     ctx.strokeRect(120, 300, 840, 1320);
+    ctx.strokeRect(120, 300, 420, 660);
+    ctx.strokeRect(540, 960, 420, 660);
     ctx.beginPath();
     ctx.moveTo(120, 960);
     ctx.lineTo(960, 960);
@@ -220,19 +320,28 @@ function drawDefaultSportBackground(ctx: CanvasRenderingContext2D, payload: Resu
     ctx.lineTo(540, 1620);
     ctx.stroke();
   } else if (theme === "basket") {
+    ctx.strokeStyle = "rgba(255,255,255,0.52)";
     ctx.beginPath();
-    ctx.arc(540, 1020, 420, Math.PI * 0.15, Math.PI * 0.85);
+    ctx.arc(540, 1130, 520, Math.PI * 1.12, Math.PI * 1.88);
     ctx.stroke();
-    ctx.strokeRect(250, 360, 580, 380);
+    ctx.strokeRect(230, 360, 620, 420);
+    ctx.strokeRect(390, 360, 300, 260);
     ctx.beginPath();
-    ctx.arc(540, 740, 110, 0, Math.PI * 2);
+    ctx.arc(540, 780, 120, 0, Math.PI * 2);
     ctx.stroke();
   } else if (theme === "track") {
-    for (let i = 0; i < 5; i += 1) {
-      ctx.strokeRect(120 + i * 44, 330 + i * 72, 840 - i * 88, 1280 - i * 144);
+    ctx.strokeStyle = "rgba(255,255,255,0.44)";
+    ctx.lineWidth = 7;
+    for (let i = 0; i < 6; i += 1) {
+      ctx.strokeRect(95 + i * 46, 300 + i * 70, 890 - i * 92, 1320 - i * 140);
     }
   } else if (theme === "sand") {
     ctx.lineWidth = 5;
+    ctx.strokeRect(130, 360, 820, 1200);
+    ctx.beginPath();
+    ctx.moveTo(130, 960);
+    ctx.lineTo(950, 960);
+    ctx.stroke();
     for (let y = 360; y < 1580; y += 90) {
       ctx.beginPath();
       ctx.moveTo(130, y);
@@ -296,38 +405,56 @@ function drawShareResultCard(
   ctx.textBaseline = "middle";
   const scale = payload.overlayScale;
   const center = x + cardWidth / 2;
+  const score = shareScoreSummary(payload);
   if (payload.showBrand) {
+    ctx.font = `900 ${34 * scale}px Arial, sans-serif`;
     ctx.fillStyle = text;
-    ctx.font = `900 ${42 * scale}px Arial, sans-serif`;
-    ctx.fillText("EsporteID", center, y + 72 * scale);
+    ctx.fillText("ESPORTE", center - 36 * scale, y + 70 * scale);
+    ctx.fillStyle = colors.action;
+    ctx.fillText("ID", center + 112 * scale, y + 70 * scale);
   }
 
+  ctx.fillStyle = "rgba(37, 99, 235, 0.24)";
+  ctx.roundRect(center - 210 * scale, y + (payload.showBrand ? 104 : 52) * scale, 420 * scale, 52 * scale, 26 * scale);
+  ctx.fill();
   ctx.fillStyle = colors.primarySoft;
-  ctx.font = `800 ${24 * scale}px Arial, sans-serif`;
-  ctx.fillText(cleanShareText(payload.sportLabel, "Resultado oficial"), center, y + (payload.showBrand ? 122 : 82) * scale);
+  ctx.font = `900 ${22 * scale}px Arial, sans-serif`;
+  ctx.fillText(cleanShareText(payload.sportLabel, "Resultado oficial").toUpperCase(), center, y + (payload.showBrand ? 131 : 79) * scale);
 
   ctx.fillStyle = text;
-  ctx.font = `900 ${42 * scale}px Arial, sans-serif`;
-  drawCenteredWrappedText(ctx, payload.ladoA, center, y + (payload.cardVariant === "compact" ? 160 : 220) * scale, cardWidth * 0.84, 50 * scale, 2);
+  ctx.font = `900 ${36 * scale}px Arial, sans-serif`;
+  const namesY = y + (payload.cardVariant === "compact" ? 170 : 218) * scale;
+  drawCenteredWrappedText(ctx, payload.ladoA, center, namesY, cardWidth * 0.84, 42 * scale, 2);
 
   ctx.fillStyle = colors.primarySoft;
-  ctx.font = `900 ${28 * scale}px Arial, sans-serif`;
-  ctx.fillText("vs", center, y + (payload.cardVariant === "compact" ? 238 : 318) * scale);
+  ctx.font = `900 ${22 * scale}px Arial, sans-serif`;
+  ctx.fillText("VS", center, y + (payload.cardVariant === "compact" ? 244 : 316) * scale);
 
   ctx.fillStyle = text;
-  ctx.font = `900 ${42 * scale}px Arial, sans-serif`;
-  drawCenteredWrappedText(ctx, payload.ladoB, center, y + (payload.cardVariant === "compact" ? 305 : 395) * scale, cardWidth * 0.84, 50 * scale, 2);
+  ctx.font = `900 ${36 * scale}px Arial, sans-serif`;
+  drawCenteredWrappedText(ctx, payload.ladoB, center, y + (payload.cardVariant === "compact" ? 300 : 386) * scale, cardWidth * 0.84, 42 * scale, 2);
 
-  ctx.fillStyle = "rgba(249, 115, 22, 0.18)";
-  ctx.roundRect(center - 210 * scale, y + (payload.cardVariant === "compact" ? 378 : 472) * scale, 420 * scale, 112 * scale, 30 * scale);
+  const scoreY = y + (payload.cardVariant === "compact" ? 374 : 474) * scale;
+  ctx.fillStyle = "rgba(249, 115, 22, 0.20)";
+  ctx.roundRect(center - 245 * scale, scoreY - 54 * scale, 490 * scale, 132 * scale, 34 * scale);
   ctx.fill();
   ctx.strokeStyle = colors.action;
   ctx.lineWidth = 3;
   ctx.stroke();
 
   ctx.fillStyle = text;
-  ctx.font = `900 ${72 * scale}px Arial, sans-serif`;
-  ctx.fillText(cleanShareText(payload.placar, "-"), center, y + (payload.cardVariant === "compact" ? 436 : 530) * scale);
+  ctx.font = `900 ${76 * scale}px Arial, sans-serif`;
+  ctx.fillText(score.headline, center, scoreY);
+  if (score.detail) {
+    ctx.fillStyle = colors.primarySoft;
+    ctx.font = `900 ${21 * scale}px Arial, sans-serif`;
+    drawCenteredWrappedText(ctx, score.detail, center, scoreY + 54 * scale, cardWidth * 0.72, 25 * scale, 1);
+  }
+  if (score.extra && payload.cardVariant !== "compact") {
+    ctx.fillStyle = muted;
+    ctx.font = `800 ${19 * scale}px Arial, sans-serif`;
+    drawCenteredWrappedText(ctx, score.extra, center, scoreY + 86 * scale, cardWidth * 0.72, 23 * scale, 1);
+  }
 
   if (payload.showMeta && payload.cardVariant !== "compact") {
     ctx.fillStyle = muted;
@@ -662,6 +789,7 @@ export function EidConfrontoResumoModal({
   const [shareBackgroundFilter, setShareBackgroundFilter] = useState<ResultadoSharePayload["backgroundFilter"]>("dim");
   const [shareShowMeta, setShareShowMeta] = useState(true);
   const [shareShowBrand, setShareShowBrand] = useState(true);
+  const [sharePanelOpen, setSharePanelOpen] = useState(false);
   const sharePreviewRef = useRef<HTMLDivElement | null>(null);
   const shareFileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -682,7 +810,8 @@ export function EidConfrontoResumoModal({
       : AVATAR_FALLBACK_LG;
 
   useEffect(() => {
-    setMounted(true);
+    const id = window.setTimeout(() => setMounted(true), 0);
+    return () => window.clearTimeout(id);
   }, []);
 
   const closeWithAnimation = useCallback(() => {
@@ -716,6 +845,9 @@ export function EidConfrontoResumoModal({
       dataHora,
       local,
       sportLabel: sportLabel ?? null,
+      mensagem: mensagem ?? null,
+      ladoAAvatarUrl,
+      ladoBAvatarUrl,
       backgroundDataUrl: shareBackgroundDataUrl,
       overlayPosition: shareOverlayPosition,
       overlayScale: shareOverlayScale,
@@ -730,7 +862,10 @@ export function EidConfrontoResumoModal({
       ladoB,
       local,
       origem,
+      mensagem,
       placarBase,
+      ladoAAvatarUrl,
+      ladoBAvatarUrl,
       shareBackgroundDataUrl,
       shareBackgroundFilter,
       shareCardVariant,
@@ -741,8 +876,12 @@ export function EidConfrontoResumoModal({
       sportLabel,
     ],
   );
+  const shareScore = useMemo(() => shareScoreSummary(sharePayload), [sharePayload]);
 
   useEffect(() => {
+    let cancelled = false;
+    const id = window.setTimeout(() => {
+      if (cancelled) return;
     try {
       const raw = window.localStorage.getItem(RESULT_SHARE_STORAGE_KEY);
       if (!raw) return;
@@ -756,6 +895,11 @@ export function EidConfrontoResumoModal({
     } catch {
       /* ignore */
     }
+    }, 0);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(id);
+    };
   }, []);
 
   useEffect(() => {
@@ -1087,7 +1231,18 @@ export function EidConfrontoResumoModal({
                     </div>
                   </div>
                 )}
-                <div className="mt-4 rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_18%,var(--eid-border-subtle)_82%)] bg-eid-surface/35 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setSharePanelOpen((current) => !current)}
+                    className="inline-flex min-h-[2.45rem] w-full items-center justify-center gap-2 rounded-xl border border-eid-action-500/38 bg-eid-action-500/14 px-3 py-2 text-[11px] font-black text-eid-action-100 shadow-[0_10px_24px_-20px_rgba(249,115,22,0.78)] transition hover:border-eid-action-400/55 hover:bg-eid-action-500/20 active:scale-[0.99]"
+                    aria-expanded={sharePanelOpen}
+                  >
+                    <Share2 className="h-4 w-4" aria-hidden />
+                    Compartilhar resultado
+                  </button>
+                  {sharePanelOpen ? (
+                    <div className="mt-2 rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_18%,var(--eid-border-subtle)_82%)] bg-eid-surface/35 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                   <input
                     ref={shareFileInputRef}
                     type="file"
@@ -1137,13 +1292,26 @@ export function EidConfrontoResumoModal({
                           width: `${(shareCardVariant === "compact" ? 64 : 78) * shareOverlayScale}%`,
                         }}
                       >
-                        {shareShowBrand ? <p className="text-[8px] font-black uppercase tracking-[0.12em] text-eid-primary-200">EsporteID</p> : null}
+                        {shareShowBrand ? (
+                          <p className="text-[8px] font-black uppercase tracking-[0.12em]">
+                            <span className="text-eid-fg">ESPORTE</span>
+                            <span className="text-eid-action-400">ID</span>
+                          </p>
+                        ) : null}
+                        <p className="mt-1 text-[7px] font-black uppercase tracking-[0.1em] text-eid-primary-200">
+                          {sportLabel ?? "Resultado oficial"}
+                        </p>
                         <p className="mt-1 line-clamp-1 text-[10px] font-black leading-tight text-eid-fg">{ladoA}</p>
                         <p className="text-[8px] font-black text-eid-primary-200">vs</p>
                         <p className="line-clamp-1 text-[10px] font-black leading-tight text-eid-fg">{ladoB}</p>
                         <p className="mt-1 rounded-lg border border-eid-action-500/40 bg-eid-action-500/15 py-1 text-base font-black tabular-nums text-eid-fg">
-                          {placarBase}
+                          {shareScore.headline}
                         </p>
+                        {shareScore.detail ? (
+                          <p className="mt-1 line-clamp-2 text-[7px] font-black leading-tight text-eid-primary-100">
+                            {shareScore.detail}
+                          </p>
+                        ) : null}
                         {shareShowMeta && shareCardVariant !== "compact" ? (
                           <p className="mt-1 line-clamp-1 text-[7px] font-bold text-eid-text-secondary">{origem}</p>
                         ) : null}
@@ -1297,6 +1465,8 @@ export function EidConfrontoResumoModal({
                       No celular, escolha Instagram, Stories ou outro app na tela de compartilhamento.
                     </p>
                   )}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>

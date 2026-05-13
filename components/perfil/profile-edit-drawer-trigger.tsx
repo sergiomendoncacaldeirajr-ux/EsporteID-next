@@ -14,6 +14,7 @@ type Props = {
   openingLabel?: ReactNode;
   openingDelayMs?: number;
   fullscreen?: boolean;
+  dataNoModal?: boolean;
   /** default = título + Fechar · backOnly = só Voltar · backAndClose = Voltar (histórico do iframe) + Fechar */
   topMode?: "default" | "backOnly" | "backAndClose";
   /** Quando true, o botão Voltar fecha o overlay sem usar histórico interno do iframe. */
@@ -28,6 +29,7 @@ export function ProfileEditDrawerTrigger({
   openingLabel,
   openingDelayMs = 120,
   fullscreen = false,
+  dataNoModal = false,
   topMode = "default",
   disableIframeBack = false,
 }: Props) {
@@ -41,7 +43,14 @@ export function ProfileEditDrawerTrigger({
     return document.documentElement.getAttribute("data-eid-theme") === "light" ? "light" : "dark";
   });
   const [openNonce, setOpenNonce] = useState(0);
-  const [chromeCompact, setChromeCompact] = useState(false);
+  const [chromeCompact] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.self !== window.top;
+    } catch {
+      return true;
+    }
+  });
   const frameRef = useRef<HTMLIFrameElement | null>(null);
 
   /** Overlay dentro de iframe (ex.: /registrar-placar?embed=1): portal no `body` do topo cobre a tela inteira. */
@@ -79,14 +88,6 @@ export function ProfileEditDrawerTrigger({
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-eid-theme"] });
     return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    try {
-      setChromeCompact(window.self !== window.top);
-    } catch {
-      setChromeCompact(true);
-    }
   }, []);
 
   useEffect(() => {
@@ -155,7 +156,15 @@ export function ProfileEditDrawerTrigger({
 
   return (
     <>
-      <button type="button" onClick={openDrawer} className={className} aria-label={title} title={title} disabled={opening}>
+      <button
+        type="button"
+        onClick={openDrawer}
+        className={className}
+        aria-label={title}
+        title={title}
+        disabled={opening}
+        data-no-modal={dataNoModal ? "1" : undefined}
+      >
         {opening && openingLabel ? openingLabel : children}
       </button>
       {open && typeof document !== "undefined"
@@ -258,4 +267,3 @@ export function ProfileEditDrawerTrigger({
     </>
   );
 }
-

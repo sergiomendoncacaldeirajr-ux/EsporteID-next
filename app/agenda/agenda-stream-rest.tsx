@@ -186,7 +186,7 @@ export async function AgendaStreamRest({ supabase, userId, teamClause, agendaTea
                             title={`Estatísticas EID de ${adv.nome ?? "Oponente"}`}
                             fullscreen
                             topMode="backOnly"
-                            className="block rounded-xl border-0 bg-transparent p-0 transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500"
+                            className="block rounded-full border-0 bg-transparent p-0 transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500"
                           >
                             {adv.avatar_url ? (
                               <Image
@@ -195,10 +195,10 @@ export async function AgendaStreamRest({ supabase, userId, teamClause, agendaTea
                                 width={44}
                                 height={44}
                                 unoptimized
-                                className="pointer-events-none h-10 w-10 rounded-xl border border-[color:var(--eid-border-subtle)] object-cover md:h-11 md:w-11"
+                                className="pointer-events-none h-10 w-10 rounded-full border border-[color:var(--eid-border-subtle)] object-cover md:h-11 md:w-11"
                               />
                             ) : (
-                              <div className="pointer-events-none flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300 md:h-11 md:w-11">
+                              <div className="pointer-events-none flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300 md:h-11 md:w-11">
                                 EID
                               </div>
                             )}
@@ -210,10 +210,10 @@ export async function AgendaStreamRest({ supabase, userId, teamClause, agendaTea
                             width={44}
                             height={44}
                             unoptimized
-                            className="h-10 w-10 rounded-xl border border-[color:var(--eid-border-subtle)] object-cover md:h-11 md:w-11"
+                            className="h-10 w-10 rounded-full border border-[color:var(--eid-border-subtle)] object-cover md:h-11 md:w-11"
                           />
                         ) : (
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300 md:h-11 md:w-11">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300 md:h-11 md:w-11">
                             EID
                           </div>
                         )}

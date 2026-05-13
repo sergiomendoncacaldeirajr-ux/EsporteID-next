@@ -26,6 +26,7 @@ export type PublicConfronto = {
   localHref: string | null;
   distanciaKm: number | null;
   placar: string | null;
+  mensagem: string | null;
   origem: "Ranking" | "Torneio";
   ladoA: ConfrontoSide;
   ladoB: ConfrontoSide;
@@ -49,6 +50,7 @@ type PartidaRow = {
   data_registro: string | null;
   local_str: string | null;
   local_espaco_id: number | null;
+  mensagem: string | null;
   esportes?: { nome?: string | null } | { nome?: string | null }[] | null;
 };
 
@@ -153,7 +155,7 @@ export async function loadPublicConfrontos({
   let query = supabase
     .from("partidas")
     .select(
-      "id, esporte_id, modalidade, jogador1_id, jogador2_id, time1_id, time2_id, vencedor_id, placar_1, placar_2, status, torneio_id, data_partida, data_resultado, data_registro, local_str, local_espaco_id, esportes(nome)"
+      "id, esporte_id, modalidade, jogador1_id, jogador2_id, time1_id, time2_id, vencedor_id, placar_1, placar_2, status, torneio_id, data_partida, data_resultado, data_registro, local_str, local_espaco_id, mensagem, esportes(nome)"
     );
 
   if (esporteId) query = query.eq("esporte_id", esporteId);
@@ -250,6 +252,7 @@ export async function loadPublicConfrontos({
         localHref: row.local_espaco_id ? `/local/${Number(row.local_espaco_id)}` : null,
         distanciaKm: dist,
         placar,
+        mensagem: row.mensagem ?? null,
         origem: row.torneio_id ? "Torneio" : "Ranking",
         ladoA: sideA,
         ladoB: sideB,

@@ -128,6 +128,24 @@ function IconLocationArrow() {
   );
 }
 
+type ReverseGeocodeResponse = {
+  localizacao?: string;
+};
+
+function coordinateFallback(la: number, ln: number): string {
+  return `Localização capturada (${la.toFixed(5)}, ${ln.toFixed(5)})`;
+}
+
+function geolocationErrorMessage(err: GeolocationPositionError): string {
+  if (err.code === err.PERMISSION_DENIED) {
+    return "Permita o acesso à localização do navegador para preencher sua cidade automaticamente.";
+  }
+  if (err.code === err.TIMEOUT) {
+    return "Não consegui obter sua localização a tempo. Tente novamente em um local com melhor sinal.";
+  }
+  return "Não consegui obter sua localização atual. Verifique se o GPS/localização está ativo e tente novamente.";
+}
+
 export function CadastroForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -276,6 +294,10 @@ export function CadastroForm() {
   }
 
   function useCurrentLocation() {
+    setError(null);
+    setLocalizacao("");
+    setLat(null);
+    setLng(null);
     setLocating(true);
     const locInput = document.getElementById("cad-localizacao") as HTMLInputElement | null;
     if (locInput) {
@@ -283,6 +305,7 @@ export function CadastroForm() {
     }
     if (!navigator.geolocation) {
       if (locInput) locInput.placeholder = "Cidade - Estado";
+      setError("Este navegador não permite acessar a localização atual.");
       setLocating(false);
       return;
     }
@@ -294,28 +317,29 @@ export function CadastroForm() {
         setLng(ln);
         try {
           const r = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${la}&lon=${ln}&format=json`,
+            `/api/geocode/reverse?lat=${encodeURIComponent(String(la))}&lng=${encodeURIComponent(
+              String(ln)
+            )}`,
             { headers: { Accept: "application/json" } }
           );
-          const d = (await r.json()) as {
-            address?: { city?: string; town?: string; village?: string; state?: string };
-          };
-          const cidade =
-            d.address?.city || d.address?.town || d.address?.village || "";
-          const estado = d.address?.state || "";
-          const v =
-            cidade && estado ? `${cidade} - ${estado}` : cidade || estado || "";
-          setLocalizacao(v);
+          const d = (await r.json()) as ReverseGeocodeResponse;
+          setLocalizacao(d.localizacao?.trim() || coordinateFallback(la, ln));
         } catch {
-          /* ignore */
+          setLocalizacao(coordinateFallback(la, ln));
         } finally {
           if (locInput) locInput.placeholder = "Cidade - Estado";
           setLocating(false);
         }
       },
-      () => {
+      (err) => {
         if (locInput) locInput.placeholder = "Cidade - Estado";
+        setError(geolocationErrorMessage(err));
         setLocating(false);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 60_000,
+        timeout: 15_000,
       }
     );
   }
