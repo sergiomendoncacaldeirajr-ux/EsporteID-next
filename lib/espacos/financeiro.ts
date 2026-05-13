@@ -20,14 +20,20 @@ export function calcularFinanceiroEspaco({
   valorCentavos,
   config,
   taxaReservaPlataformaCentavos: taxaReservaIn = 0,
+  comissaoPercentualPlataforma = 0,
 }: {
   valorCentavos: number;
   config: unknown;
   /** Centavos por reserva para a plataforma (junto ao valor do local, total cobrado = local + taxa). */
   taxaReservaPlataformaCentavos?: number;
+  /** Comissão percentual da plataforma sobre o valor do local, em decimal. Ex.: 0.05 = 5%. */
+  comissaoPercentualPlataforma?: number;
 }): CalculoFinanceiroEspaco {
   const valorLocalCentavos = Math.max(0, Math.round(Number(valorCentavos ?? 0)));
   const taxaRes = Math.max(0, Math.round(Number(taxaReservaIn ?? 0)));
+  const comissaoPercentualCentavos = Math.round(
+    valorLocalCentavos * Math.max(0, Number(comissaoPercentualPlataforma ?? 0))
+  );
   const brutoCentavos = valorLocalCentavos + taxaRes;
   const financeiro = getEspacoFinanceiro(
     config as Parameters<typeof getEspacoFinanceiro>[0]
@@ -41,7 +47,8 @@ export function calcularFinanceiroEspaco({
       taxaGatewayCentavos * Number(financeiro.plataformaSobreTaxaGateway ?? 0)
     ) +
     taxaFixaCentavos +
-    taxaRes;
+    taxaRes +
+    comissaoPercentualCentavos;
   const liquidoEspacoCentavos = Math.max(
     0,
     brutoCentavos - taxaGatewayCentavos - comissaoPlataformaCentavos

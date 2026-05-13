@@ -195,6 +195,7 @@ export function EspacoPublicReservaForm({
   espacoId,
   unidadeId,
   esporteId,
+  valorReservaPadraoCentavos = 0,
   latitude = null,
   longitude = null,
   jogosAgendados = [],
@@ -202,17 +203,21 @@ export function EspacoPublicReservaForm({
   espacoId: number;
   unidadeId: number | null;
   esporteId: number | null;
+  valorReservaPadraoCentavos?: number;
   latitude?: number | null;
   longitude?: number | null;
   jogosAgendados?: Array<{ id: number; label: string; data_partida: string | null }>;
 }) {
   const [state, action, pending] = useActionState(criarReservaEspacoAction, initial);
   const [inicio, setInicio] = useState("");
+  const valorReserva = Math.max(0, Math.round(Number(valorReservaPadraoCentavos) || 0));
+  const valorReservaLabel = (valorReserva / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   return (
     <form action={action} className="space-y-4 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4 shadow-[0_10px_28px_-18px_rgba(15,23,42,0.5)]">
       <input type="hidden" name="espaco_id" value={espacoId} />
       <input type="hidden" name="espaco_unidade_id" value={unidadeId ?? ""} />
       <input type="hidden" name="esporte_id" value={esporteId ?? ""} />
+      <input type="hidden" name="valor_centavos" value={valorReserva} />
       <div>
         <h3 className="text-sm font-bold text-eid-fg">Reservar horário</h3>
         <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">
@@ -234,14 +239,10 @@ export function EspacoPublicReservaForm({
         />
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
-        <input
-          type="number"
-          name="valor_centavos"
-          min={0}
-          step={100}
-          placeholder="Valor em centavos"
-          className="eid-input-dark rounded-xl px-3 py-2 text-sm"
-        />
+        <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-3 py-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">Valor da reserva</p>
+          <p className="mt-0.5 text-sm font-bold text-eid-fg">{valorReservaLabel}</p>
+        </div>
         <select
           name="tipo_reserva"
           className="eid-input-dark rounded-xl px-3 py-2 text-sm"

@@ -19,13 +19,47 @@ export default async function AdminFinanceiroPage() {
   if (!data) return <p className="text-sm text-eid-text-secondary">Sem linha em ei_financeiro_config.</p>;
 
   return (
-    <div>
-      <h2 className="text-base font-bold text-eid-fg">Financeiro (configuração)</h2>
-      <p className="mt-1 text-sm text-eid-text-secondary">Configure taxas reais por domínio, promoções temporárias e parâmetros globais de cobrança.</p>
-      <form action={adminUpdateFinanceiro} className="mt-6 space-y-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4">
+    <div className="space-y-5">
+      <div>
+        <p className="text-[11px] font-bold uppercase tracking-wide text-eid-primary-300">Admin financeiro</p>
+        <h2 className="mt-1 text-2xl font-black text-eid-fg">Taxas, repasses e cobranças</h2>
+        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-eid-text-secondary">
+          Configure o MDR estimado do Asaas, as taxas da plataforma e os percentuais aplicados em espaços,
+          professores e torneios.
+        </p>
+      </div>
+
+      <section className="grid gap-3 lg:grid-cols-3">
+        <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-eid-action-400">Mensalidade PaaS</p>
+          <p className="mt-2 text-sm font-bold text-eid-fg">100% plataforma</p>
+          <p className="mt-1 text-xs leading-relaxed text-eid-text-secondary">
+            A assinatura do dono do espaço é criada sem split. O valor fica na conta Asaas da plataforma/admin, descontado o MDR.
+          </p>
+        </div>
+        <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-eid-primary-300">Reservas pagas</p>
+          <p className="mt-2 text-sm font-bold text-eid-fg">Split para o Wallet do espaço</p>
+          <p className="mt-1 text-xs leading-relaxed text-eid-text-secondary">
+            O cliente paga a plataforma no Asaas. O sistema envia split fixo com o líquido do espaço; o restante permanece com a plataforma.
+          </p>
+        </div>
+        <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-eid-primary-300">Sócios e benefícios</p>
+          <p className="mt-2 text-sm font-bold text-eid-fg">Comissão configurável</p>
+          <p className="mt-1 text-xs leading-relaxed text-eid-text-secondary">
+            Mensalidades de sócio e planos de benefícios usam comissão percentual da plataforma e split do líquido para o espaço.
+          </p>
+        </div>
+      </section>
+
+      <form action={adminUpdateFinanceiro} className="space-y-5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4">
         <div className="grid gap-4 lg:grid-cols-2">
           <section className="space-y-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-4">
             <h3 className="text-sm font-bold text-eid-fg">Global / Asaas</h3>
+            <p className="text-xs leading-relaxed text-eid-text-secondary">
+              Use valores em decimal. Ex.: 0.0499 representa 4,99%. Esses campos alimentam a simulação interna de taxa e o cálculo do split.
+            </p>
             <label className="block text-xs font-semibold text-eid-text-secondary">
               Asaas taxa % (decimal)
               <input type="number" step="0.000001" name="asaas_taxa_percentual" defaultValue={Number(data.asaas_taxa_percentual)} className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm" />
@@ -133,6 +167,9 @@ export default async function AdminFinanceiroPage() {
 
           <section className="space-y-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-4">
             <h3 className="text-sm font-bold text-eid-fg">Espaços</h3>
+            <p className="text-xs leading-relaxed text-eid-text-secondary">
+              Reservas, mensalidades de sócio e planos de benefícios cobram pelo Asaas da plataforma. O Wallet ID do espaço recebe apenas o líquido calculado.
+            </p>
             <label className="block text-xs font-semibold text-eid-text-secondary">
               Taxa fixa normal (R$)
               <input type="number" step="0.01" name="espaco_taxa_fixa" defaultValue={Number(data.espaco_taxa_fixa ?? 0)} className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm" />
@@ -148,6 +185,16 @@ export default async function AdminFinanceiroPage() {
             <label className="block text-xs font-semibold text-eid-text-secondary">
               Plataforma sobre taxa gateway (promo)
               <input type="number" step="0.000001" name="espaco_plataforma_sobre_taxa_gateway_promo" defaultValue={Number(data.espaco_plataforma_sobre_taxa_gateway_promo ?? data.plataforma_sobre_taxa_gateway_promo)} className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm" />
+            </label>
+            <label className="block text-xs font-semibold text-eid-text-secondary">
+              Comissão da plataforma sobre reserva paga (% em decimal)
+              <input
+                type="number"
+                step="0.000001"
+                name="espaco_reserva_comissao_percentual"
+                defaultValue={Number((data as Record<string, unknown>).espaco_reserva_comissao_percentual ?? 0)}
+                className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm"
+              />
             </label>
             <label className="flex items-center gap-2 text-xs font-semibold text-eid-text-secondary">
               <input type="checkbox" name="espaco_promocao_ativa" defaultChecked={Boolean(data.espaco_promocao_ativa)} />
@@ -254,6 +301,9 @@ export default async function AdminFinanceiroPage() {
                 className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm"
               />
             </label>
+            <p className="rounded-lg border border-eid-primary-500/25 bg-eid-primary-500/8 p-3 text-[11px] leading-relaxed text-eid-text-secondary">
+              Essa comissão também cobre planos de benefícios do membro, como bolinhas, rifas, brindes e outros benefícios pagos que o dono cadastrar no painel.
+            </p>
             <label className="block text-xs font-semibold text-eid-text-secondary">
               Comissão da plataforma no clube de assinaturas (% em decimal)
               <input

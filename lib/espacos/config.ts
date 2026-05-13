@@ -3,6 +3,7 @@ type JsonRecord = Record<string, unknown>;
 export type EspacoReservaConfig = {
   limiteReservasDia: number;
   limiteReservasSemana: number;
+  valorReservaPadraoCentavos: number;
   cooldownHoras: number;
   antecedenciaMinHoras: number;
   antecedenciaMaxDias: number;
@@ -60,6 +61,10 @@ export function normalizeEspacoReservaConfig(input: unknown): EspacoReservaConfi
   return {
     limiteReservasDia: Math.max(0, Math.round(num(data.limiteReservasDia, 0))),
     limiteReservasSemana: Math.max(0, Math.round(num(data.limiteReservasSemana, 0))),
+    valorReservaPadraoCentavos: Math.max(
+      0,
+      Math.round(num(data.valorReservaPadraoCentavos, num(data.valor_reserva_padrao_centavos, 0)))
+    ),
     cooldownHoras: Math.max(0, Math.round(num(data.cooldownHoras, 0))),
     antecedenciaMinHoras: Math.max(0, Math.round(num(data.antecedenciaMinHoras, 0))),
     antecedenciaMaxDias: Math.max(0, Math.round(num(data.antecedenciaMaxDias, 0))),

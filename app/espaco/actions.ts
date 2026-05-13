@@ -162,6 +162,13 @@ function checkbox(formData: FormData, field: string) {
   return formData.get(field) === "on";
 }
 
+function dinheiroCentavos(formData: FormData, field: string) {
+  const input = text(formData, field);
+  const raw = input.includes(",") ? input.replace(/\./g, "").replace(",", ".") : input;
+  const value = Number(raw);
+  return Number.isFinite(value) ? Math.max(0, Math.round(value * 100)) : 0;
+}
+
 function timeToMinutes(value: string) {
   const [h, m] = value.split(":").map((v) => Number(v));
   if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
@@ -390,6 +397,7 @@ export async function salvarConfiguracoesEspacoAction(
           formData.get("antecedencia_max_dias") ??
           0
       ),
+      valorReservaPadraoCentavos: dinheiroCentavos(formData, "valor_reserva_padrao_reais"),
       bloqueiaInadimplente: checkbox(formData, "bloqueia_inadimplente"),
       reservasGratisLiberadas,
       cancelamentoGratuitaPermite: checkbox(formData, "cancelamento_gratuita_permite"),
@@ -1162,14 +1170,12 @@ export async function criarPlanoSocioEspacoAction(formData: FormData) {
       nome,
       slug: slugifyEspaco(nome),
       descricao: text(formData, "descricao") || null,
-      mensalidade_centavos: Math.max(
-        0,
-        Math.round(Number(formData.get("mensalidade_centavos") ?? 0) || 0)
-      ),
-      taxa_adesao_centavos: Math.max(
-        0,
-        Math.round(Number(formData.get("taxa_adesao_centavos") ?? 0) || 0)
-      ),
+      mensalidade_centavos:
+        dinheiroCentavos(formData, "mensalidade_reais") ||
+        Math.max(0, Math.round(Number(formData.get("mensalidade_centavos") ?? 0) || 0)),
+      taxa_adesao_centavos:
+        dinheiroCentavos(formData, "taxa_adesao_reais") ||
+        Math.max(0, Math.round(Number(formData.get("taxa_adesao_centavos") ?? 0) || 0)),
       limite_reservas_dia: intOrNull(formData, "limite_reservas_dia"),
       limite_reservas_semana:
         limiteReservasSemana === null ? null : Math.max(0, Math.round(limiteReservasSemana)),
@@ -1184,6 +1190,7 @@ export async function criarPlanoSocioEspacoAction(formData: FormData) {
       ),
       reservas_gratuitas_semana: Math.max(0, Math.round(reservasGratisSemana ?? 0)),
       beneficios_json: {
+        itens_beneficios: text(formData, "itens_beneficios") || null,
         uma_reserva_ativa_por_vez:
           checkbox(formData, "uma_reserva_ativa_por_vez"),
         herdar_regras_globais: {
@@ -1212,6 +1219,63 @@ export async function criarPlanoSocioEspacoAction(formData: FormData) {
     p_entidade_tipo: "espaco_plano_socio",
     p_entidade_id: data.id,
     p_acao: "plano_criado",
+    p_payload: { nome },
+    p_autor_usuario_id: user.id,
+  });
+
+  revalidatePath("/espaco/socios");
+  revalidatePath("/espaco");
+  revalidatePath("/espaco/configuracao");
+}
+
+export async function atualizarPlanoSocioEspacoAction(formData: FormData) {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const planoId = Number(formData.get("plano_id") ?? 0);
+  const { supabase, user } = await requireEspacoManager(espacoId);
+  if (!planoId) throw new Error("Plano inválido.");
+  const nome = text(formData, "nome");
+  if (nome.length < 2) throw new Error("Informe o nome do plano.");
+  const reservasGratisSemana = numberInputOrNull(formData, "reservas_gratuitas_semana");
+  const limiteReservasSemana = numberInputOrNull(formData, "limite_reservas_semana");
+  const cooldownHoras = numberInputOrNull(formData, "cooldown_horas");
+  const antecedenciaMaxDias = numberInputOrNull(formData, "antecedencia_max_dias");
+
+  const { error } = await supabase
+    .from("espaco_planos_socio")
+    .update({
+      nome,
+      slug: slugifyEspaco(nome),
+      descricao: text(formData, "descricao") || null,
+      mensalidade_centavos: dinheiroCentavos(formData, "mensalidade_reais"),
+      taxa_adesao_centavos: dinheiroCentavos(formData, "taxa_adesao_reais"),
+      limite_reservas_semana:
+        limiteReservasSemana === null ? null : Math.max(0, Math.round(limiteReservasSemana)),
+      cooldown_horas: Math.max(0, Math.round(cooldownHoras ?? 0)),
+      antecedencia_max_dias: Math.max(0, Math.round(antecedenciaMaxDias ?? 0)),
+      reservas_gratuitas_semana: Math.max(0, Math.round(reservasGratisSemana ?? 0)),
+      beneficios_json: {
+        itens_beneficios: text(formData, "itens_beneficios") || null,
+        uma_reserva_ativa_por_vez: checkbox(formData, "uma_reserva_ativa_por_vez"),
+        herdar_regras_globais: {
+          reservas_gratuitas_semana: reservasGratisSemana === null,
+          limite_reservas_semana: limiteReservasSemana === null,
+          cooldown_horas: cooldownHoras === null,
+          antecedencia_max_dias: antecedenciaMaxDias === null,
+        },
+      },
+      percentual_desconto_avulso: Math.max(0, Number(formData.get("percentual_desconto_avulso") ?? 0) || 0),
+      ativo: checkbox(formData, "ativo"),
+      atualizado_em: new Date().toISOString(),
+    })
+    .eq("id", planoId)
+    .eq("espaco_generico_id", espacoId);
+  if (error) throw new Error(error.message);
+
+  await supabase.rpc("espaco_criar_auditoria", {
+    p_espaco_id: espacoId,
+    p_entidade_tipo: "espaco_plano_socio",
+    p_entidade_id: planoId,
+    p_acao: "plano_atualizado",
     p_payload: { nome },
     p_autor_usuario_id: user.id,
   });
@@ -1642,7 +1706,7 @@ export async function criarReservaEspacoAction(
         supabase
           .from("ei_financeiro_config")
           .select(
-            "asaas_taxa_percentual, espaco_taxa_fixa, espaco_taxa_fixa_promo, espaco_plataforma_sobre_taxa_gateway, espaco_plataforma_sobre_taxa_gateway_promo, espaco_promocao_ativa, espaco_promocao_ate"
+            "asaas_taxa_percentual, espaco_taxa_fixa, espaco_taxa_fixa_promo, espaco_plataforma_sobre_taxa_gateway, espaco_plataforma_sobre_taxa_gateway_promo, espaco_reserva_comissao_percentual, espaco_promocao_ativa, espaco_promocao_ate"
           )
           .eq("id", 1)
           .maybeSingle(),
@@ -1778,10 +1842,8 @@ export async function criarReservaEspacoAction(
       configuracaoEspaco: espaco.configuracao_reservas_json,
     });
 
-    const valorCentavos = Math.max(
-      0,
-      Math.round(Number(formData.get("valor_centavos") ?? 0) || 0)
-    );
+    const cfgReservas = normalizeEspacoReservaConfig(espaco.configuracao_reservas_json);
+    const valorCentavos = cfgReservas.valorReservaPadraoCentavos;
     const espacoM = espaco as {
       modo_reserva?: string | null;
       modo_monetizacao?: string | null;
@@ -1796,7 +1858,7 @@ export async function criarReservaEspacoAction(
     if (modoReserva === "paga" && !isGratuitoTipo && !checkbox(formData, "usar_beneficio_gratis") && valorCentavos < 1) {
       return {
         ok: false,
-        message: "Este local está configurado apenas para reservas pagas. Informe o valor (centavos) do horário ou use o benefício de sócio, se aplicável.",
+        message: "Este local está configurado apenas para reservas pagas, mas o dono ainda não definiu o valor padrão da reserva.",
       };
     }
     if (modoReserva === "gratuita" && !isGratuitoTipo && valorCentavos > 0) {
@@ -2117,6 +2179,9 @@ export async function criarReservaEspacoAction(
       valorCentavos: usarBeneficioGratis ? 0 : valorCentavos,
       config: cfg,
       taxaReservaPlataformaCentavos: usarBeneficioGratis ? 0 : taxaReservaAplicar,
+      comissaoPercentualPlataforma: usarBeneficioGratis
+        ? 0
+        : Number((cfg as Record<string, unknown> | null)?.espaco_reserva_comissao_percentual ?? 0),
     });
 
     const { data: reserva, error } = await admin
@@ -2754,11 +2819,17 @@ export async function gerarCobrancaSocioEspacoAction(formData: FormData) {
   const { data: cfg } = await admin
     .from("ei_financeiro_config")
     .select(
-      "asaas_taxa_percentual, espaco_taxa_fixa, espaco_taxa_fixa_promo, espaco_plataforma_sobre_taxa_gateway, espaco_plataforma_sobre_taxa_gateway_promo, espaco_promocao_ativa, espaco_promocao_ate"
+      "asaas_taxa_percentual, espaco_taxa_fixa, espaco_taxa_fixa_promo, espaco_plataforma_sobre_taxa_gateway, espaco_plataforma_sobre_taxa_gateway_promo, espaco_promocao_ativa, espaco_promocao_ate, espaco_socio_comissao_percentual"
     )
     .eq("id", 1)
     .maybeSingle();
-  const calculo = calcularFinanceiroEspaco({ valorCentavos, config: cfg });
+  const calculo = calcularFinanceiroEspaco({
+    valorCentavos,
+    config: cfg,
+    comissaoPercentualPlataforma: Number(
+      (cfg as Record<string, unknown> | null)?.espaco_socio_comissao_percentual ?? 0
+    ),
+  });
   const walletRecebedor = await buscarWalletRecebedorEspaco(admin, espacoId);
   const split = asaasSplitDoEspaco(walletRecebedor, calculo.liquidoEspacoCentavos);
   if (!split) {
@@ -2767,7 +2838,7 @@ export async function gerarCobrancaSocioEspacoAction(formData: FormData) {
   const payment = await createAsaasPayment({
     customer: customerId,
     billingType: "PIX",
-    value: valorCentavos / 100,
+    value: calculo.brutoCentavos / 100,
     dueDate: new Date().toISOString().slice(0, 10),
     description: `Mensalidade de sócio · ${plano?.nome ?? "Espaço"}`,
     externalReference: `espaco_socio:${socioId}:${Date.now()}`,

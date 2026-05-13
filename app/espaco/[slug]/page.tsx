@@ -13,6 +13,7 @@ import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_WIDE_C
 import { EidCityState } from "@/components/ui/eid-city-state";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeEspacoAssociacaoConfig } from "@/lib/espacos/associacao-config";
+import { normalizeEspacoReservaConfig } from "@/lib/espacos/config";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -48,6 +49,7 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
     .maybeSingle();
   if (!espaco) notFound();
   const regraAssociacao = normalizeEspacoAssociacaoConfig(espaco.associacao_regra_json);
+  const reservaConfig = normalizeEspacoReservaConfig(espaco.configuracao_reservas_json);
   const acessoPublicoPago = String(espaco.modo_reserva ?? "").toLowerCase() === "paga";
   const permiteFilaGratuita = String(espaco.modo_reserva ?? "").toLowerCase() !== "paga";
   const { data: membership } = user
@@ -483,6 +485,7 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
                           espacoId={espaco.id}
                           unidadeId={unidadePrincipal?.id ?? null}
                           esporteId={unidadePrincipal?.esporte_id ?? null}
+                          valorReservaPadraoCentavos={reservaConfig.valorReservaPadraoCentavos}
                           latitude={Number(espaco.lat ?? NaN)}
                           longitude={Number(espaco.lng ?? NaN)}
                         />
@@ -507,6 +510,7 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
                 espacoId={espaco.id}
                 unidadeId={unidadePrincipal?.id ?? null}
                 esporteId={unidadePrincipal?.esporte_id ?? null}
+                valorReservaPadraoCentavos={reservaConfig.valorReservaPadraoCentavos}
                 latitude={Number(espaco.lat ?? NaN)}
                 longitude={Number(espaco.lng ?? NaN)}
               />
