@@ -168,10 +168,14 @@ export async function criarEquipe(
   const tipo = tipoRaw === "dupla" ? "dupla" : "time";
   const esporteId = Number(formData.get("esporte_id") ?? 0);
   const localizacao = normalizePtBrNameCaseLoose(String(formData.get("localizacao") ?? ""));
+  const localizacaoDetectada = String(formData.get("localizacao_detectada") ?? "") === "1";
   const escudoFile = formData.get("escudo_file");
 
   if (nome.length < 3) return { ok: false, message: "Nome da equipe inválido." };
   if (!Number.isInteger(esporteId) || esporteId < 1) return { ok: false, message: "Selecione um esporte válido." };
+  if (!localizacao || !localizacaoDetectada) {
+    return { ok: false, message: "Use o botão Detectar para preencher a cidade da formação." };
+  }
   const { data: donoEsporte } = await supabase
     .from("usuario_eid")
     .select("usuario_id")

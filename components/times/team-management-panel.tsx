@@ -124,6 +124,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
     return "";
   });
   const [localizacao, setLocalizacao] = useState("");
+  const [localizacaoDetectada, setLocalizacaoDetectada] = useState(false);
   const [gpsStatus, setGpsStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [inviteTeamId, setInviteTeamId] = useState<string>("");
@@ -219,9 +220,11 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
   async function obterLocalizacao() {
     setGpsStatus("loading");
     setGpsError(null);
+    setLocalizacaoDetectada(false);
     try {
       const result = await detectCurrentLocation();
       setLocalizacao(result.localizacao);
+      setLocalizacaoDetectada(true);
       setGpsStatus("ok");
     } catch (err) {
       setGpsStatus("error");
@@ -479,14 +482,16 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
             <input
               name="localizacao"
               required
+              readOnly
+              aria-readonly="true"
               value={localizacao}
-              onChange={(ev) => setLocalizacao(ev.target.value)}
-              placeholder="Cidade / Estado"
-                className={`${isCadastrarStyle ? "h-10 w-full bg-transparent text-[11px] text-eid-fg placeholder:text-[#64748B] focus:outline-none" : "eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm text-eid-fg"}`}
+              placeholder="Toque em Detectar"
+                className={`${isCadastrarStyle ? "h-10 w-full cursor-default bg-transparent text-[11px] text-eid-fg placeholder:text-[#64748B] focus:outline-none" : "eid-input-dark mt-1 w-full cursor-default rounded-xl px-3 py-2 text-sm text-eid-fg"}`}
             />
+            <input type="hidden" name="localizacao_detectada" value={localizacaoDetectada ? "1" : ""} />
             </div>
             <p className={`${isCadastrarStyle ? "mt-2 rounded-xl border border-[#F2D8AE] bg-[#FFF8EC] px-3 py-2 text-[10px] font-semibold leading-snug text-[#9A5B06]" : "mt-1 rounded-lg border border-[#d39b2a] bg-[#ffe7b3] px-2 py-1 text-[10px] font-bold leading-snug text-[#4b2b00]"}`}>
-              Atenção: a cidade da formação não pode ser alterada depois. Para trocar, será necessário criar outra equipe/dupla.
+              Atenção: a cidade da formação só pode ser preenchida pelo botão Detectar e não pode ser alterada depois.
             </p>
             {gpsError ? (
               <p className="mt-1 text-[10px] text-red-700 dark:text-red-300">{gpsError}</p>

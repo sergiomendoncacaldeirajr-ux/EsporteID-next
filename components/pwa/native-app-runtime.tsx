@@ -56,7 +56,7 @@ type NativePushData = {
   url?: unknown;
 };
 
-type NativePermissionKind = "camera" | "photos" | "notifications" | "calendar" | "files";
+type NativePermissionKind = "camera" | "photos" | "notifications" | "calendar" | "files" | "location";
 
 type NativePermissionPrompt = {
   kind: NativePermissionKind;
@@ -128,6 +128,7 @@ declare global {
     eidNativeOpenMaps?: (payload: { query: string }) => Promise<void>;
     eidNativeExplainPermission?: (payload: { kind: NativePermissionKind }) => Promise<boolean>;
     eidNativeRegisterPush?: () => Promise<boolean>;
+    eidNativeGetCurrentLocation?: () => Promise<{ latitude: number; longitude: number }>;
     EsporteIDAndroid?: {
       addCalendarEvent?: (payload: string) => void;
     };
@@ -276,6 +277,12 @@ function nativePermissionCopy(kind: NativePermissionKind) {
         title: "Abrir arquivo",
         body: "O EsporteID vai preparar o arquivo e abrir as opções nativas do aparelho.",
         action: "Abrir",
+      };
+    case "location":
+      return {
+        title: "Detectar localização",
+        body: "O EsporteID vai usar a localização do aparelho para preencher sua cidade automaticamente.",
+        action: "Detectar",
       };
   }
 }
@@ -771,6 +778,29 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
           Browser.open({ url: `https://www.google.com/maps/search/?api=1&query=${encoded}` })
         );
       };
+      window.eidNativeGetCurrentLocation = async () => {
+        const allowed = await explainPermission({ kind: "location" });
+        if (!allowed) throw new Error("Permita o acesso à localização para preencher sua cidade automaticamente.");
+        const { Geolocation } = await import("@capacitor/geolocation");
+        const permission = await Geolocation.checkPermissions();
+        if (permission.location !== "granted" && permission.coarseLocation !== "granted") {
+          const requested = await Geolocation.requestPermissions({
+            permissions: ["location", "coarseLocation"],
+          });
+          if (requested.location !== "granted" && requested.coarseLocation !== "granted") {
+            throw new Error("Permita o acesso à localização do app para preencher sua cidade automaticamente.");
+          }
+        }
+        const position = await Geolocation.getCurrentPosition({
+          enableHighAccuracy: true,
+          maximumAge: 60_000,
+          timeout: 12_000,
+        });
+        return {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        };
+      };
       window.EsporteIDAndroid = {
         ...(window.EsporteIDAndroid ?? {}),
         addCalendarEvent: (payload) => {
@@ -795,6 +825,7 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
         delete window.eidNativeAddCalendarEvent;
         delete window.eidNativeScheduleMatchReminder;
         delete window.eidNativeOpenMaps;
+        delete window.eidNativeGetCurrentLocation;
         if (window.EsporteIDAndroid?.addCalendarEvent) delete window.EsporteIDAndroid.addCalendarEvent;
         void networkHandle.remove();
         void appStateHandle.remove();
@@ -987,15 +1018,19 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
     let disposed = false;
     let backgroundAt = 0;
     let authenticating = false;
+    let lastPromptAt = 0;
 
     async function lockIfNeeded() {
-      if (disposed || authenticating) return;
+      if (disposed || authenticating || nativeLocked || nativeUnlocking) return;
       const saved = await getNativeBiometricLogin();
       if (!saved) return;
       const awayMs = backgroundAt ? Date.now() - backgroundAt : 0;
       if (awayMs < 10 * 60_000) return;
+      if (Date.now() - lastPromptAt < 30_000) return;
 
       authenticating = true;
+      lastPromptAt = Date.now();
+      backgroundAt = 0;
       setNativeLocked(true);
       setNativeUnlocking(true);
       try {
@@ -1033,7 +1068,7 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
       disposed = true;
       dispose?.();
     };
-  }, [userId]);
+  }, [nativeLocked, nativeUnlocking, userId]);
 
   useEffect(() => {
     if (!isAnyNativeApp()) return;

@@ -10,7 +10,7 @@ let enablePushInFlight: Promise<PushSubscription> | null = null;
 
 declare global {
   interface Window {
-    eidNativeExplainPermission?: (payload: { kind: "camera" | "photos" | "notifications" | "calendar" | "files" }) => Promise<boolean>;
+    eidNativeExplainPermission?: (payload: { kind: "camera" | "photos" | "notifications" | "calendar" | "files" | "location" }) => Promise<boolean>;
     eidNativeRegisterPush?: () => Promise<boolean>;
   }
 }

@@ -278,13 +278,11 @@ export async function submitPlacarAction(formData: FormData) {
   const placar2 = toInt(formData.get("placar_2"));
   const scoreFormatKey = String(formData.get("score_format_key") ?? "").trim();
   const scorePayloadRaw = String(formData.get("score_payload") ?? "").trim();
-  const observacao = sanitizeUserText(formData.get("observacao"), 500);
   const placarVariante = String(formData.get("placar_variante") ?? "").trim();
   const woAtivo = String(formData.get("wo_ativo") ?? "") === "1";
   const woVencedor = String(formData.get("wo_vencedor") ?? "").trim();
   const woDesistente = String(formData.get("wo_desistente") ?? "").trim();
   if (!woAtivo && (placar1 == null || placar2 == null)) go(partidaId, "erro", "Informe placares válidos.");
-  if (hasMaliciousPayload(observacao)) go(partidaId, "erro", "Observação inválida.");
 
   const ctx = await loadPartidaContext(partidaId, user.id);
   if (!ctx.partida) go(partidaId, "erro", "Partida não encontrada.");
@@ -417,7 +415,7 @@ export async function submitPlacarAction(formData: FormData) {
         : "Vitória por W.O. (oponente desistiu)."
     : "";
   const payloadMsg = payloadFromUI ? `| score_payload:${JSON.stringify(payloadFromUI)}` : "";
-  const mensagemFinal = [woMsg, observacao, payloadMsg].filter(Boolean).join(" ").trim();
+  const mensagemFinal = [woMsg, payloadMsg].filter(Boolean).join(" ").trim();
 
   const placarDesafiante =
     p.desafiante_id && p.desafiante_id === p.jogador1_id

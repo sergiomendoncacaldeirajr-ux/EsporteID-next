@@ -10,7 +10,45 @@ import {
   adminUpdateRegrasRankingRow,
   adminUpdateRegrasRankingMatchRow,
 } from "@/app/admin/actions";
+import { countRankingMonthlyUsageIndividual, countRankingMonthlyUsagePorTime } from "@/lib/match/ranking-monthly-usage";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
+
+type UsageIdentity = {
+  key: string;
+  userId?: string;
+  teamId?: number;
+  esporteId: number;
+  modalidade: "individual" | "dupla" | "time";
+};
+
+function normUsageStatus(value: unknown) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function isRankingFinalizado(row: Record<string, unknown>) {
+  const status = normUsageStatus(row.status);
+  const ranking = normUsageStatus(row.status_ranking);
+  return ranking === "validado" || ["concluida", "concluída", "concluido", "concluído", "finalizada", "finalizado", "encerrada", "encerrado", "validada"].includes(status);
+}
+
+function isRankingCancelado(row: Record<string, unknown>) {
+  const status = normUsageStatus(row.status);
+  return ["cancelada", "cancelado", "recusada", "recusado", "cancelled", "canceled"].includes(status);
+}
+
+function modalidadeUso(row: Record<string, unknown>): "individual" | "dupla" | "time" {
+  const raw = normUsageStatus(row.modalidade ?? row.modalidade_confronto ?? row.tipo);
+  if (raw === "dupla") return "dupla";
+  if (raw === "time" || raw === "equipe") return "time";
+  return "individual";
+}
+
+function dataFinalUso(row: Record<string, unknown>) {
+  const raw = row.data_resultado ?? row.data_validacao ?? row.data_registro ?? row.data_partida ?? null;
+  if (!raw) return "";
+  const date = new Date(String(raw));
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString();
+}
 
 export default async function AdminRegrasPage() {
   if (!hasServiceRoleConfig()) {
@@ -34,14 +72,20 @@ export default async function AdminRegrasPage() {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0).toISOString();
   const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0).toISOString();
-  const { data: partidasMesRows } = await db
-    .from("partidas")
-    .select("id, esporte_id, modalidade, jogador1_id, jogador2_id, status, status_ranking, data_resultado, data_partida, data_registro")
-    .is("torneio_id", null)
-    .gte("data_registro", monthStart)
-    .lt("data_registro", nextMonthStart)
-    .order("id", { ascending: false })
-    .limit(4000);
+  const [{ data: partidasUsoRows }, { data: matchesUsoRows }] = await Promise.all([
+    db
+      .from("partidas")
+      .select("id, esporte_id, modalidade, jogador1_id, jogador2_id, time1_id, time2_id, status, status_ranking, data_resultado, data_validacao, data_partida, data_registro")
+      .is("torneio_id", null)
+      .order("id", { ascending: false })
+      .limit(4000),
+    db
+      .from("matches")
+      .select("id, esporte_id, finalidade, modalidade_confronto, tipo, usuario_id, adversario_id, desafiante_time_id, adversario_time_id, status")
+      .eq("finalidade", "ranking")
+      .order("id", { ascending: false })
+      .limit(4000),
+  ]);
 
   let cooldownMeses = 12;
   const cj = cooldownRow.data?.value_json;
@@ -67,33 +111,79 @@ export default async function AdminRegrasPage() {
       .map((e: Record<string, unknown>) => [Number(e.id ?? 0), String(e.nome ?? "Esporte")] as const)
       .filter(([id]) => Number.isFinite(id) && id > 0)
   );
-  const usageMap = new Map<string, { userId: string; esporteId: number; modalidade: "individual" | "dupla" | "time"; count: number }>();
-  for (const p of partidasMesRows ?? []) {
-    const status = String((p as { status?: string | null }).status ?? "").trim().toLowerCase();
-    const statusRanking = String((p as { status_ranking?: string | null }).status_ranking ?? "").trim().toLowerCase();
-    const isValid =
-      statusRanking === "validado" ||
-      ["concluida", "concluída", "concluido", "concluído", "finalizada", "encerrada", "validada"].includes(status);
-    if (!isValid) continue;
-    const esporteId = Number((p as { esporte_id?: number | null }).esporte_id ?? 0);
-    if (!Number.isFinite(esporteId) || esporteId <= 0) continue;
-    const modRaw = String((p as { modalidade?: string | null }).modalidade ?? "").trim().toLowerCase();
-    const modalidade: "individual" | "dupla" | "time" = modRaw === "dupla" ? "dupla" : modRaw === "time" ? "time" : "individual";
-    const users = [String((p as { jogador1_id?: string | null }).jogador1_id ?? ""), String((p as { jogador2_id?: string | null }).jogador2_id ?? "")]
-      .filter(Boolean);
-    for (const userId of users) {
-      const key = `${userId}:${esporteId}:${modalidade}`;
-      const prev = usageMap.get(key);
-      if (prev) prev.count += 1;
-      else usageMap.set(key, { userId, esporteId, modalidade, count: 1 });
+  const usageIdentities = new Map<string, UsageIdentity>();
+  const addUsageIdentity = (identity: Omit<UsageIdentity, "key">) => {
+    const key =
+      identity.modalidade === "individual"
+        ? `u:${identity.userId}:${identity.esporteId}:individual`
+        : `t:${identity.teamId}:${identity.esporteId}:${identity.modalidade}`;
+    usageIdentities.set(key, { ...identity, key });
+  };
+
+  for (const partida of (partidasUsoRows ?? []) as Record<string, unknown>[]) {
+    const esporteId = Number(partida.esporte_id ?? 0);
+    if (!Number.isFinite(esporteId) || esporteId <= 0 || isRankingCancelado(partida)) continue;
+    if (isRankingFinalizado(partida)) {
+      const iso = dataFinalUso(partida);
+      if (!iso || iso < monthStart || iso >= nextMonthStart) continue;
+    }
+    const modalidade = modalidadeUso(partida);
+    if (modalidade === "individual") {
+      for (const rawUserId of [partida.jogador1_id, partida.jogador2_id]) {
+        const userId = String(rawUserId ?? "").trim();
+        if (userId) addUsageIdentity({ userId, esporteId, modalidade });
+      }
+    } else {
+      for (const rawTeamId of [partida.time1_id, partida.time2_id]) {
+        const teamId = Number(rawTeamId ?? 0);
+        if (Number.isFinite(teamId) && teamId > 0) addUsageIdentity({ teamId, esporteId, modalidade });
+      }
     }
   }
-  const usageRows = [...usageMap.values()].sort((a, b) => b.count - a.count).slice(0, 80);
-  const usageUserIds = [...new Set(usageRows.map((r) => r.userId))];
+
+  for (const match of (matchesUsoRows ?? []) as Record<string, unknown>[]) {
+    const esporteId = Number(match.esporte_id ?? 0);
+    if (!Number.isFinite(esporteId) || esporteId <= 0 || isRankingCancelado(match) || isRankingFinalizado(match)) continue;
+    const modalidade = modalidadeUso(match);
+    if (modalidade === "individual") {
+      for (const rawUserId of [match.usuario_id, match.adversario_id]) {
+        const userId = String(rawUserId ?? "").trim();
+        if (userId) addUsageIdentity({ userId, esporteId, modalidade });
+      }
+    } else {
+      for (const rawTeamId of [match.desafiante_time_id, match.adversario_time_id]) {
+        const teamId = Number(rawTeamId ?? 0);
+        if (Number.isFinite(teamId) && teamId > 0) addUsageIdentity({ teamId, esporteId, modalidade });
+      }
+    }
+  }
+
+  const usageRows = (
+    await Promise.all(
+      [...usageIdentities.values()].slice(0, 100).map(async (identity) => {
+        const usage =
+          identity.modalidade === "individual" && identity.userId
+            ? await countRankingMonthlyUsageIndividual(db, identity.userId, identity.esporteId)
+            : identity.modalidade !== "individual" && identity.teamId
+              ? await countRankingMonthlyUsagePorTime(db, identity.teamId, identity.esporteId, identity.modalidade)
+              : { used: 0 };
+        return { ...identity, count: usage.used };
+      }),
+    )
+  )
+    .filter((row) => row.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 80);
+  const usageUserIds = [...new Set(usageRows.map((r) => r.userId).filter((id): id is string => Boolean(id)))];
+  const usageTeamIds = [...new Set(usageRows.map((r) => r.teamId).filter((id): id is number => typeof id === "number" && Number.isFinite(id) && id > 0))];
   const { data: usageProfiles } = usageUserIds.length
     ? await db.from("profiles").select("id, nome").in("id", usageUserIds)
     : { data: [] };
+  const { data: usageTeams } = usageTeamIds.length
+    ? await db.from("times").select("id, nome, tipo").in("id", usageTeamIds)
+    : { data: [] };
   const nomeByUserId = new Map((usageProfiles ?? []).map((p) => [String((p as { id?: string | null }).id ?? ""), String((p as { nome?: string | null }).nome ?? "Usuário")]));
+  const nomeByTeamId = new Map((usageTeams ?? []).map((team) => [Number((team as { id?: number | null }).id ?? 0), String((team as { nome?: string | null }).nome ?? "Formação")]));
   let autoApproveHoras = 24;
   const aj = autoApproveRow.data?.value_json;
   if (aj && typeof aj === "object" && !Array.isArray(aj) && "horas" in aj) {
@@ -213,7 +303,11 @@ export default async function AdminRegrasPage() {
               <tbody>
                 {usageRows.map((r, i) => (
                   <tr key={`${r.userId}:${r.esporteId}:${r.modalidade}:${i}`} className="border-b border-[color:var(--eid-border-subtle)]/50">
-                    <td className="px-2 py-1.5 text-eid-fg">{nomeByUserId.get(r.userId) ?? r.userId}</td>
+                    <td className="px-2 py-1.5 text-eid-fg">
+                      {r.modalidade === "individual"
+                        ? nomeByUserId.get(r.userId ?? "") ?? r.userId
+                        : `${r.modalidade === "time" ? "Time" : "Dupla"}: ${nomeByTeamId.get(r.teamId ?? 0) ?? `#${r.teamId}`}`}
+                    </td>
                     <td className="px-2 py-1.5 text-eid-text-secondary">{esportesById.get(r.esporteId) ?? `#${r.esporteId}`}</td>
                     <td className="px-2 py-1.5 text-eid-text-secondary">{r.modalidade}</td>
                     <td className="px-2 py-1.5">

@@ -145,18 +145,25 @@ export async function loadPublicConfrontos({
   esporteId: number | null;
   page: number;
 }): Promise<{ items: PublicConfronto[]; hasMore: boolean; pageSize: number }> {
-  const { data: me } = await supabase.from("profiles").select("lat, lng").eq("id", viewerId).maybeSingle();
-  const myLat = Number((me as { lat?: unknown } | null)?.lat ?? NaN);
-  const myLng = Number((me as { lng?: unknown } | null)?.lng ?? NaN);
+  let myLat = Number.NaN;
+  let myLng = Number.NaN;
+  const includeDetails = statusView === "encerrados";
+  if (includeDetails) {
+    const { data: me } = await supabase.from("profiles").select("lat, lng").eq("id", viewerId).maybeSingle();
+    myLat = Number((me as { lat?: unknown } | null)?.lat ?? NaN);
+    myLng = Number((me as { lng?: unknown } | null)?.lng ?? NaN);
+  }
   const hasCoords = Number.isFinite(myLat) && Number.isFinite(myLng);
   const nowIso = new Date().toISOString();
   const wanted = page * PAGE_SIZE + 24;
-
-  let query = supabase
-    .from("partidas")
-    .select(
-      "id, esporte_id, modalidade, jogador1_id, jogador2_id, time1_id, time2_id, vencedor_id, placar_1, placar_2, status, torneio_id, data_partida, data_resultado, data_registro, local_str, local_espaco_id, mensagem, esportes(nome)"
-    );
+  let query =
+    statusView === "proximos"
+      ? supabase
+          .from("partidas")
+          .select("id, esporte_id, modalidade, jogador1_id, jogador2_id, time1_id, time2_id, status, torneio_id, data_partida, local_str, local_espaco_id, esportes(nome)")
+      : supabase
+          .from("partidas")
+          .select("id, esporte_id, modalidade, jogador1_id, jogador2_id, time1_id, time2_id, vencedor_id, placar_1, placar_2, status, torneio_id, data_partida, data_resultado, data_registro, local_str, local_espaco_id, mensagem, esportes(nome)");
 
   if (esporteId) query = query.eq("esporte_id", esporteId);
   if (statusView === "proximos") {
@@ -192,9 +199,9 @@ export async function loadPublicConfrontos({
     profileIds.length ? supabase.from("profiles").select("id, nome, avatar_url").in("id", profileIds) : Promise.resolve({ data: [] }),
     teamIds.length ? supabase.from("times").select("id, nome, escudo, eid_time, tipo").in("id", teamIds) : Promise.resolve({ data: [] }),
     localIds.length
-      ? supabase.from("espacos_genericos").select("id, nome_publico, localizacao, lat, lng").in("id", localIds)
+      ? supabase.from("espacos_genericos").select(includeDetails ? "id, nome_publico, localizacao, lat, lng" : "id, nome_publico, localizacao").in("id", localIds)
       : Promise.resolve({ data: [] }),
-    profileIds.length && esporteIds.length
+    includeDetails && profileIds.length && esporteIds.length
       ? supabase.from("usuario_eid").select("usuario_id, esporte_id, nota_eid").in("usuario_id", profileIds).in("esporte_id", esporteIds)
       : Promise.resolve({ data: [] }),
   ]);

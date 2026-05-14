@@ -13,6 +13,12 @@ type LocationCoords = {
   longitude: number;
 };
 
+declare global {
+  interface Window {
+    eidNativeGetCurrentLocation?: () => Promise<LocationCoords>;
+  }
+}
+
 type ReverseGeocodeResponse = {
   localizacao?: string;
 };
@@ -42,7 +48,7 @@ export function isGeolocationPositionError(err: unknown): err is GeolocationPosi
 }
 
 function getBrowserLocation(): Promise<LocationCoords> {
-  return new Promise((resolve, reject) => {
+  return withLocationTimeout(new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
       reject(new Error("Este navegador não permite acessar a localização atual."));
       return;
@@ -57,7 +63,36 @@ function getBrowserLocation(): Promise<LocationCoords> {
         timeout: 15_000,
       }
     );
+  }));
+}
+
+function withLocationTimeout<T>(promise: Promise<T>, timeoutMs = 18_000): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = window.setTimeout(() => {
+      reject(new Error("Não consegui obter sua localização a tempo. Tente novamente em um local com melhor sinal."));
+    }, timeoutMs);
+    promise.then(
+      (value) => {
+        window.clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        window.clearTimeout(timer);
+        reject(err);
+      }
+    );
   });
+}
+
+function getTopNativeLocationBridge(): (() => Promise<LocationCoords>) | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const topWindow = window.top;
+    if (!topWindow || topWindow === window) return window.eidNativeGetCurrentLocation ?? null;
+    return topWindow.eidNativeGetCurrentLocation ?? window.eidNativeGetCurrentLocation ?? null;
+  } catch {
+    return window.eidNativeGetCurrentLocation ?? null;
+  }
 }
 
 function shouldFallbackToBrowserLocation(err: unknown): boolean {
@@ -71,6 +106,11 @@ function shouldFallbackToBrowserLocation(err: unknown): boolean {
 }
 
 async function getCurrentCoords(): Promise<LocationCoords> {
+  const nativeLocationBridge = getTopNativeLocationBridge();
+  if (nativeLocationBridge) {
+    return withLocationTimeout(nativeLocationBridge(), 18_000);
+  }
+
   if (Capacitor.isNativePlatform()) {
     try {
       const { Geolocation } = await import("@capacitor/geolocation");
@@ -86,11 +126,11 @@ async function getCurrentCoords(): Promise<LocationCoords> {
         }
       }
 
-      const position = await Geolocation.getCurrentPosition({
+      const position = await withLocationTimeout(Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
         maximumAge: 60_000,
         timeout: 15_000,
-      });
+      }));
 
       return position.coords;
     } catch (err) {

@@ -8,6 +8,7 @@ import {
   adminZerarUsuarioEidTodas,
 } from "@/app/admin/actions";
 import { getMatchRankMonthlyLimitPerSport } from "@/lib/app-config/match-rank-monthly-limit";
+import { countRankingMonthlyUsageIndividual, countRankingMonthlyUsagePorTime } from "@/lib/match/ranking-monthly-usage";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 import { createClient } from "@/lib/supabase/server";
 
@@ -245,14 +246,15 @@ async function loadAdminDesafioQuotas(
     const esporteId = Number(row.esporte_id ?? 0);
     if (!Number.isFinite(esporteId) || esporteId < 1) continue;
     const counts = countIndividual(esporteId);
+    const usage = await countRankingMonthlyUsageIndividual(db, userId, esporteId);
     rows.push({
       kind: "individual",
       label: "Individual",
       esporteId,
       esporteNome: esporteNome.get(esporteId) ?? `Esporte #${esporteId}`,
-      usadosMes: counts.usadosMes,
+      usadosMes: usage.used,
       limiteMes: monthlyLimit,
-      restantesMes: Math.max(0, monthlyLimit - counts.usadosMes),
+      restantesMes: Math.max(0, monthlyLimit - usage.used),
       pendentesAbertos: counts.pendentesAbertos,
     });
   }
@@ -263,14 +265,15 @@ async function loadAdminDesafioQuotas(
     if (!Number.isFinite(esporteId) || esporteId < 1 || !Number.isFinite(teamId) || teamId < 1) continue;
     const kind = normStatus(team.tipo) === "time" ? "time" : "dupla";
     const counts = countTeam(teamId, esporteId);
+    const usage = await countRankingMonthlyUsagePorTime(db, teamId, esporteId, kind);
     rows.push({
       kind,
       label: `${kind === "time" ? "Time" : "Dupla"}: ${team.nome ?? `#${teamId}`}`,
       esporteId,
       esporteNome: esporteNome.get(esporteId) ?? `Esporte #${esporteId}`,
-      usadosMes: counts.usadosMes,
+      usadosMes: usage.used,
       limiteMes: monthlyLimit,
-      restantesMes: Math.max(0, monthlyLimit - counts.usadosMes),
+      restantesMes: Math.max(0, monthlyLimit - usage.used),
       pendentesAbertos: counts.pendentesAbertos,
       teamId,
     });

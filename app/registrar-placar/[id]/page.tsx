@@ -275,6 +275,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const cadastrarLocalHref = `/locais/cadastrar?return_to=${encodeURIComponent(returnToPath)}`;
   const scorePayload = parseScorePayloadFromMessage(p.mensagem);
   const cleanMensagem = stripScorePayloadFromMessage(p.mensagem);
+  const resultadoMensagemOperacional = cleanMensagem.toLowerCase().includes("w.o.") ? cleanMensagem : "";
   const placarSets = scorePayload?.type === "sets" ? meaningfulSets(scorePayload.sets) : [];
   const placarGols =
     scorePayload?.type === "gols" && scorePayload.goals && goalsPayloadHasAny(scorePayload.goals) ? scorePayload.goals : null;
@@ -535,7 +536,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                   {p.placar_1 ?? "—"} x {p.placar_2 ?? "—"}
                 </p>
               )}
-              {cleanMensagem ? <p className="mt-1 text-xs text-eid-text-secondary">{cleanMensagem}</p> : null}
+              {resultadoMensagemOperacional ? <p className="mt-1 text-xs text-eid-text-secondary">{resultadoMensagemOperacional}</p> : null}
             </div>
           )}
 

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { getMatchRankMonthlyLimitPerSport } from "@/lib/app-config/match-rank-monthly-limit";
+import { countRankingMonthlyUsageIndividual, countRankingMonthlyUsagePorTime } from "@/lib/match/ranking-monthly-usage";
 import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
 import { hasMaliciousPayload } from "@/lib/security/request-guards";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
@@ -193,91 +194,6 @@ async function countRankingPendenciasPorTime(
   return nMatches + nPartidas;
 }
 
-async function countRankingConfrontosNoMesIndividual(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-  esporteId: number
-): Promise<number> {
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0).toISOString();
-  const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0).toISOString();
-
-  const { data } = await supabase
-    .from("partidas")
-    .select(
-      "modalidade, status, status_ranking, data_resultado, data_registro, data_partida, time1_id, time2_id, jogador1_id, jogador2_id"
-    )
-    .eq("esporte_id", esporteId)
-    .is("torneio_id", null)
-    .or(`jogador1_id.eq.${userId},jogador2_id.eq.${userId}`)
-    .limit(400);
-
-  let count = 0;
-  for (const p of data ?? []) {
-    if (partidaModalidadeRank(p) !== "individual") continue;
-    const j1 = String((p as { jogador1_id?: string | null }).jogador1_id ?? "").trim();
-    const j2 = String((p as { jogador2_id?: string | null }).jogador2_id ?? "").trim();
-    if (j1 !== userId && j2 !== userId) continue;
-    const status = norm((p as { status?: string | null }).status);
-    const ranking = norm((p as { status_ranking?: string | null }).status_ranking);
-    const valido =
-      ranking === "validado" ||
-      ["concluida", "concluída", "concluido", "concluído", "finalizada", "encerrada", "validada"].includes(status);
-    if (!valido) continue;
-    const dtRaw =
-      (p as { data_resultado?: string | null }).data_resultado ??
-      (p as { data_registro?: string | null }).data_registro ??
-      (p as { data_partida?: string | null }).data_partida ??
-      null;
-    if (!dtRaw) continue;
-    const ts = new Date(dtRaw).toISOString();
-    if (ts >= monthStart && ts < nextMonthStart) count += 1;
-  }
-  return count;
-}
-
-async function countRankingConfrontosNoMesPorTime(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  timeId: number,
-  esporteId: number
-): Promise<number> {
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0).toISOString();
-  const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0).toISOString();
-
-  const { data } = await supabase
-    .from("partidas")
-    .select("modalidade, status, status_ranking, data_resultado, data_registro, data_partida, time1_id, time2_id")
-    .eq("esporte_id", esporteId)
-    .is("torneio_id", null)
-    .or(`time1_id.eq.${timeId},time2_id.eq.${timeId}`)
-    .limit(400);
-
-  let count = 0;
-  for (const p of data ?? []) {
-    const pm = partidaModalidadeRank(p);
-    if (pm !== "dupla" && pm !== "time") continue;
-    const t1 = Number((p as { time1_id?: number | null }).time1_id ?? 0);
-    const t2 = Number((p as { time2_id?: number | null }).time2_id ?? 0);
-    if (t1 !== timeId && t2 !== timeId) continue;
-    const status = norm((p as { status?: string | null }).status);
-    const ranking = norm((p as { status_ranking?: string | null }).status_ranking);
-    const valido =
-      ranking === "validado" ||
-      ["concluida", "concluída", "concluido", "concluído", "finalizada", "encerrada", "validada"].includes(status);
-    if (!valido) continue;
-    const dtRaw =
-      (p as { data_resultado?: string | null }).data_resultado ??
-      (p as { data_registro?: string | null }).data_registro ??
-      (p as { data_partida?: string | null }).data_partida ??
-      null;
-    if (!dtRaw) continue;
-    const ts = new Date(dtRaw).toISOString();
-    if (ts >= monthStart && ts < nextMonthStart) count += 1;
-  }
-  return count;
-}
-
 export async function solicitarDesafioMatch(
   _prev: SolicitarDesafioState,
   formData: FormData
@@ -407,14 +323,14 @@ export async function solicitarDesafioMatch(
         return { ok: false, message: "O oponente atingiu o limite de pendências de desafio/ranking." };
       }
 
-      const meusConfrontosNoMes = await countRankingConfrontosNoMesIndividual(supabase, user.id, p_esporte_id);
+      const meusConfrontosNoMes = (await countRankingMonthlyUsageIndividual(supabase, user.id, p_esporte_id)).used;
       if (meusConfrontosNoMes >= limiteMensalPorEsporte) {
         return {
           ok: false,
           message: `Você atingiu o limite mensal de ${limiteMensalPorEsporte} confrontos neste esporte para ${modalidadeLimit}. Tente novamente no próximo mês.`,
         };
       }
-      const confrontosAlvoNoMes = await countRankingConfrontosNoMesIndividual(supabase, alvoUid, p_esporte_id);
+      const confrontosAlvoNoMes = (await countRankingMonthlyUsageIndividual(supabase, alvoUid, p_esporte_id)).used;
       if (confrontosAlvoNoMes >= limiteMensalPorEsporte) {
         return {
           ok: false,
@@ -456,14 +372,14 @@ export async function solicitarDesafioMatch(
         };
       }
 
-      const meusConfrontosNoMes = await countRankingConfrontosNoMesPorTime(supabase, myTeamId, p_esporte_id);
+      const meusConfrontosNoMes = (await countRankingMonthlyUsagePorTime(supabase, myTeamId, p_esporte_id, mod)).used;
       if (meusConfrontosNoMes >= limiteMensalPorEsporte) {
         return {
           ok: false,
           message: `Sua formação atingiu o limite mensal de ${limiteMensalPorEsporte} confrontos neste esporte para ${modalidadeLimit}. Tente novamente no próximo mês.`,
         };
       }
-      const confrontosAlvoNoMes = await countRankingConfrontosNoMesPorTime(supabase, opponentTimeId, p_esporte_id);
+      const confrontosAlvoNoMes = (await countRankingMonthlyUsagePorTime(supabase, opponentTimeId, p_esporte_id, mod)).used;
       if (confrontosAlvoNoMes >= limiteMensalPorEsporte) {
         return {
           ok: false,
