@@ -315,7 +315,8 @@ function androidCalendarIntent(payload: NativeCalendarPayload) {
   const description = encodeURIComponent(String(payload.description || ""));
   const startMs = Math.max(0, Math.floor(Number(payload.startMs ?? 0)));
   const endMs = Math.max(startMs + 60_000, Math.floor(Number(payload.endMs ?? startMs + 90 * 60_000)));
-  return `intent:#Intent;action=android.intent.action.INSERT;type=vnd.android.cursor.item/event;S.title=${title};S.eventLocation=${location};S.description=${description};l.beginTime=${startMs};l.endTime=${endMs};end`;
+  const fallback = encodeURIComponent(calendarFileHref(payload));
+  return `intent://esporteid/calendar#Intent;action=android.intent.action.INSERT;type=vnd.android.cursor.item/event;S.title=${title};S.eventLocation=${location};S.description=${description};l.beginTime=${startMs};l.endTime=${endMs};S.browser_fallback_url=${fallback};end`;
 }
 
 function localNotificationIdFromMatch(matchId: string | number | null | undefined, startMs: number) {
@@ -716,13 +717,20 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
         if (!Number.isFinite(Number(payload.startMs))) return;
         const allowed = await explainPermission({ kind: "calendar" });
         if (!allowed) return;
+        const fileHref = calendarFileHref(payload);
         if (Capacitor.getPlatform() === "android") {
-          await AppLauncher.openUrl({ url: androidCalendarIntent(payload) }).catch(() =>
-            Browser.open({ url: calendarFileHref(payload) })
-          );
+          try {
+            await AppLauncher.openUrl({ url: androidCalendarIntent(payload) });
+          } catch {
+            try {
+              await Browser.open({ url: fileHref });
+            } catch {
+              window.location.href = fileHref;
+            }
+          }
           return;
         }
-        await Browser.open({ url: calendarFileHref(payload) });
+        await Browser.open({ url: fileHref });
       };
       window.eidNativeScheduleMatchReminder = async (payload) => {
         if (!Number.isFinite(Number(payload.startMs))) return;

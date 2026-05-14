@@ -5,6 +5,7 @@ type Props = {
   badge?: ReactNode;
   id?: string;
   className?: string;
+  titleAs?: "h2" | "h3";
 };
 
 export const EID_PANEL_HEADER_CLASS =
@@ -13,13 +14,13 @@ export const EID_PANEL_HEADER_CLASS =
 export const EID_PANEL_TITLE_CLASS =
   "min-w-0 truncate font-[family-name:var(--font-barlow),ui-sans-serif] text-[10px] font-black uppercase leading-none tracking-[0.18em] text-eid-primary-300 eid-light:text-eid-primary-600";
 
-export function EidPanelHeader({ title, badge, id, className }: Props) {
+export function EidPanelHeader({ title, badge, id, className, titleAs: Title = "h2" }: Props) {
   return (
     <div className={`${EID_PANEL_HEADER_CLASS} ${className ?? ""}`.trim()}>
-      <h2 id={id} className={EID_PANEL_TITLE_CLASS}>
+      <Title id={id} className={EID_PANEL_TITLE_CLASS}>
         {title}
-      </h2>
-      {badge ? <div className="flex shrink-0 items-center justify-end gap-1">{badge}</div> : null}
+      </Title>
+      {badge ? <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">{badge}</div> : null}
     </div>
   );
 }

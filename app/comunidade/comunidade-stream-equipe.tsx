@@ -663,12 +663,7 @@ export async function ComunidadeStreamEquipe({
           {candidaturasEquipe.length > 0 ? (
             <>
               {candidaturasEquipe.length > 1 ? (
-                <h3
-                  id="equipe-pedidos-entrada"
-                  className="mb-1.5 text-[12px] font-bold leading-snug tracking-tight text-eid-primary-500 eid-dark:text-eid-primary-300"
-                >
-                  Pedidos para entrar no elenco
-                </h3>
+                <EidPanelHeader id="equipe-pedidos-entrada" title="Pedidos para entrar no elenco" titleAs="h3" />
               ) : null}
               <ul id={candidaturasEquipe.length === 1 ? "equipe-pedidos-entrada" : undefined} className="space-y-4">
                 {candidaturasEquipe.map((c) => {

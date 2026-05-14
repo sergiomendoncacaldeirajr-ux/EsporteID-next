@@ -1478,7 +1478,7 @@ export function OnboardingWizard({
       data-eid-onboarding-step={step}
       data-eid-onboarding-native
       data-eid-touch-ui
-      className="eid-auth-bg eid-onboarding-native-shell flex w-full flex-1 flex-col items-center overflow-x-hidden px-4 pb-28 pt-14 text-eid-fg sm:px-6 sm:pt-7"
+      className="eid-auth-bg eid-onboarding-native-shell flex w-full flex-1 flex-col items-center overflow-x-hidden px-4 pb-28 pt-24 text-eid-fg sm:px-6 sm:pt-28"
     >
       <OnboardingTopbar />
       <div ref={topAnchorRef} />

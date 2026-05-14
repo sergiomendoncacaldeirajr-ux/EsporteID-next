@@ -60,28 +60,45 @@ function getBrowserLocation(): Promise<LocationCoords> {
   });
 }
 
+function shouldFallbackToBrowserLocation(err: unknown): boolean {
+  const message =
+    err instanceof Error
+      ? err.message
+      : typeof err === "object" && err !== null && "message" in err
+        ? String((err as { message?: unknown }).message ?? "")
+        : String(err ?? "");
+  return /plugin|not implemented|unimplemented|unavailable|not available|bridge/i.test(message);
+}
+
 async function getCurrentCoords(): Promise<LocationCoords> {
   if (Capacitor.isNativePlatform()) {
-    const { Geolocation } = await import("@capacitor/geolocation");
-    const permission = await Geolocation.checkPermissions();
+    try {
+      const { Geolocation } = await import("@capacitor/geolocation");
+      const permission = await Geolocation.checkPermissions();
 
-    if (permission.location !== "granted" && permission.coarseLocation !== "granted") {
-      const requested = await Geolocation.requestPermissions({
-        permissions: ["location", "coarseLocation"],
+      if (permission.location !== "granted" && permission.coarseLocation !== "granted") {
+        const requested = await Geolocation.requestPermissions({
+          permissions: ["location", "coarseLocation"],
+        });
+
+        if (requested.location !== "granted" && requested.coarseLocation !== "granted") {
+          throw new Error("Permita o acesso à localização do app para preencher sua cidade automaticamente.");
+        }
+      }
+
+      const position = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        maximumAge: 60_000,
+        timeout: 15_000,
       });
 
-      if (requested.location !== "granted" && requested.coarseLocation !== "granted") {
-        throw new Error("Permita o acesso à localização do app para preencher sua cidade automaticamente.");
+      return position.coords;
+    } catch (err) {
+      if (shouldFallbackToBrowserLocation(err)) {
+        return getBrowserLocation();
       }
+      throw err;
     }
-
-    const position = await Geolocation.getCurrentPosition({
-      enableHighAccuracy: true,
-      maximumAge: 60_000,
-      timeout: 15_000,
-    });
-
-    return position.coords;
   }
 
   return getBrowserLocation();
