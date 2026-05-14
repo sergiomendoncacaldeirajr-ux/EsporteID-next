@@ -10,8 +10,16 @@ export const metadata = {
   title: "Detalhe do confronto | EsporteID",
 };
 
-export default async function ConfrontoDetalhePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ConfrontoDetalhePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const { id } = await params;
+  const sp = await searchParams;
+  const embed = (Array.isArray(sp.embed) ? sp.embed[0] : sp.embed) === "1";
   const confrontoId = Number(id);
   if (!Number.isFinite(confrontoId) || confrontoId < 1) notFound();
   const supabase = await createClient();
@@ -43,10 +51,12 @@ export default async function ConfrontoDetalhePage({ params }: { params: Promise
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-col px-3 pb-[calc(var(--eid-shell-content-bottom-pad)+4.75rem)] pt-3 sm:max-w-2xl sm:px-6 sm:pb-[var(--eid-shell-content-bottom-pad)]">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <Link href={`/confrontos?view=${view}${tipo !== "individual" ? `&tipo=${tipo}` : ""}`} className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 text-eid-primary-300">
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-        </Link>
+      <div className={`mb-3 flex items-center gap-2 ${embed ? "justify-end" : "justify-between"}`}>
+        {!embed ? (
+          <Link href={`/confrontos?view=${view}${tipo !== "individual" ? `&tipo=${tipo}` : ""}`} className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 text-eid-primary-300">
+            <ArrowLeft className="h-4 w-4" aria-hidden />
+          </Link>
+        ) : null}
         <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/12 px-3 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-eid-primary-300">
           {item.origem} · {item.tipo}
         </span>

@@ -221,7 +221,7 @@ export async function ComunidadeStreamEquipe({
         statusRaw === "aprovado"
           ? "border-emerald-500/35 bg-emerald-500/10 text-emerald-200"
           : statusRaw === "recusado"
-            ? "border-rose-500/35 bg-rose-500/10 text-rose-200"
+            ? "border-rose-500/35 bg-rose-500/10 text-rose-200 eid-light:border-rose-300 eid-light:bg-rose-50 eid-light:text-rose-800"
             : "border-amber-500/35 bg-amber-500/10 text-amber-200";
       return {
         id: Number(s.id),
@@ -583,7 +583,7 @@ export async function ComunidadeStreamEquipe({
         statusLabel === "Aprovado"
           ? "border-emerald-500/35 bg-emerald-500/10 text-emerald-200"
           : statusLabel === "Recusado" || statusLabel === "Cancelado"
-            ? "border-rose-500/35 bg-rose-500/10 text-rose-200"
+            ? "border-rose-500/35 bg-rose-500/10 text-rose-200 eid-light:border-rose-300 eid-light:bg-rose-50 eid-light:text-rose-800"
             : "border-amber-500/35 bg-amber-500/10 text-amber-200";
       const espId = Number(team?.esporte_id ?? 0);
       const notaEidMeu = minhasCandEidMap.get(espId) ?? 0;

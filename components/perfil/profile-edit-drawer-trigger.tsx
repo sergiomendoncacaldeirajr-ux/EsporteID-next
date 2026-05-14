@@ -248,6 +248,7 @@ export function ProfileEditDrawerTrigger({
                   onLoad={handleFrameLoad}
                   title={title}
                   src={frameSrc}
+                  allow="geolocation; camera; microphone; clipboard-read; clipboard-write"
                   className="relative z-0 min-h-0 w-full flex-1 border-0 bg-eid-bg"
                 />
                 {frameLoading ? (

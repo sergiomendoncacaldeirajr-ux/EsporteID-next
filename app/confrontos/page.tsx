@@ -17,12 +17,13 @@ export const metadata = {
   title: "Confrontos | EsporteID",
 };
 
-function href(next: { view?: ConfrontoStatusView; tipo?: ConfrontoTipo; page?: number; esporte?: number | null }) {
+function href(next: { view?: ConfrontoStatusView; tipo?: ConfrontoTipo; page?: number; esporte?: number | null; embed?: boolean }) {
   const params = new URLSearchParams();
   if (next.view && next.view !== "proximos") params.set("view", next.view);
   if (next.tipo && next.tipo !== "individual") params.set("tipo", next.tipo);
   if (next.esporte) params.set("esporte", String(next.esporte));
   if (next.page && next.page > 1) params.set("page", String(next.page));
+  if (next.embed) params.set("embed", "1");
   const q = params.toString();
   return q ? `/confrontos?${q}` : "/confrontos";
 }
@@ -54,6 +55,7 @@ export default async function ConfrontosPage({
 
   const view = normalizeConfrontoStatusView(sp.view);
   const tipo = normalizeConfrontoTipo(sp.tipo);
+  const embed = (Array.isArray(sp.embed) ? sp.embed[0] : sp.embed) === "1";
   const page = confrontoPage(sp.page);
   const esporteParam = Array.isArray(sp.esporte) ? sp.esporte[0] : sp.esporte;
   let esporteId = Math.max(0, Number(esporteParam ?? 0) || 0) || null;
@@ -78,10 +80,12 @@ export default async function ConfrontosPage({
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-col px-3 pb-[calc(var(--eid-shell-content-bottom-pad)+4.75rem)] pt-3 sm:max-w-2xl sm:px-6 sm:pb-[var(--eid-shell-content-bottom-pad)]">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <Link href="/ranking" className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 text-eid-primary-300">
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-        </Link>
+      <div className={`mb-3 flex items-center gap-2 ${embed ? "justify-end" : "justify-between"}`}>
+        {!embed ? (
+          <Link href="/ranking" className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 text-eid-primary-300">
+            <ArrowLeft className="h-4 w-4" aria-hidden />
+          </Link>
+        ) : null}
         <span className="inline-flex items-center gap-1 rounded-full border border-eid-action-500/30 bg-eid-action-500/12 px-3 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-eid-action-300">
           <CalendarDays className="h-3 w-3" aria-hidden />
           Central
@@ -94,21 +98,21 @@ export default async function ConfrontosPage({
           Próximos jogos e resultados recentes por modalidade, priorizando horário e localização.
         </p>
         <div className="mt-4 grid grid-cols-2 gap-1 rounded-2xl bg-eid-surface/55 p-1">
-          <SegLink active={view === "proximos"} href={href({ view: "proximos", tipo, esporte: esporteId })}>
+          <SegLink active={view === "proximos"} href={href({ view: "proximos", tipo, esporte: esporteId, embed })}>
             Próximos
           </SegLink>
-          <SegLink active={view === "encerrados"} href={href({ view: "encerrados", tipo, esporte: esporteId })}>
+          <SegLink active={view === "encerrados"} href={href({ view: "encerrados", tipo, esporte: esporteId, embed })}>
             Encerrados
           </SegLink>
         </div>
         <div className="mt-2 grid grid-cols-3 gap-1 rounded-2xl bg-eid-surface/55 p-1">
-          <SegLink active={tipo === "individual"} href={href({ view, tipo: "individual", esporte: esporteId })}>
+          <SegLink active={tipo === "individual"} href={href({ view, tipo: "individual", esporte: esporteId, embed })}>
             Individual
           </SegLink>
-          <SegLink active={tipo === "dupla"} href={href({ view, tipo: "dupla", esporte: esporteId })}>
+          <SegLink active={tipo === "dupla"} href={href({ view, tipo: "dupla", esporte: esporteId, embed })}>
             Duplas
           </SegLink>
-          <SegLink active={tipo === "time"} href={href({ view, tipo: "time", esporte: esporteId })}>
+          <SegLink active={tipo === "time"} href={href({ view, tipo: "time", esporte: esporteId, embed })}>
             Times
           </SegLink>
         </div>
@@ -127,7 +131,7 @@ export default async function ConfrontosPage({
 
       {hasMore ? (
         <Link
-          href={href({ view, tipo, esporte: esporteId, page: page + 1 })}
+          href={href({ view, tipo, esporte: esporteId, page: page + 1, embed })}
           className="mt-3 inline-flex min-h-11 items-center justify-center rounded-2xl border border-eid-primary-500/30 bg-eid-primary-500/12 px-4 text-[11px] font-black uppercase tracking-[0.06em] text-eid-primary-300"
         >
           Ver mais

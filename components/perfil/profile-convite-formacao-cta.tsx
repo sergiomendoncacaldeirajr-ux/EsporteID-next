@@ -119,7 +119,7 @@ export function ProfileConviteFormacaoCta({
       ) : null}
 
       {state.message ? (
-        <p className={`text-center text-xs leading-snug ${state.ok ? "text-eid-primary-300" : "text-red-300"}`}>{state.message}</p>
+        <p className={`text-center text-xs font-semibold leading-snug ${state.ok ? "text-eid-primary-300 eid-light:text-eid-primary-700" : "text-red-300 eid-light:text-red-800"}`}>{state.message}</p>
       ) : null}
 
       <div className="border-t border-[color:var(--eid-border-subtle)] pt-2.5">

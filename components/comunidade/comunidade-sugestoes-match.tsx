@@ -87,7 +87,7 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
       {okMsg ? (
         <p className="rounded-lg border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-2 text-xs text-eid-fg">{okMsg}</p>
       ) : null}
-      {err ? <p className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">{err}</p> : null}
+      {err ? <p className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-200 eid-light:border-red-300 eid-light:bg-red-50 eid-light:text-red-800">{err}</p> : null}
 
       <ul className="space-y-3">
         {items.map((s) => {

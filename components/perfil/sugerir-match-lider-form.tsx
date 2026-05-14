@@ -63,7 +63,7 @@ export function SugerirMatchLiderForm({
         >
           {pending ? "Enviando..." : enviadoComSucesso ? "Sugestão enviada" : "Enviar sugestão ao líder"}
         </button>
-        {err ? <p className="text-xs text-red-300">{err}</p> : null}
+        {err ? <p className="text-xs font-semibold text-red-300 eid-light:text-red-800">{err}</p> : null}
         {ok ? <p className="text-xs text-eid-primary-300">{ok}</p> : null}
       </form>
     </div>

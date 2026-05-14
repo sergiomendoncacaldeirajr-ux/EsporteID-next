@@ -92,7 +92,7 @@ export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, classNa
       {!compact ? (
         <div className="flex items-center justify-between border-b border-red-500/20 bg-red-500/8 px-2.5 py-2">
           <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Segurança</p>
-          <span className="rounded-full border border-red-500/40 bg-red-500/14 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-red-200">
+          <span className="rounded-full border border-red-500/40 bg-red-500/14 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-red-200 eid-light:border-red-400/55 eid-light:bg-red-50 eid-light:text-red-800">
             Denúncia
           </span>
         </div>
@@ -109,14 +109,14 @@ export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, classNa
         }}
         className={
           compact
-            ? "inline-flex min-h-[24px] touch-manipulation items-center justify-center gap-1 rounded-full border border-red-400/35 bg-black/35 px-2 py-0.5 text-[7px] font-black uppercase leading-none tracking-[0.06em] text-red-200 shadow-[0_3px_10px_-8px_rgba(0,0,0,0.5)] backdrop-blur-sm transition hover:border-red-400/50 hover:bg-red-500/12 sm:text-[8px]"
-            : "flex w-full min-h-[2.25rem] touch-manipulation items-center justify-center gap-1.5 rounded-lg border border-red-500/25 bg-red-500/12 px-2.5 py-1.5 text-center text-[10px] font-bold uppercase tracking-[0.08em] text-red-300/95 transition hover:border-red-500/40 hover:bg-red-500/18 active:bg-red-500/22"
+            ? "inline-flex h-7 w-7 touch-manipulation items-center justify-center rounded-full border border-red-400/35 bg-black/35 text-red-200 shadow-[0_3px_10px_-8px_rgba(0,0,0,0.5)] backdrop-blur-sm transition hover:border-red-400/50 hover:bg-red-500/12"
+            : "flex w-full min-h-[2.25rem] touch-manipulation items-center justify-center gap-1.5 rounded-lg border border-red-500/25 bg-red-500/12 px-2.5 py-1.5 text-center text-[10px] font-bold uppercase tracking-[0.08em] text-red-300/95 transition hover:border-red-500/40 hover:bg-red-500/18 active:bg-red-500/22 eid-light:border-red-300 eid-light:bg-red-50 eid-light:text-red-800"
         }
       >
-        <svg viewBox="0 0 12 14" className={compact ? "h-2 w-2 shrink-0 opacity-90" : "h-2.5 w-2.5 shrink-0 opacity-90"} fill="currentColor" aria-hidden>
+        <svg viewBox="0 0 12 14" className={compact ? "h-3 w-3 shrink-0 opacity-90" : "h-2.5 w-2.5 shrink-0 opacity-90"} fill="currentColor" aria-hidden>
           <path d="M0 0h2v14H0zM2 2l9 3.5L2 9z" />
         </svg>
-        <span>{compact ? "Denunciar" : "Denunciar perfil"}</span>
+        <span className={compact ? "sr-only" : undefined}>{compact ? "Denunciar perfil" : "Denunciar perfil"}</span>
       </button>
 
       {aberto ? (
@@ -190,7 +190,7 @@ export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, classNa
                   />
                 </div>
                 {msg ? (
-                  <p className={`text-xs ${msg.startsWith("Denúncia") ? "text-emerald-300" : "text-red-300"}`}>{msg}</p>
+                  <p className={`text-xs font-semibold ${msg.startsWith("Denúncia") ? "text-emerald-300 eid-light:text-emerald-800" : "text-red-300 eid-light:text-red-800"}`}>{msg}</p>
                 ) : null}
                 <div className="flex flex-wrap gap-2">
                   <button
@@ -222,7 +222,7 @@ export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, classNa
         <div id="eid-denuncia-painel" className="mt-2.5 overflow-hidden rounded-xl border border-red-500/20 bg-red-500/6">
           <div className="flex items-center justify-between border-b border-red-500/20 bg-red-500/10 px-2.5 py-2">
             <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Motivo da denúncia</p>
-            <span className="rounded-full border border-red-500/40 bg-red-500/14 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-red-200">
+            <span className="rounded-full border border-red-500/40 bg-red-500/14 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-red-200 eid-light:border-red-400/55 eid-light:bg-red-50 eid-light:text-red-800">
               Moderação
             </span>
           </div>
@@ -264,14 +264,14 @@ export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, classNa
             />
           </div>
           {msg ? (
-            <p className={`text-xs ${msg.startsWith("Denúncia") ? "text-emerald-300" : "text-red-300"}`}>{msg}</p>
+            <p className={`text-xs font-semibold ${msg.startsWith("Denúncia") ? "text-emerald-300 eid-light:text-emerald-800" : "text-red-300 eid-light:text-red-800"}`}>{msg}</p>
           ) : null}
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               disabled={pending}
               onClick={enviar}
-              className="rounded-lg border border-red-500/50 bg-red-500/15 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-red-200 disabled:opacity-50"
+              className="rounded-lg border border-red-500/50 bg-red-500/15 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-red-200 disabled:opacity-50 eid-light:border-red-500/55 eid-light:bg-red-600 eid-light:text-white"
             >
               {pending ? "Enviando…" : "Enviar denúncia"}
             </button>

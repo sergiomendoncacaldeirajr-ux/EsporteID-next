@@ -66,7 +66,7 @@ export function ComunidadePedidosEnviados({ items }: { items: ComunidadePedidoEn
 
   return (
     <div className="mt-2 space-y-2">
-      {err ? <p className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">{err}</p> : null}
+      {err ? <p className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-200 eid-light:border-red-300 eid-light:bg-red-50 eid-light:text-red-800">{err}</p> : null}
       <ul className="space-y-3">
         {items.map((m) => {
           const f = m.formacaoAdversaria;

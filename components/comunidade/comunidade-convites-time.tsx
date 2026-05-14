@@ -220,7 +220,7 @@ function ConviteTimeRow({ c }: { c: ConviteTimeItem }) {
         </div>
       </div>
       {rowError ? (
-        <p className="mt-1.5 rounded-lg border border-red-400/30 bg-red-500/10 px-2 py-1.5 text-[11px] text-red-200">{rowError}</p>
+        <p className="mt-1.5 rounded-lg border border-red-400/30 bg-red-500/10 px-2 py-1.5 text-[11px] font-semibold text-red-200 eid-light:border-red-300 eid-light:bg-red-50 eid-light:text-red-800">{rowError}</p>
       ) : null}
     </li>
   );

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Image from "next/image";
 import { CalendarClock, ChevronRight, MapPin, Trophy } from "lucide-react";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { sideInitial, type PublicConfronto, type ConfrontoSide } from "@/lib/confrontos/public-feed";
@@ -16,18 +16,22 @@ function SideFace({ side, variant }: { side: ConfrontoSide; variant: "individual
   const rounded = variant === "formacao" ? "rounded-2xl" : "rounded-full";
   return (
     <div className="flex min-w-0 flex-1 flex-col items-center">
-      <Link
+      <ProfileEditDrawerTrigger
         href={side.eidHref}
+        fullscreen
+        topMode="backOnly"
+        openingDelayMs={0}
+        title={`Estatísticas EID de ${side.name}`}
         className={`pointer-events-auto group relative block h-14 w-14 shrink-0 outline-none ring-offset-2 ring-offset-eid-bg transition hover:scale-[1.02] focus-visible:ring-2 focus-visible:ring-eid-primary-500 active:scale-[0.98]`}
         aria-label={`Estatísticas EID de ${side.name}`}
       >
         <span
-          className={`block h-14 w-14 overflow-hidden ${rounded} border ${
+          className={`relative block h-14 w-14 overflow-hidden ${rounded} border ${
             side.winner ? "border-eid-action-500/70" : "border-[color:var(--eid-border-subtle)]"
           } bg-eid-surface shadow-[0_8px_22px_-16px_rgba(15,23,42,0.5)] transition group-hover:border-eid-primary-500/50`}
         >
           {side.avatarUrl ? (
-            <img src={side.avatarUrl} alt="" className="h-full w-full object-cover" />
+            <Image src={side.avatarUrl} alt="" fill unoptimized className="object-cover" />
           ) : (
             <span className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
               {sideInitial(side)}
@@ -39,7 +43,7 @@ function SideFace({ side, variant }: { side: ConfrontoSide; variant: "individual
             <Trophy className="h-3 w-3" aria-hidden />
           </span>
         ) : null}
-      </Link>
+      </ProfileEditDrawerTrigger>
       <EidMini value={side.eid} />
       <p className="mt-1 line-clamp-2 max-w-[7rem] text-center text-[11px] font-black leading-tight text-eid-fg">
         {side.name}

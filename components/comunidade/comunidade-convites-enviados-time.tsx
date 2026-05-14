@@ -75,8 +75,8 @@ function statusClass(status: string): string {
   if (s === "pendente") {
     return "border-[color:color-mix(in_srgb,var(--eid-warning-500)_48%,var(--eid-border-subtle)_52%)] bg-[color:color-mix(in_srgb,var(--eid-warning-500)_15%,var(--eid-card)_85%)] text-[color:color-mix(in_srgb,var(--eid-warning-500)_86%,var(--eid-fg)_14%)]";
   }
-  if (s === "aceito" || s === "aprovado") return "border-emerald-500/35 bg-emerald-500/12 text-emerald-100";
-  if (s === "recusado" || s === "cancelado") return "border-rose-500/35 bg-rose-500/12 text-rose-100";
+  if (s === "aceito" || s === "aprovado") return "border-emerald-500/35 bg-emerald-500/12 text-emerald-100 eid-light:text-emerald-800";
+  if (s === "recusado" || s === "cancelado") return "border-rose-500/35 bg-rose-500/12 text-rose-100 eid-light:border-rose-300 eid-light:bg-rose-50 eid-light:text-rose-800";
   return "border-eid-primary-500/35 bg-eid-primary-500/12 text-eid-primary-200";
 }
 
@@ -118,7 +118,7 @@ export function ComunidadeConvitesEnviadosTime({ items }: { items: ConviteTimeEn
   return (
     <div className="mt-3 space-y-3">
       {errorText ? (
-        <p className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">{errorText}</p>
+        <p className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-200 eid-light:border-red-300 eid-light:bg-red-50 eid-light:text-red-800">{errorText}</p>
       ) : null}
       <ul className="space-y-3">
         {items.map((c) => {

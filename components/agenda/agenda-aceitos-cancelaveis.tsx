@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useActionState } from "react";
@@ -217,9 +218,25 @@ export function AgendaAceitosCancelaveis({
         ) : null}
         {items.map((m) => {
           const podeReagendar = m.status === "Aceito" && !m.gestaoSomenteLeitura;
+          const modalidadeKey = String(m.modalidade ?? "")
+            .trim()
+            .toLowerCase();
+          const avatarEhFormacao =
+            modalidadeKey !== "individual" && Boolean(m.oponenteAvatarEhTime && Number(m.oponenteTimeId ?? 0) > 0);
+          const avatarShapeClass = avatarEhFormacao ? "rounded-xl" : "rounded-full";
+          const avatarFrameClass = `inline-flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ring-1 ring-eid-card md:h-10 md:w-10 md:text-xs ${avatarShapeClass}`;
+          const avatarNode = m.avatarOponente ? (
+            <span className={`${avatarFrameClass} pointer-events-none relative`}>
+              <Image src={m.avatarOponente} alt="" fill unoptimized className="object-cover object-center" />
+            </span>
+          ) : (
+            <span className={`${avatarFrameClass} pointer-events-none`}>
+              {iniciaisFormacaoNome(m.nomeOponente).slice(0, 2) || "O"}
+            </span>
+          );
           const eidHref =
             Number(m.esporteId ?? 0) > 0
-              ? m.oponenteAvatarEhTime && Number(m.oponenteTimeId ?? 0) > 0
+              ? avatarEhFormacao
                 ? `/perfil-time/${Number(m.oponenteTimeId)}/eid/${Number(m.esporteId)}?from=${encodeURIComponent("/agenda")}`
                 : m.oponenteId
                   ? `/perfil/${encodeURIComponent(m.oponenteId)}/eid/${Number(m.esporteId)}?from=${encodeURIComponent("/agenda")}`
@@ -240,47 +257,13 @@ export function AgendaAceitosCancelaveis({
                     fullscreen
                     topMode="backOnly"
                     className={`block border-0 bg-transparent p-0 transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500 ${
-                      m.oponenteAvatarEhTime ? "rounded-xl" : "rounded-full"
+                      avatarShapeClass
                     }`}
                   >
-                    {m.avatarOponente ? (
-                      <img
-                        src={m.avatarOponente}
-                        alt=""
-                        className={
-                          m.oponenteAvatarEhTime
-                            ? "pointer-events-none h-9 w-9 rounded-xl border border-[color:var(--eid-border-subtle)] object-cover md:h-10 md:w-10"
-                            : "pointer-events-none h-9 w-9 rounded-full border border-[color:var(--eid-border-subtle)] object-cover md:h-10 md:w-10"
-                        }
-                      />
-                    ) : (
-                      <span
-                        className={`pointer-events-none inline-flex h-9 w-9 items-center justify-center border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 md:h-10 md:w-10 md:text-xs ${
-                          m.oponenteAvatarEhTime ? "rounded-xl" : "rounded-full"
-                        }`}
-                      >
-                        {iniciaisFormacaoNome(m.nomeOponente).slice(0, 2) || "O"}
-                      </span>
-                    )}
+                    {avatarNode}
                   </ProfileEditDrawerTrigger>
-                ) : m.avatarOponente ? (
-                  <img
-                    src={m.avatarOponente}
-                    alt=""
-                    className={
-                      m.oponenteAvatarEhTime
-                        ? "h-9 w-9 rounded-xl border border-[color:var(--eid-border-subtle)] object-cover md:h-10 md:w-10"
-                        : "h-9 w-9 rounded-full border border-[color:var(--eid-border-subtle)] object-cover md:h-10 md:w-10"
-                    }
-                  />
                 ) : (
-                  <span
-                    className={`inline-flex h-9 w-9 items-center justify-center border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 md:h-10 md:w-10 md:text-xs ${
-                      m.oponenteAvatarEhTime ? "rounded-xl" : "rounded-full"
-                    }`}
-                  >
-                    {iniciaisFormacaoNome(m.nomeOponente).slice(0, 2) || "O"}
-                  </span>
+                  avatarNode
                 )}
                 <div className="mt-1">
                   <ProfileEidPerformanceSeal notaEid={Number(m.notaEidOponente ?? 0)} compact />

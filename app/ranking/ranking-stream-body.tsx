@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import Link from "next/link";
 import {
   RankingGenderToggle,
   RankingPeriodToggle,
@@ -8,6 +7,7 @@ import {
   RankingRow,
   ViewerRankCard,
 } from "@/components/ranking/ranking-compact";
+import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { rankingHref, type RankingSearchState } from "@/lib/ranking/ranking-href";
 import { RankingLoadMoreButton } from "@/components/ranking/ranking-load-more-button";
 import {
@@ -442,12 +442,17 @@ export async function RankingStreamBody({
       {rankingAll.length > 0 ? (
         <>
           <section className="relative z-[1] mt-4">
-            <Link
+            <ProfileEditDrawerTrigger
               href={`/confrontos?tipo=${state.tipo}${selectedEsporteId ? `&esporte=${selectedEsporteId}` : ""}`}
-              className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(160deg,color-mix(in_srgb,var(--eid-card)_95%,var(--eid-primary-500)_5%),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-2.5 py-2.5 shadow-[0_8px_28px_-24px_rgba(15,23,42,0.68)] transition hover:border-eid-primary-500/35 hover:bg-eid-primary-500/8 active:scale-[0.995]"
+              fullscreen
+              topMode="backOnly"
+              openingDelayMs={0}
+              title="Central de confrontos"
+              className="group relative grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 overflow-hidden rounded-xl border border-eid-primary-500/20 bg-[radial-gradient(circle_at_82%_42%,color-mix(in_srgb,var(--eid-action-500)_16%,transparent),transparent_34%),linear-gradient(160deg,color-mix(in_srgb,var(--eid-card)_94%,var(--eid-primary-500)_6%),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-2.5 py-2.5 text-left shadow-[0_12px_32px_-26px_rgba(15,23,42,0.78),inset_0_1px_0_rgba(255,255,255,0.045)] transition hover:border-eid-action-500/35 hover:shadow-[0_16px_34px_-26px_rgba(249,115,22,0.5),inset_0_1px_0_rgba(255,255,255,0.06)] active:scale-[0.995]"
             >
+              <span className="pointer-events-none absolute inset-y-0 -left-12 w-20 rotate-12 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent)] opacity-0 blur-sm transition duration-500 group-hover:translate-x-72 group-hover:opacity-100" aria-hidden />
               <span className="min-w-0">
-                <span className="inline-flex items-center rounded-full border border-eid-primary-500/25 bg-eid-primary-500/10 px-2 py-0.5 text-[7.5px] font-black uppercase tracking-[0.08em] text-eid-primary-300">
+                <span className="inline-flex items-center rounded-full border border-eid-primary-500/25 bg-eid-primary-500/10 px-2 py-0.5 text-[7.5px] font-black uppercase tracking-[0.12em] text-eid-primary-300 shadow-[0_0_14px_-8px_rgba(96,165,250,0.7)]">
                   Central de confrontos
                 </span>
                 <span className="mt-1 block truncate text-[12px] font-black leading-tight text-eid-fg">
@@ -458,13 +463,14 @@ export async function RankingStreamBody({
                   {esporteNomeAtual ? ` · ${esporteNomeAtual}` : ""}
                 </span>
               </span>
-              <span className="grid h-11 w-11 place-items-center rounded-xl border border-eid-action-500/30 bg-eid-action-500/12 text-eid-action-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition group-hover:border-eid-action-500/45 group-hover:bg-eid-action-500/18">
+              <span className="relative grid h-11 w-11 place-items-center overflow-hidden rounded-xl border border-eid-action-500/35 bg-eid-action-500/12 text-eid-action-300 shadow-[0_10px_22px_-16px_rgba(249,115,22,0.85),inset_0_1px_0_rgba(255,255,255,0.06)] transition group-hover:border-eid-action-500/55 group-hover:bg-eid-action-500/18">
+                <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.2),transparent_48%)] opacity-70" aria-hidden />
                 <span className="text-[11px] font-black leading-none">VS</span>
                 <span className="mt-0.5 text-[6.5px] font-black uppercase leading-none tracking-[0.08em] text-eid-action-200/80">
                   Ver
                 </span>
               </span>
-            </Link>
+            </ProfileEditDrawerTrigger>
           </section>
 
           <section className="relative z-[1] mt-4 md:mt-6">

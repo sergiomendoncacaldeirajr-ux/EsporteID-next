@@ -69,7 +69,12 @@ function isEmbedDesafioPath(path: string): boolean {
 }
 
 function isEmbedConfrontoPath(path: string): boolean {
-  return /^\/registrar-placar\/[^/]+\/?$/.test(path);
+  return (
+    path === "/confrontos" ||
+    path === "/confrontos/" ||
+    /^\/confrontos\/[^/]+\/?$/.test(path) ||
+    /^\/registrar-placar\/[^/]+\/?$/.test(path)
+  );
 }
 
 function isFullscreenCadastrarLocalPath(path: string): boolean {
