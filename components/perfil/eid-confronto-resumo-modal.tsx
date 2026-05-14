@@ -130,8 +130,10 @@ function sportShareIconText(sportLabel: string | null | undefined) {
 
 function sportShareDefaultBackgroundSrc(sportLabel: string | null | undefined) {
   const label = cleanShareText(sportLabel, "").toLowerCase();
+  if (/fut|soccer|campo|society|futsal/u.test(label)) return "/share-backgrounds/soccer.svg";
   if (/padel|pádel/u.test(label)) return "/share-backgrounds/padel.svg";
   if (/beach\s*tennis|beachtennis|praia/u.test(label)) return "/share-backgrounds/beach-tennis.svg";
+  if (/volei|vôlei|volley|voleibol/u.test(label)) return "/share-backgrounds/volleyball.svg";
   if (/tenis|tênis/u.test(label)) return "/share-backgrounds/tennis.svg";
   return null;
 }
@@ -500,7 +502,7 @@ function drawShareSlimResultCard(
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  if (payload.showBrand) {
+  if (payload.showBrand || payload.shareLayout === "slim") {
     if (brandLogo) {
       const logoW = 230 * logoScale * scale;
       const logoH = 56 * logoScale * scale;
@@ -542,7 +544,7 @@ function drawShareSlimResultCard(
     ctx.stroke();
   };
 
-  const scoreTop = y + (payload.showBrand ? 92 : 32) * scale;
+  const scoreTop = y + (payload.showBrand || payload.shareLayout === "slim" ? 92 : 32) * scale;
   const scoreX = x + 30 * scale;
   const scoreW = cardWidth - 60 * scale;
   const scoreH = isSets ? 148 * scale : 92 * scale;
@@ -795,12 +797,13 @@ function drawShareResultCard(
   }
 }
 
-async function createResultadoShareImage(payload: ResultadoSharePayload) {
+async function renderResultadoShareCanvas(payload: ResultadoSharePayload, outputScale = 1) {
   const canvas = document.createElement("canvas");
-  canvas.width = 1080;
-  canvas.height = 1920;
+  canvas.width = Math.round(1080 * outputScale);
+  canvas.height = Math.round(1920 * outputScale);
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas indisponível para gerar o resultado.");
+  if (outputScale !== 1) ctx.scale(outputScale, outputScale);
   const styles = getComputedStyle(document.documentElement);
   const ink = canvasColorVar(styles, "--eid-brand-ink", "rgb(11, 29, 46)");
   const surface = canvasColorVar(styles, "--eid-surface", "rgb(18, 52, 90)");
@@ -833,7 +836,7 @@ async function createResultadoShareImage(payload: ResultadoSharePayload) {
   let brandLogo: HTMLImageElement | null = null;
   let avatarA: HTMLImageElement | null = null;
   let avatarB: HTMLImageElement | null = null;
-  if (payload.showBrand) {
+  if (payload.showBrand || payload.shareLayout === "slim") {
     try {
       brandLogo = await loadCanvasImage(EID_LOGO_WORDMARK_SRC);
     } catch {
@@ -852,15 +855,19 @@ async function createResultadoShareImage(payload: ResultadoSharePayload) {
   }
 
   drawShareResultCard(ctx, payload, { primarySoft, action, fg, muted, ink }, brandLogo, { a: avatarA, b: avatarB });
+  return canvas;
+}
 
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-  ctx.font = "800 30px Arial, sans-serif";
-  if (payload.showBrand) ctx.fillText("esporteid.com.br", 540, 1718);
-
+async function createResultadoShareImage(payload: ResultadoSharePayload) {
+  const canvas = await renderResultadoShareCanvas(payload, 1);
   const blob = await canvasToBlob(canvas);
   return new File([blob], `esporteid-resultado-${Date.now()}.png`, { type: "image/png" });
+}
+
+async function createResultadoSharePreviewUrl(payload: ResultadoSharePayload) {
+  const canvas = await renderResultadoShareCanvas(payload, 0.36);
+  const blob = await canvasToBlob(canvas);
+  return URL.createObjectURL(blob);
 }
 
 function downloadResultadoFile(file: File) {
@@ -1254,8 +1261,7 @@ export function EidConfrontoResumoModal({
     let cancelled = false;
     const id = window.setTimeout(async () => {
       try {
-        const file = await createResultadoShareImage(sharePayload);
-        const url = URL.createObjectURL(file);
+        const url = await createResultadoSharePreviewUrl(sharePayload);
         if (cancelled) {
           URL.revokeObjectURL(url);
           return;
@@ -1718,7 +1724,7 @@ export function EidConfrontoResumoModal({
                           width: `${(shareLayout === "slim" ? 70 : shareCardVariant === "compact" ? 64 : 78) * shareOverlayScale}%`,
                         }}
                       >
-                        {shareShowBrand ? (
+                        {shareShowBrand || shareLayout === "slim" ? (
                           <span
                             className="relative mx-auto block h-4 w-[4.6rem]"
                             style={{
