@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, CalendarClock, MapPin, Trophy } from "lucide-react";
 import { ConfrontoCard } from "@/components/confrontos/confronto-card";
@@ -75,6 +76,11 @@ export default async function ConfrontoDetalhePage({
           </p>
           <p className="flex items-center gap-2 text-eid-text-secondary">
             <MapPin className="h-4 w-4 text-eid-primary-300" aria-hidden />
+            {item.localLogoUrl ? (
+              <span className="relative h-5 w-5 shrink-0 overflow-hidden rounded-md border border-[color:var(--eid-border-subtle)] bg-eid-card">
+                <Image src={item.localLogoUrl} alt="" fill unoptimized className="object-cover" />
+              </span>
+            ) : null}
             {item.localHref ? (
               <Link href={item.localHref} className="font-bold text-eid-primary-300 hover:underline">
                 {item.local ?? "Local"}

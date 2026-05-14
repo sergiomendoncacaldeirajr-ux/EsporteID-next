@@ -464,11 +464,6 @@ export async function ComunidadeStreamPartidas({
 
               {painelAgendadasVisiveis.length > 0 ? (
                 <div className="overflow-hidden rounded-2xl border border-eid-primary-500/20 bg-eid-primary-500/5">
-                  <EidPanelHeader
-                    title="Lançar resultado"
-                    titleAs="h3"
-                    info="Partidas agendadas que já podem receber o placar."
-                  />
                   <div className="space-y-4 p-3">
                     {painelAgendadasVisiveis.map((row) => {
                       const esp = firstOfRelation(row.esportes);

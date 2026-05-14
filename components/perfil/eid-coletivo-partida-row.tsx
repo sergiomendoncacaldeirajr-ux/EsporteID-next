@@ -35,6 +35,7 @@ type Props = {
     dataHora: string;
     local: string | null;
     localHref?: string | null;
+    localLogoUrl?: string | null;
     placar: string;
     origem: "Ranking" | "Torneio";
     confronto?: string | null;
@@ -117,6 +118,7 @@ export function EidColetivoPartidaRow({
       dataHora={whenWithTime}
       local={p.local_str ?? null}
       localHref={p.local_espaco_id != null && Number(p.local_espaco_id) > 0 ? `/local/${Number(p.local_espaco_id)}` : null}
+      localLogoUrl={(p as { localLogoUrl?: string | null }).localLogoUrl ?? null}
       placarBase={placarTxt}
       sportLabel={esporteLabel ?? null}
       mensagem={p.mensagem ?? null}

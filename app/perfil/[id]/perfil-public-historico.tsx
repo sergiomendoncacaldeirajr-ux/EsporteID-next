@@ -89,13 +89,15 @@ export async function PerfilPublicoHistoricoSection({ profileId, viewerId, perfi
     }
   }
   const localHistoricoMap = new Map<number, string>();
+  const localHistoricoLogoMap = new Map<number, string>();
   const localHistoricoIds = [
     ...new Set(partidasHistorico.map((p) => Number((p as { local_espaco_id?: number }).local_espaco_id)).filter((x) => Number.isFinite(x) && x > 0)),
   ];
   if (localHistoricoIds.length > 0) {
-    const { data: locaisHistoricoRows } = await supabase.from("espacos_genericos").select("id, nome_publico").in("id", localHistoricoIds);
+    const { data: locaisHistoricoRows } = await supabase.from("espacos_genericos").select("id, nome_publico, logo_arquivo").in("id", localHistoricoIds);
     for (const loc of locaisHistoricoRows ?? []) {
       if (loc.id != null) localHistoricoMap.set(Number(loc.id), loc.nome_publico ?? "Local");
+      if (loc.id != null && loc.logo_arquivo?.trim()) localHistoricoLogoMap.set(Number(loc.id), loc.logo_arquivo.trim());
     }
   }
 
@@ -253,6 +255,10 @@ export async function PerfilPublicoHistoricoSection({ profileId, viewerId, perfi
                           hr.local_espaco_id != null && Number(hr.local_espaco_id) > 0
                             ? `/local/${Number(hr.local_espaco_id)}`
                             : null,
+                        localLogoUrl:
+                          hr.local_espaco_id != null && Number(hr.local_espaco_id) > 0
+                            ? localHistoricoLogoMap.get(Number(hr.local_espaco_id)) ?? null
+                            : null,
                         placar: hr.jogador1_id === id
                           ? `${Number(hr.placar_1 ?? 0)} × ${Number(hr.placar_2 ?? 0)}`
                           : `${Number(hr.placar_2 ?? 0)} × ${Number(hr.placar_1 ?? 0)}`,
@@ -265,7 +271,13 @@ export async function PerfilPublicoHistoricoSection({ profileId, viewerId, perfi
                     return (
                       <EidIndividualPartidaRow
                         key={row.id}
-                        partida={p as EidPartidaIndividualRow}
+                        partida={{
+                          ...(p as EidPartidaIndividualRow),
+                          localLogoUrl:
+                            row.local_espaco_id != null && Number(row.local_espaco_id) > 0
+                              ? localHistoricoLogoMap.get(Number(row.local_espaco_id)) ?? null
+                              : null,
+                        }}
                         selfNome={perfil.nome ?? "Atleta"}
                         selfAvatarUrl={perfil.avatar_url ?? null}
                         selfProfileHref={`/perfil/${encodeURIComponent(id)}`}

@@ -15,6 +15,7 @@ export type EidPartidaIndividualRow = {
   torneio_id?: number | null;
   local_espaco_id?: number | null;
   local_str?: string | null;
+  localLogoUrl?: string | null;
   data_partida?: string | null;
   mensagem?: string | null;
   tipo_partida?: string | null;
@@ -46,6 +47,7 @@ type Props = {
     dataHora: string;
     local: string | null;
     localHref?: string | null;
+    localLogoUrl?: string | null;
     placar: string;
     origem: "Ranking" | "Torneio";
     confronto?: string | null;
@@ -117,6 +119,7 @@ export function EidIndividualPartidaRow({
       dataHora={whenWithTime}
       local={p.local_str ?? null}
       localHref={p.local_espaco_id != null && Number(p.local_espaco_id) > 0 ? `/local/${Number(p.local_espaco_id)}` : null}
+      localLogoUrl={p.localLogoUrl ?? null}
       placarBase={placarTxt}
       sportLabel={esporteLabel ?? null}
       mensagem={p.mensagem ?? null}

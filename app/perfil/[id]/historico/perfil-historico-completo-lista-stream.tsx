@@ -52,8 +52,8 @@ export async function PerfilHistoricoCompletoListaStream({ profileId, perfilNome
           .in("esporte_id", esporteIds)
       : Promise.resolve({ data: [] as { usuario_id: string; esporte_id: number; nota_eid: number | null }[] }),
     localEspacoIds.length > 0
-      ? supabase.from("espacos_genericos").select("id, nome_publico").in("id", localEspacoIds)
-      : Promise.resolve({ data: [] as { id: number; nome_publico: string | null }[] }),
+      ? supabase.from("espacos_genericos").select("id, nome_publico, logo_arquivo").in("id", localEspacoIds)
+      : Promise.resolve({ data: [] as { id: number; nome_publico: string | null; logo_arquivo: string | null }[] }),
   ]);
 
   const oponenteMap = new Map<string, { nome: string; avatarUrl: string | null }>();
@@ -77,8 +77,10 @@ export async function PerfilHistoricoCompletoListaStream({ profileId, perfilNome
   }
 
   const localEspacoNomeMap = new Map<number, string>();
+  const localEspacoLogoMap = new Map<number, string>();
   for (const loc of locaisRowsRes.data ?? []) {
     if (loc.id != null) localEspacoNomeMap.set(Number(loc.id), loc.nome_publico ?? "Local");
+    if (loc.id != null && loc.logo_arquivo?.trim()) localEspacoLogoMap.set(Number(loc.id), loc.logo_arquivo.trim());
   }
 
   return (
@@ -121,6 +123,8 @@ export async function PerfilHistoricoCompletoListaStream({ profileId, perfilNome
               (String(h.local_str ?? "").trim() || String(h.local_cidade ?? "").trim() || null),
             localHref:
               h.local_espaco_id != null && Number(h.local_espaco_id) > 0 ? `/local/${Number(h.local_espaco_id)}` : null,
+            localLogoUrl:
+              h.local_espaco_id != null && Number(h.local_espaco_id) > 0 ? localEspacoLogoMap.get(Number(h.local_espaco_id)) ?? null : null,
             placar: h.jogador1_id === id
               ? `${Number(h.placar_1 ?? 0)} × ${Number(h.placar_2 ?? 0)}`
               : `${Number(h.placar_2 ?? 0)} × ${Number(h.placar_1 ?? 0)}`,
@@ -133,7 +137,10 @@ export async function PerfilHistoricoCompletoListaStream({ profileId, perfilNome
         return (
           <EidIndividualPartidaRow
             key={p.id}
-            partida={p}
+            partida={{
+              ...p,
+              localLogoUrl: p.local_espaco_id != null && Number(p.local_espaco_id) > 0 ? localEspacoLogoMap.get(Number(p.local_espaco_id)) ?? null : null,
+            }}
             selfNome={perfilNome}
             opponentId={oponenteId ?? id}
             opponentNome={oponenteNome}

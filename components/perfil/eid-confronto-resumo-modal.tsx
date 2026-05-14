@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import NextImage from "next/image";
 import { Calendar, Download, ImageIcon, Loader2, MapPin, RotateCcw, Share2, X } from "lucide-react";
 import Link from "next/link";
 import { GoalsScoreboardSummary } from "@/components/placar/goals-scoreboard-summary";
@@ -30,6 +31,7 @@ type ResumoHistoricoItem = {
   dataHora: string;
   local: string | null;
   localHref?: string | null;
+  localLogoUrl?: string | null;
   placar: string;
   origem: "Ranking" | "Torneio";
   confronto?: string | null;
@@ -51,6 +53,7 @@ type Props = {
   dataHora: string;
   local: string | null;
   localHref?: string | null;
+  localLogoUrl?: string | null;
   placarBase: string;
   mensagem?: string | null;
   totalConfrontos: number;
@@ -99,6 +102,15 @@ const RESULT_SHARE_STORAGE_KEY = "eid:result-share-editor:v1";
 function cleanShareText(value: string | null | undefined, fallback = "EsporteID") {
   const clean = String(value ?? "").replace(/\s+/g, " ").trim();
   return clean || fallback;
+}
+
+function LocalLogoThumb({ src }: { src?: string | null }) {
+  if (!src?.trim()) return null;
+  return (
+    <span className="relative inline-flex h-5 w-5 shrink-0 overflow-hidden rounded-md border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_72%,white_18%)] bg-eid-card align-middle shadow-sm">
+      <NextImage src={src} alt="" fill unoptimized className="object-cover" />
+    </span>
+  );
 }
 
 function wrapCanvasText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxLines: number) {
@@ -766,6 +778,7 @@ export function EidConfrontoResumoModal({
   dataHora,
   local,
   localHref,
+  localLogoUrl,
   placarBase,
   mensagem,
   totalConfrontos,
@@ -1165,19 +1178,22 @@ export function EidConfrontoResumoModal({
                     <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-eid-primary-400" aria-hidden />
                     <div className="min-w-0">
                       <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Local</p>
-                      <p className="mt-0.5 text-[12px] font-semibold leading-snug text-eid-fg sm:text-sm">
+                      <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[12px] font-semibold leading-snug text-eid-fg sm:text-sm">
                         {local?.trim() ? (
-                          localHref ? (
-                            <Link
-                              href={localHref}
-                              data-no-modal="1"
-                              className="text-eid-primary-200 underline-offset-2 hover:underline"
-                            >
-                              {local}
-                            </Link>
-                          ) : (
-                            <span>{local}</span>
-                          )
+                          <>
+                            <LocalLogoThumb src={localLogoUrl} />
+                            {localHref ? (
+                              <Link
+                                href={localHref}
+                                data-no-modal="1"
+                                className="min-w-0 truncate text-eid-primary-200 underline-offset-2 hover:underline"
+                              >
+                                {local}
+                              </Link>
+                            ) : (
+                              <span className="min-w-0 truncate">{local}</span>
+                            )}
+                          </>
                         ) : (
                           <span className="text-eid-text-secondary">Não informado</span>
                         )}
@@ -1613,19 +1629,22 @@ export function EidConfrontoResumoModal({
                         <div className="mt-2 border-t border-dashed border-[color:color-mix(in_srgb,var(--eid-border-subtle)_85%,transparent)] pt-2">
                           <HistoricoPlacarDisplay item={item} sportFallback={sportLabel ?? null} />
                         </div>
-                        <p className="mt-1.5 text-center text-[9px] leading-snug text-eid-text-secondary">
+                        <p className="mt-1.5 flex min-w-0 items-center justify-center gap-1.5 text-center text-[9px] leading-snug text-eid-text-secondary">
                           {item.local?.trim() ? (
-                            item.localHref ? (
-                              <Link
-                                href={item.localHref}
-                                data-no-modal="1"
-                                className="font-medium text-eid-primary-400 underline-offset-2 hover:underline dark:text-eid-primary-300"
-                              >
-                                {item.local}
-                              </Link>
-                            ) : (
-                              item.local
-                            )
+                            <>
+                              <LocalLogoThumb src={item.localLogoUrl} />
+                              {item.localHref ? (
+                                <Link
+                                  href={item.localHref}
+                                  data-no-modal="1"
+                                  className="min-w-0 truncate font-medium text-eid-primary-400 underline-offset-2 hover:underline dark:text-eid-primary-300"
+                                >
+                                  {item.local}
+                                </Link>
+                              ) : (
+                                <span className="min-w-0 truncate">{item.local}</span>
+                              )}
+                            </>
                           ) : (
                             <span className="italic opacity-90">Local não informado</span>
                           )}
