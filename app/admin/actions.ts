@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 import { getPresetForSport } from "@/lib/desafio/score-rules";
 import { revalidateAfterTimeRosterOrConviteChange } from "@/lib/comunidade/revalidate-time-social-paths";
+import { fiscalDocumentoDigits } from "@/lib/fiscal/nfse";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 function svc() {
@@ -2399,5 +2400,105 @@ export async function adminSupportChamadoMarcarStatus(formData: FormData) {
   } catch (e) {
     if (isRedirectError(e)) throw e;
     redirect("/admin/suporte?adm_flash=support_erro");
+  }
+}
+
+function adminFiscalText(formData: FormData, field: string) {
+  return String(formData.get(field) ?? "").trim();
+}
+
+function adminFiscalNumber(formData: FormData, field: string) {
+  const value = Number(adminFiscalText(formData, field).replace(",", "."));
+  return Number.isFinite(value) ? value : null;
+}
+
+export async function adminSalvarConfiguracaoFiscalPlataformaAction(formData: FormData) {
+  try {
+    await guard();
+    const nome = adminFiscalText(formData, "nome_razao_social");
+    const documento = fiscalDocumentoDigits(formData.get("documento"));
+    if (!nome || !documento) redirect("/admin/notas-fiscais?adm_flash=fiscal_config_invalida");
+    const db = svc();
+    const payload = {
+      escopo: "plataforma",
+      espaco_generico_id: null,
+      nome_razao_social: nome,
+      documento,
+      inscricao_municipal: adminFiscalText(formData, "inscricao_municipal") || null,
+      municipio: adminFiscalText(formData, "municipio") || null,
+      uf: adminFiscalText(formData, "uf").toUpperCase() || null,
+      regime_tributario: adminFiscalText(formData, "regime_tributario") || null,
+      cnae: fiscalDocumentoDigits(formData.get("cnae")) || null,
+      codigo_servico: adminFiscalText(formData, "codigo_servico") || null,
+      item_lista_servico: adminFiscalText(formData, "item_lista_servico") || null,
+      aliquota_iss: adminFiscalNumber(formData, "aliquota_iss"),
+      provedor: adminFiscalText(formData, "provedor") || "manual",
+      ambiente: adminFiscalText(formData, "ambiente") === "homologacao" ? "homologacao" : "producao",
+      status: "pronto",
+      config_json: { observacoes: adminFiscalText(formData, "observacoes") },
+      atualizado_em: new Date().toISOString(),
+    };
+    const { data: atual } = await db.from("fiscal_emitentes").select("id").eq("escopo", "plataforma").maybeSingle();
+    const { error } = atual
+      ? await db.from("fiscal_emitentes").update(payload).eq("id", atual.id)
+      : await db.from("fiscal_emitentes").insert(payload);
+    if (error) redirect(`/admin/notas-fiscais?adm_flash=fiscal_config_erro${adminQueryDetail(error.message)}`);
+    revalidatePath("/admin/notas-fiscais");
+    redirect("/admin/notas-fiscais?adm_flash=fiscal_config_ok");
+  } catch (e) {
+    if (isRedirectError(e)) throw e;
+    redirect("/admin/notas-fiscais?adm_flash=fiscal_config_erro");
+  }
+}
+
+export async function adminSolicitarNotaFiscalPlataformaAction(formData: FormData) {
+  try {
+    await guard();
+    const espacoId = Number(formData.get("espaco_id") ?? 0);
+    const transacaoId = Number(formData.get("transacao_id") ?? 0);
+    const db = svc();
+    const [{ data: emitente }, { data: transacao }, { data: espaco }, { data: existente }] = await Promise.all([
+      db.from("fiscal_emitentes").select("id, status").eq("escopo", "plataforma").maybeSingle(),
+      db
+        .from("espaco_transacoes")
+        .select("id, espaco_generico_id, status, valor_bruto_centavos, comissao_plataforma_centavos, tipo")
+        .eq("id", transacaoId)
+        .eq("espaco_generico_id", espacoId)
+        .maybeSingle(),
+      db
+        .from("espacos_genericos")
+        .select("id, nome_publico, responsavel_usuario_id, criado_por_usuario_id")
+        .eq("id", espacoId)
+        .maybeSingle(),
+      db
+        .from("fiscal_notas")
+        .select("id")
+        .eq("escopo", "plataforma_espaco")
+        .eq("transacao_id", transacaoId)
+        .maybeSingle(),
+    ]);
+    if (!emitente || emitente.status !== "pronto") redirect("/admin/notas-fiscais?adm_flash=fiscal_emitente_pendente");
+    if (!transacao || transacao.status !== "received") redirect("/admin/notas-fiscais?adm_flash=fiscal_transacao_invalida");
+    if (!espaco) redirect("/admin/notas-fiscais?adm_flash=fiscal_espaco_invalido");
+    if (existente) redirect("/admin/notas-fiscais?adm_flash=fiscal_nota_duplicada");
+    const valor = Number(transacao.comissao_plataforma_centavos ?? 0);
+    if (valor <= 0) redirect("/admin/notas-fiscais?adm_flash=fiscal_sem_comissao");
+    const { error } = await db.from("fiscal_notas").insert({
+      escopo: "plataforma_espaco",
+      espaco_generico_id: espaco.id,
+      emitente_id: emitente.id,
+      transacao_id: transacao.id,
+      tomador_nome: espaco.nome_publico,
+      descricao: adminFiscalText(formData, "descricao") || `Prestação de serviço EsporteID · ${transacao.tipo}`,
+      valor_servico_centavos: valor,
+      status: "solicitada",
+      detalhes_json: { origem: "admin_notas_fiscais" },
+    });
+    if (error) redirect(`/admin/notas-fiscais?adm_flash=fiscal_nota_erro${adminQueryDetail(error.message)}`);
+    revalidatePath("/admin/notas-fiscais");
+    redirect("/admin/notas-fiscais?adm_flash=fiscal_nota_ok");
+  } catch (e) {
+    if (isRedirectError(e)) throw e;
+    redirect("/admin/notas-fiscais?adm_flash=fiscal_nota_erro");
   }
 }

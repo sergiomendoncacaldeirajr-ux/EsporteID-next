@@ -93,6 +93,7 @@ type ResultadoSharePayload = {
   backgroundDataUrl?: string | null;
   overlayPosition: { x: number; y: number };
   overlayScale: number;
+  brandLogoScale: number;
   cardVariant: "dark" | "light" | "glass" | "compact";
   backgroundFilter: "normal" | "dim" | "blur";
   showMeta: boolean;
@@ -128,6 +129,12 @@ function sportShareIconText(sportLabel: string | null | undefined) {
 
 function shareUsesSetLines(score: ReturnType<typeof shareScoreSummary>) {
   return score.detail === "Placar por sets" && score.lines.length > 0;
+}
+
+function shareMetaLine(payload: Pick<ResultadoSharePayload, "origem" | "dataHora" | "local">) {
+  return [payload.origem, cleanShareText(payload.dataHora, ""), cleanShareText(payload.local, "")]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 function shareUsesGoalsScore(payload: Pick<ResultadoSharePayload, "sportLabel" | "mensagem">, score: ReturnType<typeof shareScoreSummary>) {
@@ -296,6 +303,155 @@ function shareScoreSummary(payload: Pick<ResultadoSharePayload, "placar" | "mens
   return { headline: fallback, detail: null as string | null, lines: [] as string[], extra: null as string | null };
 }
 
+function getShareSetRows(payload: Pick<ResultadoSharePayload, "mensagem">) {
+  const score = parseScorePayloadFromPartidaMensagem(payload.mensagem);
+  if (score?.type !== "sets" || !Array.isArray(score.sets)) return [];
+  return score.sets
+    .map((set) => {
+      const a = Number(set.a ?? 0) || 0;
+      const b = Number(set.b ?? 0) || 0;
+      const tiebreakA = Number(set.tiebreakA ?? 0) || 0;
+      const tiebreakB = Number(set.tiebreakB ?? 0) || 0;
+      return { a, b, tiebreakA, tiebreakB, hasTiebreak: tiebreakA > 0 || tiebreakB > 0 };
+    })
+    .filter((set) => set.a > 0 || set.b > 0 || set.hasTiebreak)
+    .slice(0, 5);
+}
+
+function drawCanvasSetCell(
+  ctx: CanvasRenderingContext2D,
+  value: number,
+  tiebreak: number,
+  hasTiebreak: boolean,
+  x: number,
+  y: number,
+  fontPx: number,
+  color: string,
+  subColor: string,
+) {
+  ctx.fillStyle = color;
+  ctx.font = `900 ${fontPx}px Arial, sans-serif`;
+  ctx.fillText(String(value), x, y);
+  if (!hasTiebreak) return;
+  const mainW = ctx.measureText(String(value)).width;
+  ctx.fillStyle = subColor;
+  ctx.font = `900 ${fontPx * 0.46}px Arial, sans-serif`;
+  ctx.fillText(String(tiebreak), x + mainW / 2 + fontPx * 0.2, y - fontPx * 0.36);
+}
+
+function drawShareSetsTable(
+  ctx: CanvasRenderingContext2D,
+  payload: ResultadoSharePayload,
+  sets: ReturnType<typeof getShareSetRows>,
+  x: number,
+  y: number,
+  width: number,
+  scale: number,
+  colors: { primarySoft: string; action: string; fg: string; muted: string; ink: string },
+  text: string,
+  muted: string,
+) {
+  const cols = Math.max(1, sets.length);
+  const nameW = 190 * scale;
+  const rowH = 58 * scale;
+  const headH = 36 * scale;
+  const tableH = headH + rowH * 2;
+  const colW = (width - nameW) / cols;
+
+  ctx.fillStyle = "rgba(255,255,255,0.08)";
+  ctx.roundRect(x, y, width, tableH, 22 * scale);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,0.15)";
+  ctx.lineWidth = 1.5 * scale;
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(37, 99, 235, 0.18)";
+  ctx.roundRect(x, y, width, headH, 22 * scale);
+  ctx.fill();
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = muted;
+  ctx.font = `900 ${15 * scale}px Arial, sans-serif`;
+  sets.forEach((_, idx) => ctx.fillText(`S${idx + 1}`, x + nameW + colW * idx + colW / 2, y + headH / 2));
+
+  const names = [shareFirstName(payload.ladoA), shareFirstName(payload.ladoB)];
+  names.forEach((name, rowIdx) => {
+    const rowY = y + headH + rowIdx * rowH;
+    ctx.fillStyle = rowIdx === 0 ? "rgba(255,255,255,0.045)" : "rgba(0,0,0,0.08)";
+    ctx.fillRect(x, rowY, width, rowH);
+    ctx.textAlign = "left";
+    ctx.fillStyle = text;
+    ctx.font = `900 ${19 * scale}px Arial, sans-serif`;
+    ctx.fillText(name, x + 22 * scale, rowY + rowH / 2 + 1 * scale);
+  });
+
+  ctx.textAlign = "center";
+  sets.forEach((set, idx) => {
+    const cx = x + nameW + colW * idx + colW / 2;
+    ctx.strokeStyle = "rgba(255,255,255,0.10)";
+    ctx.beginPath();
+    ctx.moveTo(x + nameW + colW * idx, y);
+    ctx.lineTo(x + nameW + colW * idx, y + tableH);
+    ctx.stroke();
+    drawCanvasSetCell(ctx, set.a, set.tiebreakA, set.hasTiebreak, cx, y + headH + rowH / 2 + 2 * scale, 27 * scale, text, colors.primarySoft);
+    drawCanvasSetCell(ctx, set.b, set.tiebreakB, set.hasTiebreak, cx, y + headH + rowH + rowH / 2 + 2 * scale, 27 * scale, text, colors.primarySoft);
+  });
+}
+
+function drawShareGoalsTvScore(
+  ctx: CanvasRenderingContext2D,
+  payload: ResultadoSharePayload,
+  x: number,
+  y: number,
+  width: number,
+  scale: number,
+  colors: { primarySoft: string; action: string; fg: string; muted: string; ink: string },
+  text: string,
+  muted: string,
+) {
+  const parsed = parseScorePayloadFromPartidaMensagem(payload.mensagem);
+  const goals = parsed?.type === "gols" ? parsed.goals : null;
+  const score = shareScoreSummary(payload);
+  const base = goals ? goalsTotalsBeforePenaltiesDisplay(goals) : null;
+  const penA = Number(goals?.penaltiesA ?? 0) || 0;
+  const penB = Number(goals?.penaltiesB ?? 0) || 0;
+  const hasPen = penA > 0 || penB > 0;
+
+  ctx.fillStyle = "rgba(6, 37, 22, 0.78)";
+  ctx.roundRect(x, y, width, 136 * scale, 28 * scale);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,0.18)";
+  ctx.lineWidth = 2 * scale;
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(255,255,255,0.09)";
+  ctx.fillRect(x + width / 2 - 1 * scale, y + 18 * scale, 2 * scale, 100 * scale);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = muted;
+  ctx.font = `900 ${15 * scale}px Arial, sans-serif`;
+  ctx.fillText("PLACAR FINAL", x + width / 2, y + 24 * scale);
+  ctx.fillStyle = text;
+  ctx.font = `900 ${27 * scale}px Arial, sans-serif`;
+  ctx.fillText(shareFirstName(payload.ladoA), x + width * 0.25, y + 62 * scale);
+  ctx.fillText(shareFirstName(payload.ladoB), x + width * 0.75, y + 62 * scale);
+  ctx.font = `900 ${48 * scale}px Arial, sans-serif`;
+  const fallbackGoals = score.headline.split(/\s*[x×]\s*/i);
+  ctx.fillText(base ? String(base.a) : fallbackGoals[0] ?? "0", x + width * 0.38, y + 96 * scale);
+  ctx.fillStyle = colors.primarySoft;
+  ctx.font = `900 ${24 * scale}px Arial, sans-serif`;
+  ctx.fillText("×", x + width / 2, y + 96 * scale);
+  ctx.fillStyle = text;
+  ctx.font = `900 ${48 * scale}px Arial, sans-serif`;
+  ctx.fillText(base ? String(base.b) : fallbackGoals[1] ?? "0", x + width * 0.62, y + 96 * scale);
+  if (hasPen) {
+    ctx.fillStyle = colors.action;
+    ctx.font = `900 ${16 * scale}px Arial, sans-serif`;
+    ctx.fillText(`PÊNALTIS ${penA} × ${penB}`, x + width / 2, y + 122 * scale);
+  }
+}
+
 function drawDefaultSportBackground(ctx: CanvasRenderingContext2D, payload: ResultadoSharePayload, colors: { ink: string; surface: string; primary: string; action: string }) {
   const theme = sportShareTheme(payload.sportLabel);
   const gradient = ctx.createLinearGradient(0, 0, 1080, 1920);
@@ -428,8 +584,22 @@ function drawShareResultCard(
   brandLogo?: HTMLImageElement | null,
   avatars?: { a?: HTMLImageElement | null; b?: HTMLImageElement | null },
 ) {
-  const baseWidth = payload.cardVariant === "compact" ? 690 : 840;
-  const baseHeight = payload.cardVariant === "compact" ? 500 : 650;
+  const score = shareScoreSummary(payload);
+  const setRows = getShareSetRows(payload);
+  const isSets = shareUsesSetLines(score) && setRows.length > 0;
+  const isGoals = shareUsesGoalsScore(payload, score);
+  const hasExtraScoreLine = Boolean(score.extra) || (isGoals && score.lines.length > 0);
+  const baseWidth = payload.cardVariant === "compact" ? 700 : 840;
+  const baseHeight =
+    payload.cardVariant === "compact"
+      ? payload.showMeta
+        ? 600
+        : 540
+      : isSets
+        ? 720
+        : hasExtraScoreLine
+          ? 690
+          : 650;
   const cardWidth = baseWidth * payload.overlayScale;
   const cardHeight = baseHeight * payload.overlayScale;
   const x = Math.min(1080 - cardWidth - 70, Math.max(70, payload.overlayPosition.x * 1080 - cardWidth / 2));
@@ -456,9 +626,6 @@ function drawShareResultCard(
   ctx.textBaseline = "middle";
   const scale = payload.overlayScale;
   const center = x + cardWidth / 2;
-  const score = shareScoreSummary(payload);
-  const isSets = shareUsesSetLines(score);
-  const isGoals = shareUsesGoalsScore(payload, score);
   const firstA = shareFirstName(payload.ladoA);
   const firstB = shareFirstName(payload.ladoB);
   const drawAvatar = (img: HTMLImageElement | null | undefined, label: string, cx: number, cy: number) => {
@@ -490,12 +657,13 @@ function drawShareResultCard(
   };
 
   if (payload.showBrand) {
+    const logoScale = Math.min(1.7, Math.max(0.75, payload.brandLogoScale || 1));
     if (brandLogo) {
-      const logoW = 220 * scale;
-      const logoH = 52 * scale;
+      const logoW = 270 * logoScale * scale;
+      const logoH = 64 * logoScale * scale;
       ctx.drawImage(brandLogo, center - logoW / 2, y + 42 * scale, logoW, logoH);
     } else {
-      ctx.font = `900 ${34 * scale}px Arial, sans-serif`;
+      ctx.font = `900 ${38 * logoScale * scale}px Arial, sans-serif`;
       ctx.fillStyle = text;
       ctx.fillText("ESPORTE", center - 36 * scale, y + 70 * scale);
       ctx.fillStyle = colors.action;
@@ -504,18 +672,18 @@ function drawShareResultCard(
   }
 
   ctx.fillStyle = "rgba(37, 99, 235, 0.20)";
-  ctx.roundRect(center - 225 * scale, y + (payload.showBrand ? 104 : 52) * scale, 450 * scale, 52 * scale, 26 * scale);
+  ctx.roundRect(center - 225 * scale, y + (payload.showBrand ? 126 : 52) * scale, 450 * scale, 52 * scale, 26 * scale);
   ctx.fill();
   ctx.fillStyle = colors.primarySoft;
   ctx.font = `900 ${22 * scale}px Arial, sans-serif`;
   ctx.fillText(
     `${sportShareIconText(payload.sportLabel)} ${cleanShareText(payload.sportLabel, "Resultado oficial").toUpperCase()}`,
     center,
-    y + (payload.showBrand ? 131 : 79) * scale,
+    y + (payload.showBrand ? 153 : 79) * scale,
   );
 
   ctx.fillStyle = text;
-  const namesY = y + (payload.cardVariant === "compact" ? 188 : 224) * scale;
+  const namesY = y + (payload.cardVariant === "compact" ? 228 : 254) * scale;
   drawAvatar(avatars?.a, payload.ladoA, center - 190 * scale, namesY);
   drawAvatar(avatars?.b, payload.ladoB, center + 190 * scale, namesY);
   ctx.font = `900 ${28 * scale}px Arial, sans-serif`;
@@ -525,48 +693,38 @@ function drawShareResultCard(
   ctx.font = `900 ${20 * scale}px Arial, sans-serif`;
   ctx.fillText("VS", center, namesY + 15 * scale);
 
-  const scoreY = y + (payload.cardVariant === "compact" ? 360 : 430) * scale;
-  ctx.fillStyle = "rgba(249, 115, 22, 0.16)";
-  ctx.roundRect(center - 260 * scale, scoreY - 58 * scale, 520 * scale, isSets ? 194 * scale : 154 * scale, 38 * scale);
-  ctx.fill();
-  ctx.strokeStyle = colors.action;
-  ctx.lineWidth = 3;
-  ctx.stroke();
-
-  ctx.fillStyle = text;
-  ctx.font = `900 ${(isGoals ? 92 : isSets ? 62 : 78) * scale}px Arial, sans-serif`;
-  ctx.fillText(score.headline, center, scoreY);
-  if (score.detail) {
+  const scoreY = y + (payload.cardVariant === "compact" ? 395 : 450) * scale;
+  if (isSets) {
     ctx.fillStyle = colors.primarySoft;
-    ctx.font = `900 ${(isSets ? 20 : 21) * scale}px Arial, sans-serif`;
-    drawCenteredWrappedText(ctx, score.detail, center, scoreY + (isSets ? 48 : 56) * scale, cardWidth * 0.72, 25 * scale, 1);
-  }
-  if (score.lines.length) {
+    ctx.font = `900 ${18 * scale}px Arial, sans-serif`;
+    ctx.fillText("PLACAR POR SETS", center, scoreY - 34 * scale);
+    drawShareSetsTable(ctx, payload, setRows, center - 315 * scale, scoreY - 12 * scale, 630 * scale, scale, colors, text, muted);
+  } else if (isGoals) {
+    drawShareGoalsTvScore(ctx, payload, center - 300 * scale, scoreY - 70 * scale, 600 * scale, scale, colors, text, muted);
+  } else {
+    ctx.fillStyle = "rgba(249, 115, 22, 0.14)";
+    ctx.roundRect(center - 230 * scale, scoreY - 50 * scale, 460 * scale, 122 * scale, 34 * scale);
+    ctx.fill();
+    ctx.strokeStyle = colors.action;
+    ctx.lineWidth = 2.5 * scale;
+    ctx.stroke();
+    ctx.fillStyle = colors.primarySoft;
+    ctx.font = `900 ${16 * scale}px Arial, sans-serif`;
+    ctx.fillText("PLACAR FINAL", center, scoreY - 24 * scale);
     ctx.fillStyle = text;
-    ctx.font = `900 ${28 * scale}px Arial, sans-serif`;
-    const chipY = scoreY + 86 * scale;
-    const chipW = Math.min(132 * scale, 420 * scale / Math.max(1, score.lines.length));
-    score.lines.slice(0, 5).forEach((line, idx, list) => {
-      const totalW = list.length * chipW + (list.length - 1) * 12 * scale;
-      const chipX = center - totalW / 2 + idx * (chipW + 12 * scale);
-      ctx.fillStyle = "rgba(255,255,255,0.10)";
-      ctx.roundRect(chipX, chipY - 22 * scale, chipW, 44 * scale, 16 * scale);
-      ctx.fill();
-      ctx.fillStyle = text;
-      ctx.fillText(line, chipX + chipW / 2, chipY);
-    });
+    ctx.font = `900 ${56 * scale}px Arial, sans-serif`;
+    ctx.fillText(score.headline, center, scoreY + 24 * scale);
   }
-  if (score.extra && payload.cardVariant !== "compact") {
+  if (score.extra && payload.cardVariant !== "compact" && !isSets) {
     ctx.fillStyle = muted;
     ctx.font = `800 ${19 * scale}px Arial, sans-serif`;
-    drawCenteredWrappedText(ctx, score.extra, center, scoreY + (score.lines.length ? 120 : 86) * scale, cardWidth * 0.72, 23 * scale, 1);
+    drawCenteredWrappedText(ctx, score.extra, center, scoreY + 92 * scale, cardWidth * 0.72, 23 * scale, 1);
   }
 
-  if (payload.showMeta && payload.cardVariant !== "compact") {
+  if (payload.showMeta) {
     ctx.fillStyle = muted;
-    ctx.font = `800 ${22 * scale}px Arial, sans-serif`;
-    const footer = [payload.origem, payload.dataHora, payload.local?.trim()].filter(Boolean).join(" · ");
-    drawCenteredWrappedText(ctx, footer, center, y + 620 * scale, cardWidth * 0.86, 28 * scale, 1);
+    ctx.font = `800 ${payload.cardVariant === "compact" ? 18 * scale : 21 * scale}px Arial, sans-serif`;
+    drawCenteredWrappedText(ctx, shareMetaLine(payload), center, y + cardHeight - 44 * scale, cardWidth * 0.86, 26 * scale, 2);
   }
 }
 
@@ -913,6 +1071,7 @@ export function EidConfrontoResumoModal({
   const [shareBackgroundLabel, setShareBackgroundLabel] = useState("Fundo padrão");
   const [shareOverlayPosition, setShareOverlayPosition] = useState({ x: 0.5, y: 0.58 });
   const [shareOverlayScale, setShareOverlayScale] = useState(1);
+  const [shareBrandLogoScale, setShareBrandLogoScale] = useState(1.22);
   const [shareCardVariant, setShareCardVariant] = useState<ResultadoSharePayload["cardVariant"]>("dark");
   const [shareBackgroundFilter, setShareBackgroundFilter] = useState<ResultadoSharePayload["backgroundFilter"]>("dim");
   const [shareShowMeta, setShareShowMeta] = useState(true);
@@ -979,6 +1138,7 @@ export function EidConfrontoResumoModal({
       backgroundDataUrl: shareBackgroundDataUrl,
       overlayPosition: shareOverlayPosition,
       overlayScale: shareOverlayScale,
+      brandLogoScale: shareBrandLogoScale,
       cardVariant: shareCardVariant,
       backgroundFilter: shareBackgroundFilter,
       showMeta: shareShowMeta,
@@ -996,6 +1156,7 @@ export function EidConfrontoResumoModal({
       ladoBAvatarUrl,
       shareBackgroundDataUrl,
       shareBackgroundFilter,
+      shareBrandLogoScale,
       shareCardVariant,
       shareOverlayPosition,
       shareOverlayScale,
@@ -1018,6 +1179,7 @@ export function EidConfrontoResumoModal({
       const saved = JSON.parse(raw) as Partial<ResultadoSharePayload>;
       if (saved.overlayPosition) setShareOverlayPosition(saved.overlayPosition);
       if (typeof saved.overlayScale === "number") setShareOverlayScale(Math.min(1.18, Math.max(0.74, saved.overlayScale)));
+      if (typeof saved.brandLogoScale === "number") setShareBrandLogoScale(Math.min(1.7, Math.max(0.75, saved.brandLogoScale)));
       if (saved.cardVariant) setShareCardVariant(saved.cardVariant);
       if (saved.backgroundFilter) setShareBackgroundFilter(saved.backgroundFilter);
       if (typeof saved.showMeta === "boolean") setShareShowMeta(saved.showMeta);
@@ -1039,6 +1201,7 @@ export function EidConfrontoResumoModal({
         JSON.stringify({
           overlayPosition: shareOverlayPosition,
           overlayScale: shareOverlayScale,
+          brandLogoScale: shareBrandLogoScale,
           cardVariant: shareCardVariant,
           backgroundFilter: shareBackgroundFilter,
           showMeta: shareShowMeta,
@@ -1048,7 +1211,7 @@ export function EidConfrontoResumoModal({
     } catch {
       /* ignore */
     }
-  }, [shareBackgroundFilter, shareCardVariant, shareOverlayPosition, shareOverlayScale, shareShowBrand, shareShowMeta]);
+  }, [shareBackgroundFilter, shareBrandLogoScale, shareCardVariant, shareOverlayPosition, shareOverlayScale, shareShowBrand, shareShowMeta]);
 
   const updateShareOverlayFromPointer = useCallback((clientX: number, clientY: number) => {
     const preview = sharePreviewRef.current;
@@ -1080,6 +1243,7 @@ export function EidConfrontoResumoModal({
     setShareBackgroundLabel("Fundo padrão");
     setShareOverlayPosition({ x: 0.5, y: 0.58 });
     setShareOverlayScale(1);
+    setShareBrandLogoScale(1.22);
     setShareCardVariant("dark");
     setShareBackgroundFilter("dim");
     setShareShowMeta(true);
@@ -1430,7 +1594,13 @@ export function EidConfrontoResumoModal({
                         }}
                       >
                         {shareShowBrand ? (
-                          <span className="relative mx-auto block h-4 w-[4.6rem]">
+                          <span
+                            className="relative mx-auto block h-4 w-[4.6rem]"
+                            style={{
+                              width: `${4.6 * shareBrandLogoScale}rem`,
+                              height: `${1 * shareBrandLogoScale}rem`,
+                            }}
+                          >
                             <NextImage src={EID_LOGO_WORDMARK_SRC} alt="EsporteID" fill unoptimized className="object-contain" />
                           </span>
                         ) : null}
@@ -1469,35 +1639,40 @@ export function EidConfrontoResumoModal({
                             <p className="truncate text-[9px] font-black leading-tight text-eid-fg">{shareFirstName(ladoB)}</p>
                           </div>
                         </div>
-                        <p
-                          className={`mt-2 rounded-xl border border-eid-action-500/45 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-500)_24%,transparent),color-mix(in_srgb,var(--eid-primary-500)_14%,transparent))] px-2 py-1.5 font-black leading-none tabular-nums text-eid-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] ${
-                            shareIsGoals ? "text-[24px]" : shareIsSets ? "text-[18px]" : "text-[20px]"
-                          }`}
-                        >
-                          {shareScore.headline}
-                        </p>
-                        {shareScore.detail ? (
-                          <p className="mt-1 text-[7px] font-black uppercase tracking-[0.08em] leading-tight text-eid-primary-100">
-                            {shareScore.detail}
-                          </p>
-                        ) : null}
-                        {shareScore.lines.length ? (
-                          <div className="mt-1 flex flex-wrap justify-center gap-1">
-                            {shareScore.lines.slice(0, 5).map((line) => (
-                              <span
-                                key={line}
-                                className="rounded-md border border-white/12 bg-white/10 px-1.5 py-0.5 text-[8px] font-black leading-none text-eid-fg"
-                              >
-                                {line}
-                              </span>
+                        {shareIsSets ? (
+                          <div className="mt-2 overflow-hidden rounded-lg border border-white/14 bg-white/10 text-eid-fg">
+                            <div className="grid bg-eid-primary-500/15 text-[6px] font-black uppercase text-eid-primary-100" style={{ gridTemplateColumns: `2.8rem repeat(${Math.max(1, shareScore.lines.length)}, minmax(0,1fr))` }}>
+                              <span />
+                              {shareScore.lines.slice(0, 5).map((_, idx) => <span key={`set-head-${idx}`} className="py-0.5">S{idx + 1}</span>)}
+                            </div>
+                            {[ladoA, ladoB].map((name, rowIdx) => (
+                              <div key={name} className="grid border-t border-white/10 text-[8px] font-black" style={{ gridTemplateColumns: `2.8rem repeat(${Math.max(1, shareScore.lines.length)}, minmax(0,1fr))` }}>
+                                <span className="truncate px-1 py-1 text-left">{shareFirstName(name)}</span>
+                                {getShareSetRows(sharePayload).map((set, idx) => (
+                                  <span key={`${name}-${idx}`} className="py-1 tabular-nums">
+                                    {rowIdx === 0 ? set.a : set.b}
+                                    {set.hasTiebreak ? <sup className="ml-px text-[0.55em] text-eid-primary-100">{rowIdx === 0 ? set.tiebreakA : set.tiebreakB}</sup> : null}
+                                  </span>
+                                ))}
+                              </div>
                             ))}
                           </div>
-                        ) : null}
+                        ) : shareIsGoals ? (
+                          <div className="mt-2 rounded-xl border border-white/15 bg-emerald-950/70 px-2 py-1.5 text-eid-fg">
+                            <p className="text-[6px] font-black uppercase tracking-[0.12em] text-white/70">Placar final</p>
+                            <p className="mt-0.5 text-[18px] font-black leading-none tabular-nums">{shareScore.headline}</p>
+                            {shareScore.lines[0] ? <p className="mt-1 text-[7px] font-black uppercase text-eid-action-300">{shareScore.lines[0]}</p> : null}
+                          </div>
+                        ) : (
+                          <p className="mt-2 rounded-xl border border-eid-action-500/45 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-500)_24%,transparent),color-mix(in_srgb,var(--eid-primary-500)_14%,transparent))] px-2 py-1.5 text-[18px] font-black leading-none tabular-nums text-eid-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
+                            {shareScore.headline}
+                          </p>
+                        )}
                         {shareScore.extra && shareCardVariant !== "compact" ? (
                           <p className="mt-1 text-[7px] font-bold leading-tight text-eid-text-secondary">{shareScore.extra}</p>
                         ) : null}
-                        {shareShowMeta && shareCardVariant !== "compact" ? (
-                          <p className="mt-1 line-clamp-1 text-[7px] font-bold text-eid-text-secondary">{origem}</p>
+                        {shareShowMeta ? (
+                          <p className="mt-1 line-clamp-2 text-[7px] font-bold leading-tight text-eid-text-secondary">{shareMetaLine(sharePayload)}</p>
                         ) : null}
                       </div>
                     </div>
@@ -1547,6 +1722,18 @@ export function EidConfrontoResumoModal({
                         value={shareOverlayScale}
                         onChange={(event) => setShareOverlayScale(Number(event.currentTarget.value))}
                         className="mt-1 block w-full accent-[color:var(--eid-action-500)]"
+                      />
+                    </label>
+                    <label className="block text-[10px] font-black uppercase tracking-[0.12em] text-eid-text-secondary">
+                      Tamanho da logo
+                      <input
+                        type="range"
+                        min="0.75"
+                        max="1.7"
+                        step="0.05"
+                        value={shareBrandLogoScale}
+                        onChange={(event) => setShareBrandLogoScale(Number(event.currentTarget.value))}
+                        className="mt-1 block w-full accent-[color:var(--eid-primary-500)]"
                       />
                     </label>
                     <div className="grid grid-cols-3 gap-1.5">

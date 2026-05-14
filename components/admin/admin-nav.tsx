@@ -9,6 +9,7 @@ import {
   CreditCard,
   DollarSign,
   ExternalLink,
+  FileText,
   Flag,
   GraduationCap,
   BarChart3,
@@ -85,6 +86,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/admin/financeiro", label: "Parâmetros", Icon: DollarSign },
       { href: "/admin/integracoes-pagamento", label: "Integrações", Icon: CreditCard },
+      { href: "/admin/notas-fiscais", label: "Notas fiscais", Icon: FileText },
     ],
   },
   {

@@ -7,6 +7,7 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock3,
+  FileText,
   Home,
   Landmark,
   Settings,
@@ -43,6 +44,7 @@ function PainelChromeInner({ space }: { space: EspacoPainelSpace }) {
     { href: "/espaco/agenda", label: "Agenda", Icon: CalendarDays },
     { href: "/espaco/socios", label: "Sócios", Icon: Users },
     ...(mostrarFinanceiro ? [{ href: "/espaco/financeiro", label: "Financ.", Icon: Wallet }] : []),
+    { href: "/espaco/notas-fiscais", label: "Notas", Icon: FileText },
     { href: "/espaco/configuracao", label: "Ajustes", Icon: Settings },
   ] as const;
 

@@ -19,6 +19,7 @@ import { avaliarBeneficiosSocioEspaco } from "@/lib/espacos/eligibility";
 import {
   calcularFinanceiroEspaco,
 } from "@/lib/espacos/financeiro";
+import { fiscalDocumentoDigits } from "@/lib/fiscal/nfse";
 import {
   checkEspacoConflict,
   fetchAutomaticHolidaysForYear,
@@ -3509,4 +3510,97 @@ export async function salvarDadosContaAsaasParceiroAction(
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : "Falha ao salvar." };
   }
+}
+
+export async function salvarConfiguracaoFiscalEspacoAction(formData: FormData) {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const { user } = await requireEspacoManager(espacoId);
+  const admin = createServiceRoleClient();
+  const documento = fiscalDocumentoDigits(formData.get("documento"));
+  const nome = text(formData, "nome_razao_social");
+  if (!nome || !documento) throw new Error("Informe razão social e CPF/CNPJ do emitente.");
+  const payload = {
+    escopo: "espaco",
+    espaco_generico_id: espacoId,
+    nome_razao_social: nome,
+    documento,
+    inscricao_municipal: text(formData, "inscricao_municipal") || null,
+    municipio: text(formData, "municipio") || null,
+    uf: text(formData, "uf").toUpperCase() || null,
+    regime_tributario: text(formData, "regime_tributario") || null,
+    cnae: fiscalDocumentoDigits(formData.get("cnae")) || null,
+    codigo_servico: text(formData, "codigo_servico") || null,
+    item_lista_servico: text(formData, "item_lista_servico") || null,
+    aliquota_iss: numberInputOrNull(formData, "aliquota_iss"),
+    provedor: text(formData, "provedor") || "manual",
+    ambiente: text(formData, "ambiente") === "homologacao" ? "homologacao" : "producao",
+    status: "pronto",
+    config_json: {
+      atualizado_por: user.id,
+      observacoes: text(formData, "observacoes"),
+    },
+    atualizado_em: new Date().toISOString(),
+  };
+  const { data: atual } = await admin
+    .from("fiscal_emitentes")
+    .select("id")
+    .eq("escopo", "espaco")
+    .eq("espaco_generico_id", espacoId)
+    .maybeSingle();
+  const { error } = atual
+    ? await admin.from("fiscal_emitentes").update(payload).eq("id", atual.id)
+    : await admin.from("fiscal_emitentes").insert(payload);
+  if (error) throw new Error(error.message);
+  revalidatePath("/espaco/notas-fiscais");
+}
+
+export async function solicitarNotaFiscalEspacoClienteAction(formData: FormData) {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const transacaoId = Number(formData.get("transacao_id") ?? 0);
+  const { user } = await requireEspacoManager(espacoId);
+  const admin = createServiceRoleClient();
+  const [{ data: emitente }, { data: transacao }, { data: existente }] = await Promise.all([
+    admin
+      .from("fiscal_emitentes")
+      .select("id, status")
+      .eq("escopo", "espaco")
+      .eq("espaco_generico_id", espacoId)
+      .maybeSingle(),
+    admin
+      .from("espaco_transacoes")
+      .select("id, usuario_id, tipo, status, valor_bruto_centavos, valor_liquido_espaco_centavos, espaco_generico_id")
+      .eq("id", transacaoId)
+      .eq("espaco_generico_id", espacoId)
+      .maybeSingle(),
+    admin
+      .from("fiscal_notas")
+      .select("id")
+      .eq("escopo", "espaco_cliente")
+      .eq("transacao_id", transacaoId)
+      .maybeSingle(),
+  ]);
+  if (!emitente || emitente.status !== "pronto") throw new Error("Configure os dados fiscais do espaço antes de solicitar nota.");
+  if (!transacao || transacao.status !== "received") throw new Error("A nota só pode ser solicitada para transação recebida.");
+  if (existente) throw new Error("Essa transação já possui solicitação de nota.");
+  const tomadorNome = text(formData, "tomador_nome");
+  const tomadorDocumento = fiscalDocumentoDigits(formData.get("tomador_documento"));
+  const tomadorEmail = text(formData, "tomador_email");
+  if (!tomadorNome || !tomadorDocumento) throw new Error("Informe nome e CPF/CNPJ do tomador.");
+  const { error } = await admin.from("fiscal_notas").insert({
+    escopo: "espaco_cliente",
+    espaco_generico_id: espacoId,
+    emitente_id: emitente.id,
+    transacao_id: transacao.id,
+    tomador_usuario_id: transacao.usuario_id,
+    tomador_nome: tomadorNome,
+    tomador_documento: tomadorDocumento,
+    tomador_email: tomadorEmail || null,
+    descricao: text(formData, "descricao") || `Serviço ${transacao.tipo}`,
+    valor_servico_centavos: Number(transacao.valor_bruto_centavos ?? 0),
+    status: "solicitada",
+    solicitada_por_usuario_id: user.id,
+    detalhes_json: { origem: "painel_espaco" },
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath("/espaco/notas-fiscais");
 }
