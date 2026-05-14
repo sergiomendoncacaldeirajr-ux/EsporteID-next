@@ -1,6 +1,6 @@
 "use client";
 
-import { Capacitor } from "@capacitor/core";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { ActiveAppContext } from "@/lib/auth/active-context";
@@ -45,6 +45,10 @@ type NativeCalendarPayload = {
   description?: string | null;
   startMs?: number;
   endMs?: number;
+};
+
+type EidCalendarPlugin = {
+  addEvent(payload: NativeCalendarPayload): Promise<{ opened?: boolean }>;
 };
 
 type NativeReminderPayload = NativeCalendarPayload & {
@@ -118,6 +122,8 @@ const EID_ANDROID_PUSH_CHANNELS = [
     importance: 3,
   },
 ] as const;
+
+const EidCalendar = registerPlugin<EidCalendarPlugin>("EidCalendar");
 
 declare global {
   interface Window {
@@ -727,6 +733,12 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
         if (!allowed) return;
         const fileHref = calendarFileHref(payload);
         if (Capacitor.getPlatform() === "android") {
+          try {
+            await EidCalendar.addEvent(payload);
+            return;
+          } catch {
+            /* fallback para versoes antigas do app ou aparelhos sem agenda compativel */
+          }
           try {
             await AppLauncher.openUrl({ url: androidCalendarIntent(payload) });
           } catch {

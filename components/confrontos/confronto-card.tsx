@@ -113,6 +113,11 @@ export function ConfrontoCard({ item }: { item: PublicConfronto }) {
           </p>
           <p className="flex min-w-0 items-center gap-1.5 text-[10px] text-eid-text-secondary">
             <MapPin className="h-3.5 w-3.5 shrink-0 text-eid-primary-300" aria-hidden />
+            {item.localLogoUrl ? (
+              <span className="relative h-5 w-5 shrink-0 overflow-hidden rounded-md border border-[color:var(--eid-border-subtle)] bg-eid-card">
+                <Image src={item.localLogoUrl} alt="" fill unoptimized className="object-cover" />
+              </span>
+            ) : null}
             <span className="truncate">{item.local ?? "Local a confirmar"}</span>
             {dist ? <span className="shrink-0 font-black text-eid-primary-300">· {dist}</span> : null}
           </p>

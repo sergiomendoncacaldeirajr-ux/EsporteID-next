@@ -24,6 +24,7 @@ export type PublicConfronto = {
   dataHoraIso: string | null;
   local: string | null;
   localHref: string | null;
+  localLogoUrl: string | null;
   distanciaKm: number | null;
   placar: string | null;
   mensagem: string | null;
@@ -56,7 +57,14 @@ type PartidaRow = {
 
 type ProfileRow = { id: string; nome: string | null; avatar_url: string | null };
 type TeamRow = { id: number; nome: string | null; escudo: string | null; eid_time: number | null; tipo: string | null };
-type LocalRow = { id: number; nome_publico: string | null; localizacao: string | null; lat: number | null; lng: number | null };
+type LocalRow = {
+  id: number;
+  nome_publico: string | null;
+  localizacao: string | null;
+  logo_arquivo: string | null;
+  lat: number | null;
+  lng: number | null;
+};
 
 const PAGE_SIZE = 10;
 
@@ -166,6 +174,13 @@ export async function loadPublicConfrontos({
           .select("id, esporte_id, modalidade, jogador1_id, jogador2_id, time1_id, time2_id, vencedor_id, placar_1, placar_2, status, torneio_id, data_partida, data_resultado, data_registro, local_str, local_espaco_id, mensagem, esportes(nome)");
 
   if (esporteId) query = query.eq("esporte_id", esporteId);
+  if (tipo === "dupla") {
+    query = query.eq("modalidade", "dupla");
+  } else if (tipo === "time") {
+    query = query.eq("modalidade", "time");
+  } else {
+    query = query.or("modalidade.eq.individual,and(time1_id.is.null,time2_id.is.null)");
+  }
   if (statusView === "proximos") {
     query = query
       .in("status", ["agendada"])
@@ -199,7 +214,7 @@ export async function loadPublicConfrontos({
     profileIds.length ? supabase.from("profiles").select("id, nome, avatar_url").in("id", profileIds) : Promise.resolve({ data: [] }),
     teamIds.length ? supabase.from("times").select("id, nome, escudo, eid_time, tipo").in("id", teamIds) : Promise.resolve({ data: [] }),
     localIds.length
-      ? supabase.from("espacos_genericos").select(includeDetails ? "id, nome_publico, localizacao, lat, lng" : "id, nome_publico, localizacao").in("id", localIds)
+      ? supabase.from("espacos_genericos").select(includeDetails ? "id, nome_publico, localizacao, logo_arquivo, lat, lng" : "id, nome_publico, localizacao, logo_arquivo").in("id", localIds)
       : Promise.resolve({ data: [] }),
     includeDetails && profileIds.length && esporteIds.length
       ? supabase.from("usuario_eid").select("usuario_id, esporte_id, nota_eid").in("usuario_id", profileIds).in("esporte_id", esporteIds)
@@ -257,6 +272,7 @@ export async function loadPublicConfrontos({
         dataHoraIso: row.data_partida ?? row.data_resultado ?? row.data_registro ?? null,
         local,
         localHref: row.local_espaco_id ? `/local/${Number(row.local_espaco_id)}` : null,
+        localLogoUrl: localRow?.logo_arquivo?.trim() || null,
         distanciaKm: dist,
         placar,
         mensagem: row.mensagem ?? null,
