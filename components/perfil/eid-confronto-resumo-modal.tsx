@@ -131,6 +131,9 @@ function sportShareIconText(sportLabel: string | null | undefined) {
 function sportShareDefaultBackgroundSrc(sportLabel: string | null | undefined) {
   const label = cleanShareText(sportLabel, "").toLowerCase();
   if (/fut|soccer|campo|society|futsal/u.test(label)) return "/share-backgrounds/soccer.svg";
+  if (/basquete|basket/u.test(label)) return "/share-backgrounds/basketball.svg";
+  if (/badminton|badmínton|peteca/u.test(label)) return "/share-backgrounds/badminton.svg";
+  if (/pickle/u.test(label)) return "/share-backgrounds/pickleball.svg";
   if (/padel|pádel/u.test(label)) return "/share-backgrounds/padel.svg";
   if (/beach\s*tennis|beachtennis|praia/u.test(label)) return "/share-backgrounds/beach-tennis.svg";
   if (/volei|vôlei|volley|voleibol/u.test(label)) return "/share-backgrounds/volleyball.svg";
@@ -223,14 +226,20 @@ function canvasColorVar(styles: CSSStyleDeclaration, name: string, fallback: str
   return styles.getPropertyValue(name).trim() || fallback;
 }
 
+const canvasImageCache = new Map<string, Promise<HTMLImageElement>>();
+
 function loadCanvasImage(src: string) {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
+  const cached = canvasImageCache.get(src);
+  if (cached) return cached;
+  const promise = new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
     img.onerror = () => reject(new Error("Não foi possível carregar a imagem de fundo."));
     img.src = src;
   });
+  canvasImageCache.set(src, promise);
+  return promise;
 }
 
 function drawImageCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, width: number, height: number) {
@@ -474,9 +483,8 @@ function drawShareSlimResultCard(
   const setRows = getShareSetRows(payload);
   const isSets = shareUsesSetLines(score) && setRows.length > 0;
   const scale = payload.overlayScale;
-  const logoScale = Math.min(1.85, Math.max(0.85, payload.brandLogoScale || 1));
   const baseWidth = isSets ? 760 : 420;
-  const baseHeight = isSets ? 280 : 230;
+  const baseHeight = isSets ? 184 : 124;
   const cardWidth = baseWidth * scale;
   const cardHeight = baseHeight * scale;
   const x = Math.min(1080 - cardWidth - 70, Math.max(70, payload.overlayPosition.x * 1080 - cardWidth / 2));
@@ -502,20 +510,6 @@ function drawShareSlimResultCard(
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  if (payload.showBrand || payload.shareLayout === "slim") {
-    if (brandLogo) {
-      const logoW = 230 * logoScale * scale;
-      const logoH = 56 * logoScale * scale;
-      ctx.drawImage(brandLogo, center - logoW / 2, y + 18 * scale, logoW, logoH);
-    } else {
-      ctx.font = `900 ${30 * logoScale * scale}px Arial, sans-serif`;
-      ctx.fillStyle = text;
-      ctx.fillText("ESPORTE", center - 34 * scale, y + 45 * scale);
-      ctx.fillStyle = colors.action;
-      ctx.fillText("ID", center + 94 * scale, y + 45 * scale);
-    }
-  }
-
   const drawTinyAvatar = (img: HTMLImageElement | null | undefined, label: string, cx: number, cy: number) => {
     const r = 24 * scale;
     ctx.save();
@@ -544,7 +538,7 @@ function drawShareSlimResultCard(
     ctx.stroke();
   };
 
-  const scoreTop = y + (payload.showBrand || payload.shareLayout === "slim" ? 92 : 32) * scale;
+  const scoreTop = y + 30 * scale;
   const scoreX = x + 30 * scale;
   const scoreW = cardWidth - 60 * scale;
   const scoreH = isSets ? 148 * scale : 92 * scale;
@@ -639,6 +633,29 @@ function drawDefaultSportBackground(ctx: CanvasRenderingContext2D, payload: Resu
   glowB.addColorStop(1, "rgba(249, 115, 22, 0)");
   ctx.fillStyle = glowB;
   ctx.fillRect(-260, 1120, 880, 880);
+}
+
+function drawShareTopBrand(
+  ctx: CanvasRenderingContext2D,
+  payload: ResultadoSharePayload,
+  colors: { action: string; fg: string },
+  brandLogo?: HTMLImageElement | null,
+) {
+  const logoScale = Math.min(1.9, Math.max(0.9, payload.brandLogoScale || 1));
+  const y = 138;
+  if (brandLogo) {
+    const logoW = 420 * logoScale;
+    const logoH = 100 * logoScale;
+    ctx.drawImage(brandLogo, 540 - logoW / 2, y, logoW, logoH);
+    return;
+  }
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = `900 ${54 * logoScale}px Arial, sans-serif`;
+  ctx.fillStyle = colors.fg;
+  ctx.fillText("ESPORTE", 492, y + 48 * logoScale);
+  ctx.fillStyle = colors.action;
+  ctx.fillText("ID", 690, y + 48 * logoScale);
 }
 
 function drawShareResultCard(
@@ -854,6 +871,7 @@ async function renderResultadoShareCanvas(payload: ResultadoSharePayload, output
     avatarB = null;
   }
 
+  if (payload.shareLayout === "slim") drawShareTopBrand(ctx, payload, { action, fg }, brandLogo);
   drawShareResultCard(ctx, payload, { primarySoft, action, fg, muted, ink }, brandLogo, { a: avatarA, b: avatarB });
   return canvas;
 }
@@ -865,7 +883,7 @@ async function createResultadoShareImage(payload: ResultadoSharePayload) {
 }
 
 async function createResultadoSharePreviewUrl(payload: ResultadoSharePayload) {
-  const canvas = await renderResultadoShareCanvas(payload, 0.36);
+  const canvas = await renderResultadoShareCanvas(payload, 0.22);
   const blob = await canvasToBlob(canvas);
   return URL.createObjectURL(blob);
 }
@@ -1163,6 +1181,7 @@ export function EidConfrontoResumoModal({
   const [sharePreviewDataUrl, setSharePreviewDataUrl] = useState<string | null>(null);
   const sharePreviewRef = useRef<HTMLDivElement | null>(null);
   const shareFileInputRef = useRef<HTMLInputElement | null>(null);
+  const shareCameraInputRef = useRef<HTMLInputElement | null>(null);
 
   const hrefA =
     (ladoAProfileHref && String(ladoAProfileHref).trim()) ||
@@ -1672,6 +1691,15 @@ export function EidConfrontoResumoModal({
                     onChange={handleSharePhotoChange}
                     aria-label="Escolher foto de fundo"
                   />
+                  <input
+                    ref={shareCameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="sr-only"
+                    onChange={handleSharePhotoChange}
+                    aria-label="Tirar foto de fundo"
+                  />
                   <div className="mb-2.5 grid gap-2 sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
                     <div
                       ref={sharePreviewRef}
@@ -1829,7 +1857,7 @@ export function EidConfrontoResumoModal({
                             ? `Fundo padrão · ${sportLabel ?? "Esporte"}`
                             : shareBackgroundLabel}
                       </p>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         <button
                           type="button"
                           onClick={() => shareFileInputRef.current?.click()}
@@ -1841,6 +1869,14 @@ export function EidConfrontoResumoModal({
                         >
                           <ImageIcon className="h-3.5 w-3.5" aria-hidden />
                           Foto
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => shareCameraInputRef.current?.click()}
+                          className="inline-flex min-h-[2.45rem] items-center justify-center gap-1.5 rounded-xl border border-eid-primary-500/28 bg-eid-primary-500/8 px-2 text-[10px] font-black text-eid-primary-200 transition hover:bg-eid-primary-500/14"
+                        >
+                          <ImageIcon className="h-3.5 w-3.5" aria-hidden />
+                          Câmera
                         </button>
                         <button
                           type="button"
