@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
+import { useState, type FormEvent } from "react";
 import { solicitarDesafioMatch, type SolicitarDesafioState } from "@/app/desafio/actions";
 import { DesafioFlowCtaIcon } from "@/components/desafio/desafio-flow-cta-icon";
 import { DESAFIO_FLOW_CTA_BLOCK_CLASS } from "@/lib/desafio/flow-ui";
@@ -27,13 +27,13 @@ export function DesafioEnviarForm({
   className,
 }: Props) {
   const router = useRouter();
-  const [state, formAction, pending] = useActionState(solicitarDesafioMatch, initial);
+  const [state, setState] = useState<SolicitarDesafioState>(initial);
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (!state.ok) return;
+  function goToNext(redirectTo: string) {
     try {
       if (typeof window !== "undefined" && window.parent !== window.self) {
-        const next = new URL(state.redirectTo, window.location.origin);
+        const next = new URL(redirectTo, window.location.origin);
         if (next.origin === window.location.origin) {
           window.parent.location.assign(next.pathname + next.search + next.hash);
           return;
@@ -42,13 +42,31 @@ export function DesafioEnviarForm({
     } catch {
       /* parent inacessível (cross-origin) */
     }
-    router.push(state.redirectTo);
-  }, [state, router]);
+    router.push(redirectTo);
+    router.refresh();
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+    setState(initial);
+
+    const formData = new FormData(event.currentTarget);
+    const result = await solicitarDesafioMatch(initial, formData);
+    setState(result);
+
+    if (result.ok) {
+      goToNext(result.redirectTo);
+      return;
+    }
+    setSubmitting(false);
+  }
 
   const err = !state.ok && state.message ? state.message : null;
 
   return (
-    <form action={formAction} className={`space-y-4 ${className ?? "mt-4"}`.trim()}>
+    <form onSubmit={handleSubmit} className={`space-y-4 ${className ?? "mt-4"}`.trim()}>
       <input type="hidden" name="modalidade" value={modalidade === "individual" ? "individual" : modalidade} />
       <input type="hidden" name="esporte_id" value={String(esporteId)} />
       <input type="hidden" name="finalidade" value={finalidade} />
@@ -63,10 +81,10 @@ export function DesafioEnviarForm({
         <p className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">{err}</p>
       ) : null}
 
-      <button type="submit" disabled={pending} className={DESAFIO_FLOW_CTA_BLOCK_CLASS}>
+      <button type="submit" disabled={submitting} className={DESAFIO_FLOW_CTA_BLOCK_CLASS}>
         <DesafioFlowCtaIcon />
         <span>
-          {pending
+          {submitting
             ? "Enviando…"
             : finalidade === "amistoso"
               ? "Confirmar desafio amistoso"

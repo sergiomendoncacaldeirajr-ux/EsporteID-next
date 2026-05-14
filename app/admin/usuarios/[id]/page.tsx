@@ -7,6 +7,7 @@ import {
   adminUpdateUsuarioEidRow,
   adminZerarUsuarioEidTodas,
 } from "@/app/admin/actions";
+import { getMatchRankMonthlyLimitPerSport } from "@/lib/app-config/match-rank-monthly-limit";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 import { createClient } from "@/lib/supabase/server";
 
@@ -77,6 +78,207 @@ type PageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+type AdminUsuarioEidRow = {
+  id: number;
+  esporte_id: number | null;
+  nota_eid: number | null;
+  vitorias: number | null;
+  derrotas: number | null;
+  partidas_jogadas: number | null;
+  pontos_ranking: number | null;
+  posicao_rank: number | null;
+  categoria: string | null;
+  interesse_match: string | null;
+  esportes: { nome?: string | null } | { nome?: string | null }[] | null;
+};
+
+type AdminDesafioQuota = {
+  kind: "individual" | "dupla" | "time";
+  label: string;
+  esporteId: number;
+  esporteNome: string;
+  usadosMes: number;
+  limiteMes: number;
+  restantesMes: number;
+  pendentesAbertos: number;
+  teamId?: number;
+};
+
+function normStatus(value: unknown) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function modalidadePartida(row: { modalidade?: string | null; time1_id?: number | null; time2_id?: number | null }) {
+  const mod = normStatus(row.modalidade);
+  if (mod === "dupla" || mod === "time") return mod;
+  if (Number(row.time1_id ?? 0) > 0 || Number(row.time2_id ?? 0) > 0) return "coletivo";
+  return "individual";
+}
+
+function isPartidaRankingValidaNoMes(row: {
+  status?: string | null;
+  status_ranking?: string | null;
+  data_resultado?: string | null;
+  data_registro?: string | null;
+  data_partida?: string | null;
+}, monthStart: string, nextMonthStart: string) {
+  const status = normStatus(row.status);
+  const ranking = normStatus(row.status_ranking);
+  const validada =
+    ranking === "validado" ||
+    ["concluida", "concluída", "concluido", "concluído", "finalizada", "encerrada", "validada"].includes(status);
+  if (!validada) return false;
+  const dt = row.data_resultado ?? row.data_registro ?? row.data_partida ?? null;
+  if (!dt) return false;
+  const iso = new Date(dt).toISOString();
+  return iso >= monthStart && iso < nextMonthStart;
+}
+
+function isPartidaAberta(row: { status?: string | null }) {
+  return ["agendada", "aguardando_confirmacao"].includes(normStatus(row.status));
+}
+
+async function getPendingLimit(db: ReturnType<typeof createServiceRoleClient>) {
+  const { data } = await db.from("app_config").select("value_json").eq("key", "match_rank_pending_result_limit").maybeSingle();
+  const raw = data?.value_json;
+  if (typeof raw === "number" && Number.isFinite(raw)) return Math.max(1, Math.min(20, Math.floor(raw)));
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    const n = Number((raw as { limite?: unknown }).limite);
+    if (Number.isFinite(n)) return Math.max(1, Math.min(20, Math.floor(n)));
+  }
+  return 2;
+}
+
+async function loadAdminDesafioQuotas(
+  db: ReturnType<typeof createServiceRoleClient>,
+  userId: string,
+  eidRows: AdminUsuarioEidRow[]
+): Promise<{ monthlyLimit: number; pendingLimit: number; rows: AdminDesafioQuota[] }> {
+  const [monthlyLimit, pendingLimit, { data: teams }, { data: partidas }, { data: matches }] = await Promise.all([
+    getMatchRankMonthlyLimitPerSport(db),
+    getPendingLimit(db),
+    db
+      .from("times")
+      .select("id, nome, tipo, esporte_id")
+      .eq("criador_id", userId)
+      .in("tipo", ["dupla", "time"]),
+    db
+      .from("partidas")
+      .select("id, match_id, esporte_id, modalidade, status, status_ranking, data_resultado, data_registro, data_partida, jogador1_id, jogador2_id, usuario_id, desafiante_id, desafiado_id, time1_id, time2_id, torneio_id")
+      .is("torneio_id", null)
+      .limit(1000),
+    db
+      .from("matches")
+      .select("id, esporte_id, modalidade_confronto, tipo, status, finalidade, usuario_id, adversario_id, desafiante_time_id, adversario_time_id")
+      .eq("finalidade", "ranking")
+      .in("status", ["Pendente", "Aceito", "CancelamentoPendente", "ReagendamentoPendente"])
+      .limit(1000),
+  ]);
+
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
+  const teamRows = (teams ?? []) as Array<{ id: number; nome: string | null; tipo: string | null; esporte_id: number | null }>;
+  const partidaRows = (partidas ?? []) as Array<Record<string, unknown>>;
+  const matchRows = (matches ?? []) as Array<Record<string, unknown>>;
+  const openMatchIds = new Set(
+    partidaRows
+      .filter((row) => isPartidaAberta({ status: row.status as string | null }))
+      .map((row) => Number(row.match_id ?? 0))
+      .filter((id) => Number.isFinite(id) && id > 0)
+  );
+
+  const esporteNome = new Map<number, string>();
+  for (const row of eidRows) {
+    const esporteId = Number(row.esporte_id ?? 0);
+    if (!Number.isFinite(esporteId) || esporteId < 1) continue;
+    const esp = Array.isArray(row.esportes) ? row.esportes[0] : row.esportes;
+    esporteNome.set(esporteId, esp?.nome ?? `Esporte #${esporteId}`);
+  }
+  for (const team of teamRows) {
+    const esporteId = Number(team.esporte_id ?? 0);
+    if (Number.isFinite(esporteId) && esporteId > 0 && !esporteNome.has(esporteId)) {
+      esporteNome.set(esporteId, `Esporte #${esporteId}`);
+    }
+  }
+
+  function countIndividual(esporteId: number) {
+    const partidasDoUsuario = partidaRows.filter((row) => {
+      if (Number(row.esporte_id ?? 0) !== esporteId || modalidadePartida(row) !== "individual") return false;
+      return [row.jogador1_id, row.jogador2_id, row.usuario_id, row.desafiante_id, row.desafiado_id].some((v) => String(v ?? "") === userId);
+    });
+    const usadosMes = partidasDoUsuario.filter((row) => isPartidaRankingValidaNoMes(row, monthStart, nextMonthStart)).length;
+    const abertas = partidasDoUsuario.filter((row) => isPartidaAberta({ status: row.status as string | null })).length;
+    const matchesAbertos = matchRows.filter((row) => {
+      const id = Number(row.id ?? 0);
+      if (openMatchIds.has(id)) return false;
+      if (Number(row.esporte_id ?? 0) !== esporteId) return false;
+      const mod = normStatus(row.modalidade_confronto ?? row.tipo);
+      if (mod !== "individual" && mod !== "atleta") return false;
+      return String(row.usuario_id ?? "") === userId || String(row.adversario_id ?? "") === userId;
+    }).length;
+    return { usadosMes, pendentesAbertos: abertas + matchesAbertos };
+  }
+
+  function countTeam(teamId: number, esporteId: number) {
+    const partidasDoTime = partidaRows.filter((row) => {
+      if (Number(row.esporte_id ?? 0) !== esporteId) return false;
+      const mod = modalidadePartida(row);
+      if (mod !== "dupla" && mod !== "time" && mod !== "coletivo") return false;
+      return Number(row.time1_id ?? 0) === teamId || Number(row.time2_id ?? 0) === teamId;
+    });
+    const usadosMes = partidasDoTime.filter((row) => isPartidaRankingValidaNoMes(row, monthStart, nextMonthStart)).length;
+    const abertas = partidasDoTime.filter((row) => isPartidaAberta({ status: row.status as string | null })).length;
+    const matchesAbertos = matchRows.filter((row) => {
+      const id = Number(row.id ?? 0);
+      if (openMatchIds.has(id)) return false;
+      if (Number(row.esporte_id ?? 0) !== esporteId) return false;
+      const mod = normStatus(row.modalidade_confronto ?? row.tipo);
+      if (mod !== "dupla" && mod !== "time") return false;
+      return Number(row.desafiante_time_id ?? 0) === teamId || Number(row.adversario_time_id ?? 0) === teamId;
+    }).length;
+    return { usadosMes, pendentesAbertos: abertas + matchesAbertos };
+  }
+
+  const rows: AdminDesafioQuota[] = [];
+  for (const row of eidRows) {
+    const esporteId = Number(row.esporte_id ?? 0);
+    if (!Number.isFinite(esporteId) || esporteId < 1) continue;
+    const counts = countIndividual(esporteId);
+    rows.push({
+      kind: "individual",
+      label: "Individual",
+      esporteId,
+      esporteNome: esporteNome.get(esporteId) ?? `Esporte #${esporteId}`,
+      usadosMes: counts.usadosMes,
+      limiteMes: monthlyLimit,
+      restantesMes: Math.max(0, monthlyLimit - counts.usadosMes),
+      pendentesAbertos: counts.pendentesAbertos,
+    });
+  }
+
+  for (const team of teamRows) {
+    const esporteId = Number(team.esporte_id ?? 0);
+    const teamId = Number(team.id ?? 0);
+    if (!Number.isFinite(esporteId) || esporteId < 1 || !Number.isFinite(teamId) || teamId < 1) continue;
+    const kind = normStatus(team.tipo) === "time" ? "time" : "dupla";
+    const counts = countTeam(teamId, esporteId);
+    rows.push({
+      kind,
+      label: `${kind === "time" ? "Time" : "Dupla"}: ${team.nome ?? `#${teamId}`}`,
+      esporteId,
+      esporteNome: esporteNome.get(esporteId) ?? `Esporte #${esporteId}`,
+      usadosMes: counts.usadosMes,
+      limiteMes: monthlyLimit,
+      restantesMes: Math.max(0, monthlyLimit - counts.usadosMes),
+      pendentesAbertos: counts.pendentesAbertos,
+      teamId,
+    });
+  }
+
+  return { monthlyLimit, pendingLimit, rows };
+}
+
 export default async function AdminUsuarioDetalhePage({ params, searchParams }: PageProps) {
   const { id } = await params;
   const sp = (await searchParams) ?? {};
@@ -120,6 +322,8 @@ export default async function AdminUsuarioDetalhePage({ params, searchParams }: 
     .select("id, esporte_id, nota_eid, vitorias, derrotas, partidas_jogadas, pontos_ranking, posicao_rank, categoria, interesse_match, esportes(nome)")
     .eq("usuario_id", id)
     .order("esporte_id", { ascending: true });
+  const eidRowsTyped = (eidRows ?? []) as AdminUsuarioEidRow[];
+  const desafioQuota = await loadAdminDesafioQuotas(db, id, eidRowsTyped);
 
   const { data: authU } = await db.auth.admin.getUserById(id);
   const email = authU.user?.email ?? "—";
@@ -412,6 +616,87 @@ export default async function AdminUsuarioDetalhePage({ params, searchParams }: 
             </button>
           </div>
         </form>
+      </section>
+
+      <section className="mt-6 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/50 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-bold text-eid-fg">Cota mensal de desafios</h3>
+            <p className="mt-1 text-xs text-eid-text-secondary">
+              Conta confrontos de ranking válidos no mês atual. Pendências abertas aparecem separado para diagnóstico.
+            </p>
+          </div>
+          <div className="rounded-lg border border-eid-primary-500/25 bg-eid-primary-500/10 px-3 py-2 text-right">
+            <p className="text-[10px] font-bold uppercase text-eid-text-secondary">Limites globais</p>
+            <p className="text-xs font-bold text-eid-fg">
+              {desafioQuota.monthlyLimit}/mês · {desafioQuota.pendingLimit} pendentes
+            </p>
+          </div>
+        </div>
+
+        {desafioQuota.rows.length === 0 ? (
+          <p className="mt-3 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-xs text-eid-text-secondary">
+            Nenhum esporte ou formação para calcular.
+          </p>
+        ) : (
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {desafioQuota.rows.map((row) => {
+              const bloqueadoMes = row.restantesMes <= 0;
+              const bloqueadoPendente = row.pendentesAbertos >= desafioQuota.pendingLimit;
+              return (
+                <div
+                  key={`${row.kind}:${row.esporteId}:${row.teamId ?? "user"}`}
+                  className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-black uppercase tracking-wide text-eid-primary-300">
+                        {row.esporteNome}
+                      </p>
+                      <p className="mt-0.5 truncate text-sm font-bold text-eid-fg">{row.label}</p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${
+                        bloqueadoMes
+                          ? "border-red-500/35 bg-red-500/10 text-red-200"
+                          : "border-emerald-500/35 bg-emerald-500/10 text-emerald-200"
+                      }`}
+                    >
+                      {row.restantesMes} restantes
+                    </span>
+                  </div>
+
+                  <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
+                    <div className="rounded-lg bg-eid-card/60 px-2 py-2">
+                      <dt className="text-[10px] font-bold uppercase text-eid-text-secondary">Usados mês</dt>
+                      <dd className="mt-1 text-lg font-black text-eid-fg">{row.usadosMes}</dd>
+                    </div>
+                    <div className="rounded-lg bg-eid-card/60 px-2 py-2">
+                      <dt className="text-[10px] font-bold uppercase text-eid-text-secondary">Limite</dt>
+                      <dd className="mt-1 text-lg font-black text-eid-fg">{row.limiteMes}</dd>
+                    </div>
+                    <div className="rounded-lg bg-eid-card/60 px-2 py-2">
+                      <dt className="text-[10px] font-bold uppercase text-eid-text-secondary">Abertos</dt>
+                      <dd className="mt-1 text-lg font-black text-eid-fg">{row.pendentesAbertos}</dd>
+                    </div>
+                  </dl>
+
+                  {bloqueadoMes || bloqueadoPendente ? (
+                    <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-1.5 text-[11px] font-semibold text-amber-100">
+                      {bloqueadoMes
+                        ? "Limite mensal atingido para este esporte/modalidade."
+                        : "Limite de pendências abertas atingido; precisa concluir/validar uma antes."}
+                    </p>
+                  ) : (
+                    <p className="mt-3 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-2 py-1.5 text-[11px] font-semibold text-emerald-100">
+                      Pode abrir/aceitar desafio de ranking nesta modalidade.
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       <section className="mt-6 rounded-xl border border-red-500/30 bg-eid-bg/30 p-4">

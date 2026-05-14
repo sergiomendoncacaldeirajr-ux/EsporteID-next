@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EidPanelHeader } from "@/components/ui/eid-panel-header";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 import { SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 
@@ -20,12 +21,14 @@ export function ConexoesStrip({ peers }: { peers: ConexaoPeer[] }) {
   return (
     <section className="mt-4 md:mt-8">
       <div className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
-        <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-1.5 md:py-2">
-          <h2 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-eid-text-secondary">Conexões ativas</h2>
-          <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
-            Atalhos
-          </span>
-        </div>
+        <EidPanelHeader
+          title="Conexões ativas"
+          badge={
+            <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+              Atalhos
+            </span>
+          }
+        />
         <p className="px-3 pt-1.5 text-[10px] text-eid-text-secondary md:pt-2 md:text-xs">
           Atletas com desafio aceito — atalho para o perfil.
         </p>

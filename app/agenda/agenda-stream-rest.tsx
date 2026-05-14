@@ -6,6 +6,7 @@ import { AgendaPendenteFormacaoAvatar } from "@/components/agenda/agenda-pendent
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { EidCityState } from "@/components/ui/eid-city-state";
+import { EidPanelHeader } from "@/components/ui/eid-panel-header";
 import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import { getMatchAgendamentoJanelaHoras } from "@/lib/app-config/match-prazos";
@@ -36,12 +37,7 @@ export async function AgendaStreamRest({ supabase, userId, teamClause, agendaTea
         <section id="agenda-status-ranking" className="scroll-mt-4 mt-6 space-y-6 md:scroll-mt-6 md:mt-10">
           {hasRanking ? (
             <div className="overflow-hidden rounded-xl border border-[rgba(217,119,6,0.18)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-warning-500)_3%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] shadow-[0_4px_16px_-8px_rgba(15,23,42,0.3),inset_0_1px_0_rgba(255,255,255,0.03)]">
-              <div className="flex items-center justify-between border-b border-[rgba(217,119,6,0.15)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-warning-500)_9%,var(--eid-surface)),color-mix(in_srgb,var(--eid-warning-500)_4%,var(--eid-surface)))] px-3 py-2">
-                <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-300">
-                  Pedidos de ranking em análise
-                </h2>
-                <EidPendingBadge label="Pendente" />
-              </div>
+              <EidPanelHeader title="Pedidos de ranking em análise" badge={<EidPendingBadge label="Pendente" />} />
               <p className="px-3 pt-2 text-[11px] text-eid-text-secondary md:text-xs">
                 Status para o elenco: o capitão adversário responde no{" "}
                 <Link href="/comunidade#desafio-pedidos" className="font-bold text-eid-primary-300 hover:underline">
@@ -165,10 +161,7 @@ export async function AgendaStreamRest({ supabase, userId, teamClause, agendaTea
       {hasPedidosEnvio ? (
         <section className="mt-6 md:mt-10">
           <div className="overflow-hidden rounded-xl border border-[rgba(37,99,235,0.16)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] shadow-[0_4px_16px_-8px_rgba(15,23,42,0.3),inset_0_1px_0_rgba(255,255,255,0.03)]">
-            <div className="flex items-center justify-between border-b border-[rgba(37,99,235,0.12)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-primary-500)_9%,var(--eid-surface)),color-mix(in_srgb,var(--eid-primary-500)_4%,var(--eid-surface)))] px-3 py-2">
-              <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-primary-300">Pedidos que você enviou</h2>
-              <EidPendingBadge label="Pendentes" />
-            </div>
+            <EidPanelHeader title="Pedidos que você enviou" badge={<EidPendingBadge label="Pendentes" />} />
             <ul className="m-3 space-y-2">
               {(p.pendentesEnvio ?? []).map((m) => {
                 const adv = m.adversario_id ? p.advMap.get(m.adversario_id) : null;

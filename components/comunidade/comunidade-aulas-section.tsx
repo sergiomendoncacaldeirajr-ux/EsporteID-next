@@ -5,6 +5,7 @@ import {
 } from "@/app/professor/actions";
 import { descreverPoliticaCancelamentoProfessor } from "@/lib/professor/cancellation";
 import { EidCancelAction } from "@/components/ui/eid-cancel-action";
+import { EidPanelHeader, EID_PANEL_HEADER_CLASS, EID_PANEL_TITLE_CLASS } from "@/components/ui/eid-panel-header";
 
 export type ComunidadeProfessorProfileRow = {
   id: string;
@@ -74,17 +75,14 @@ export function ComunidadeAulasSection({
   professorNotifs: ProfessorNotifItem[];
 }) {
   return (
-    <section className="eid-list-item rounded-2xl bg-eid-card/90 p-4 md:p-5">
-      <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Minhas aulas</h2>
-      <p className="mt-1 hidden text-sm text-eid-text-secondary md:block">
-        Acompanhe pedidos, aulas confirmadas e avisos do seu atendimento em um único quadro.
-      </p>
+    <section className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90">
+      <EidPanelHeader title="Minhas aulas" />
 
-      <div className="mt-3 space-y-4">
+      <div className="space-y-4 p-4 md:p-5">
         <div>
-          <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-300">
-            Pedidos de aula
-          </h3>
+          <div className={EID_PANEL_HEADER_CLASS}>
+            <h3 className={EID_PANEL_TITLE_CLASS}>Pedidos de aula</h3>
+          </div>
           <div className="mt-2 space-y-3">
           {solicitacoes.length ? (
             solicitacoes.map((solicitacao) => {
@@ -156,9 +154,9 @@ export function ComunidadeAulasSection({
         </div>
 
         <div>
-          <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-400">
-            Aulas confirmadas e em andamento
-          </h3>
+          <div className={EID_PANEL_HEADER_CLASS}>
+            <h3 className={EID_PANEL_TITLE_CLASS}>Aulas confirmadas e em andamento</h3>
+          </div>
           <div className="mt-2 space-y-3">
           {vinculos.length ? (
             vinculos.map((vinculo) => {
@@ -253,9 +251,9 @@ export function ComunidadeAulasSection({
         </div>
 
         <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3">
-          <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-action-300">
-            Avisos das suas aulas
-          </h3>
+          <div className={EID_PANEL_HEADER_CLASS}>
+            <h3 className={EID_PANEL_TITLE_CLASS}>Avisos das suas aulas</h3>
+          </div>
           {professorNotifs.length === 0 ? (
             <p className="mt-2 text-xs text-eid-text-secondary">Sem avisos de aula no momento.</p>
           ) : (

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { Calendar, Clock, Clock3, LayoutGrid, Shield, User, UserPlus } from "lucide-react";
+import { Calendar, Clock, Clock3, LayoutGrid, Shield, User } from "lucide-react";
 import { ComunidadeConvitesTime, type ConviteTimeItem } from "@/components/comunidade/comunidade-convites-time";
 import {
   ComunidadeConvitesEnviadosTime,
@@ -15,6 +15,7 @@ import { ComunidadeSugestoesMatch, type SugestaoMatchItem } from "@/components/c
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { EidCityState } from "@/components/ui/eid-city-state";
+import { EidPanelHeader, EID_PANEL_HEADER_CLASS, EID_PANEL_TITLE_CLASS } from "@/components/ui/eid-panel-header";
 import { CancelarCandidaturaForm } from "@/components/vagas/vagas-actions";
 import { CandidaturaResponseActions } from "@/components/vagas/candidatura-response-actions";
 import {
@@ -634,21 +635,15 @@ export async function ComunidadeStreamEquipe({
 
   return (
     <section className="eid-list-item overflow-hidden rounded-2xl border border-[rgba(37,99,235,0.15)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_98%,var(--eid-primary-500)_2%),var(--eid-card))] p-0 shadow-[0_4px_18px_-10px_rgba(15,23,42,0.3),inset_0_1px_0_rgba(255,255,255,0.03)] md:p-0">
-      <div className="flex items-center justify-between gap-2 border-b border-[rgba(37,99,235,0.12)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-primary-500)_9%,var(--eid-surface)),color-mix(in_srgb,var(--eid-primary-500)_4%,var(--eid-surface)))] px-3 py-2 md:px-4">
-        <div className="flex min-w-0 items-center gap-1.5">
-          <UserPlus className="h-3.5 w-3.5 shrink-0 text-eid-primary-400" strokeWidth={2} aria-hidden />
-          <div className="min-w-0">
-            <h2 className="text-[8px] font-black uppercase tracking-[0.14em] text-eid-primary-200">Equipe</h2>
-            <p className="mt-0.5 hidden text-[8px] font-medium text-eid-text-secondary md:block">
-              Convites e sugestões de liderança que precisam da sua resposta.
-            </p>
-          </div>
-        </div>
-        <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.08em] text-eid-primary-500 eid-dark:text-eid-primary-300">
-          <LayoutGrid className="h-3 w-3 text-eid-primary-500" strokeWidth={2} aria-hidden />
-          Formações
-        </span>
-      </div>
+      <EidPanelHeader
+        title="Equipe"
+        badge={
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.08em] text-eid-primary-500 eid-dark:text-eid-primary-300">
+            <LayoutGrid className="h-3 w-3 text-eid-primary-500" strokeWidth={2} aria-hidden />
+            Formações
+          </span>
+        }
+      />
       <div className="px-2 py-2.5 md:px-3 md:py-3">
         <div className="space-y-3">
           <ComunidadeQuadro id="equipe-sugestoes" title="Sugestões da equipe (liderança)" hasPending={sugestoesItems.length > 0}>
@@ -690,9 +685,9 @@ export async function ComunidadeStreamEquipe({
                       : "/comunidade";
                   return (
                     <li key={c.id} className={`${getSocialStatusPanelItemShell("pendente")} p-0 text-sm`}>
-                      <div className="flex items-center justify-between gap-2 border-b border-transparent bg-[color:color-mix(in_srgb,var(--eid-card)_62%,transparent)] px-3.5 py-2 sm:px-4.5 eid-light:bg-white/95">
+                      <div className={EID_PANEL_HEADER_CLASS}>
                         {candidaturasEquipe.length === 1 ? (
-                          <h3 className="min-w-0 text-[11px] font-semibold leading-snug tracking-tight text-eid-primary-500 eid-dark:text-eid-primary-300">
+                          <h3 className={EID_PANEL_TITLE_CLASS}>
                             Pedidos para entrar no elenco
                           </h3>
                         ) : (

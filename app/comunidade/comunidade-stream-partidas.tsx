@@ -1,7 +1,7 @@
-import Link from "next/link";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AgendaAceitosCancelaveis, type AceitosCancelaveisItem } from "@/components/agenda/agenda-aceitos-cancelaveis";
 import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
+import { EidPanelHeader, EID_PANEL_HEADER_CLASS, EID_PANEL_TITLE_CLASS } from "@/components/ui/eid-panel-header";
 import { userIsDesafioAgendaLeaderFromMap } from "@/lib/agenda/desafio-match-leadership";
 import { loadAceitosCancelaveisItems } from "@/lib/agenda/load-aceitos-cancelaveis-items";
 import {
@@ -389,29 +389,23 @@ export async function ComunidadeStreamPartidas({
           id="resultados-partida"
           className="eid-list-item overflow-hidden rounded-2xl border border-[rgba(249,115,22,0.15)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_98%,var(--eid-action-500)_2%),var(--eid-card))] p-0 shadow-[0_4px_18px_-10px_rgba(15,23,42,0.3),inset_0_1px_0_rgba(255,255,255,0.03)] md:p-0"
         >
-          <div className="flex items-center justify-between gap-2 border-b border-[rgba(249,115,22,0.14)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-action-500)_9%,var(--eid-surface)),color-mix(in_srgb,var(--eid-action-500)_4%,var(--eid-surface)))] px-3 py-2.5 md:px-4">
-            <div>
-              <h2 className="text-[12px] font-black tracking-tight text-eid-fg">Partidas e resultados</h2>
-              <p className="mt-0.5 hidden text-[11px] text-eid-text-secondary md:block">
-                Lançamento de placar, revisão e confirmação. Cancelamento ou nova data em desafio aceito fica em{" "}
-                <strong className="text-eid-fg">Desafios aceitos</strong> (neste painel, quando houver). Na{" "}
-                <Link href="/agenda" className="font-semibold text-eid-primary-300 hover:underline">
-                  Agenda
-                </Link>{" "}
-                você vê só <strong className="text-eid-fg">data e local</strong> como referência.
-              </p>
-            </div>
-            <span className="inline-flex items-center gap-1 shrink-0 rounded-full border border-eid-action-500/35 bg-eid-action-500/12 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.05em] text-eid-action-300 shadow-[0_0_8px_-3px_rgba(249,115,22,0.25)]">
-              Fluxo de placar
-            </span>
-          </div>
+          <EidPanelHeader
+            title="Partidas e resultados"
+            badge={
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-eid-action-500/35 bg-eid-action-500/12 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.05em] text-eid-action-300 shadow-[0_0_8px_-3px_rgba(249,115,22,0.25)]">
+                Fluxo de placar
+              </span>
+            }
+          />
 
           <div className="px-3 py-3 md:px-4 md:py-4">
             <div className="space-y-6">
               {(painelPlacarPendente ?? []).length > 0 ? (
-                <div>
-                  <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-action-400">Placar aguardando você</h3>
-                  <div className="mt-4 space-y-4">
+                <div className="overflow-hidden rounded-2xl border border-eid-action-500/20 bg-eid-action-500/5">
+                  <div className={EID_PANEL_HEADER_CLASS}>
+                    <h3 className={EID_PANEL_TITLE_CLASS}>Placar aguardando você</h3>
+                  </div>
+                  <div className="space-y-4 p-3">
                     {(painelPlacarPendente ?? []).map((row) => {
                       const esp = firstOfRelation(row.esportes);
                       const pr = row as AgendaPartidaCardRow;
@@ -466,12 +460,11 @@ export async function ComunidadeStreamPartidas({
               ) : null}
 
               {painelAgendadasVisiveis.length > 0 ? (
-                <div>
-                  <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-400">Lançar resultado</h3>
-                  <p className="mt-1 text-xs text-eid-text-secondary">
-                    Partidas agendadas em que você pode enviar o placar após o jogo.
-                  </p>
-                  <div className="mt-4 space-y-4">
+                <div className="overflow-hidden rounded-2xl border border-eid-primary-500/20 bg-eid-primary-500/5">
+                  <div className={EID_PANEL_HEADER_CLASS}>
+                    <h3 className={EID_PANEL_TITLE_CLASS}>Lançar resultado</h3>
+                  </div>
+                  <div className="space-y-4 p-3">
                     {painelAgendadasVisiveis.map((row) => {
                       const esp = firstOfRelation(row.esportes);
                       const pr = row as AgendaPartidaCardRow;

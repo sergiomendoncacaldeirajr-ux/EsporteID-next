@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { apagarNotificacao, marcarNotificacaoLida, marcarTodasNotificacoesLidas } from "@/app/comunidade/actions";
+import { EidPanelHeader } from "@/components/ui/eid-panel-header";
 import { EidNotificacaoRow } from "@/components/ui/eid-notificacao-row";
 import { isAmistosoAceiteInformativoNotif } from "@/lib/notificacoes/amistoso-aceite-informativo";
 import { resolveNotificationHref } from "@/lib/notificacoes/resolve-notification-href";
@@ -36,34 +37,31 @@ export function ComunidadeNotificacoesSection({ items }: { items: NotifRow[] }) 
   return (
     <section
       id="notificacoes"
-      className="scroll-mt-24 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-3 md:p-4"
+      className="scroll-mt-24 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))]"
     >
-      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--eid-border-subtle)] pb-3">
-        <div>
-          <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Notificações</h2>
-          <p className="mt-1 text-sm text-eid-text-secondary">
-            Avisos gerais, respostas e lembretes em um só lugar.
-          </p>
-        </div>
-        {unread > 0 ? (
-          <form action={marcarTodasNotificacoesLidas}>
-            <button
-              type="submit"
-              data-eid-compact-chip-btn="true"
-              className="rounded-lg border border-eid-primary-500/40 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-eid-primary-300 transition hover:bg-eid-primary-500/10"
-            >
-              Marcar todas lidas ({unread})
-            </button>
-          </form>
-        ) : null}
-      </div>
+      <EidPanelHeader
+        title="Notificações"
+        badge={
+          unread > 0 ? (
+            <form action={marcarTodasNotificacoesLidas}>
+              <button
+                type="submit"
+                data-eid-compact-chip-btn="true"
+                className="rounded-lg border border-eid-primary-500/40 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-eid-primary-300 transition hover:bg-eid-primary-500/10"
+              >
+                Marcar todas lidas ({unread})
+              </button>
+            </form>
+          ) : null
+        }
+      />
 
       {items.length === 0 ? (
-        <p className="mt-4 rounded-2xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-card/50 p-6 text-center text-sm text-eid-text-secondary">
+        <p className="m-3 rounded-2xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-card/50 p-6 text-center text-sm text-eid-text-secondary md:m-4">
           Nenhuma notificação ainda. Novos avisos aparecem aqui automaticamente.
         </p>
       ) : (
-        <ul className="mt-4 list-none space-y-2 p-0">
+        <ul className="list-none space-y-2 p-3 md:p-4">
           {items.map((n) => (
             <li key={n.id}>
               <EidNotificacaoRow unread={n.lida !== true}>

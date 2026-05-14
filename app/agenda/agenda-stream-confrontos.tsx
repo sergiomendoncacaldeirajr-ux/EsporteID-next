@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
+import { EidPanelHeader } from "@/components/ui/eid-panel-header";
 import { userIsDesafioAgendaLeaderFromMap } from "@/lib/agenda/desafio-match-leadership";
 import {
   type AgendaPartidaCardRow,
@@ -27,12 +28,12 @@ export async function AgendaStreamConfrontos({ supabase, userId, teamClause, age
   return (
     <section className="mt-6 md:mt-10">
       <div className="overflow-hidden rounded-xl border border-[rgba(37,99,235,0.16)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] shadow-[0_4px_16px_-8px_rgba(15,23,42,0.3),inset_0_1px_0_rgba(255,255,255,0.03)]">
-        <div className="flex items-center justify-between border-b border-[rgba(37,99,235,0.12)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-primary-500)_9%,var(--eid-surface)),color-mix(in_srgb,var(--eid-primary-500)_4%,var(--eid-surface)))] px-3 py-2">
-          <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-primary-500">Confrontos</h2>
-          <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+        <EidPanelHeader
+          title="Confrontos"
+          badge={<span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
             Agenda
-          </span>
-        </div>
+          </span>}
+        />
         <p className="px-3 pt-2 text-[11px] text-eid-text-secondary md:text-xs">
           Ajuste <strong className="text-eid-fg">data e local</strong> aqui. Pedidos de cancelamento ou nova data:{" "}
           <Link href="/comunidade#desafios-aceitos-gestao" className="font-bold text-eid-primary-300 hover:underline">
