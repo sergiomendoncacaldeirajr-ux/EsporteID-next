@@ -130,6 +130,8 @@ function sportShareIconText(sportLabel: string | null | undefined) {
 
 function sportShareDefaultBackgroundSrc(sportLabel: string | null | undefined) {
   const label = cleanShareText(sportLabel, "").toLowerCase();
+  if (/padel|pádel/u.test(label)) return "/share-backgrounds/padel.svg";
+  if (/beach\s*tennis|beachtennis|praia/u.test(label)) return "/share-backgrounds/beach-tennis.svg";
   if (/tenis|tênis/u.test(label)) return "/share-backgrounds/tennis.svg";
   return null;
 }
@@ -470,7 +472,7 @@ function drawShareSlimResultCard(
   const setRows = getShareSetRows(payload);
   const isSets = shareUsesSetLines(score) && setRows.length > 0;
   const scale = payload.overlayScale;
-  const logoScale = Math.min(1.7, Math.max(0.75, payload.brandLogoScale || 1));
+  const logoScale = Math.min(1.85, Math.max(0.85, payload.brandLogoScale || 1));
   const baseWidth = isSets ? 760 : 420;
   const baseHeight = isSets ? 280 : 230;
   const cardWidth = baseWidth * scale;
@@ -500,20 +502,20 @@ function drawShareSlimResultCard(
   ctx.textBaseline = "middle";
   if (payload.showBrand) {
     if (brandLogo) {
-      const logoW = 190 * logoScale * scale;
-      const logoH = 46 * logoScale * scale;
-      ctx.drawImage(brandLogo, center - logoW / 2, y + 22 * scale, logoW, logoH);
+      const logoW = 230 * logoScale * scale;
+      const logoH = 56 * logoScale * scale;
+      ctx.drawImage(brandLogo, center - logoW / 2, y + 18 * scale, logoW, logoH);
     } else {
-      ctx.font = `900 ${25 * logoScale * scale}px Arial, sans-serif`;
+      ctx.font = `900 ${30 * logoScale * scale}px Arial, sans-serif`;
       ctx.fillStyle = text;
-      ctx.fillText("ESPORTE", center - 26 * scale, y + 44 * scale);
+      ctx.fillText("ESPORTE", center - 34 * scale, y + 45 * scale);
       ctx.fillStyle = colors.action;
-      ctx.fillText("ID", center + 76 * scale, y + 44 * scale);
+      ctx.fillText("ID", center + 94 * scale, y + 45 * scale);
     }
   }
 
   const drawTinyAvatar = (img: HTMLImageElement | null | undefined, label: string, cx: number, cy: number) => {
-    const r = 17 * scale;
+    const r = 24 * scale;
     ctx.save();
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
@@ -530,7 +532,7 @@ function drawShareSlimResultCard(
     ctx.restore();
     if (!img) {
       ctx.fillStyle = colors.primarySoft;
-      ctx.font = `900 ${11 * scale}px Arial, sans-serif`;
+      ctx.font = `900 ${14 * scale}px Arial, sans-serif`;
       ctx.fillText(shareInitials(label), cx, cy + 1 * scale);
     }
     ctx.strokeStyle = "rgba(255,255,255,0.40)";
@@ -540,7 +542,7 @@ function drawShareSlimResultCard(
     ctx.stroke();
   };
 
-  const scoreTop = y + (payload.showBrand ? 82 : 32) * scale;
+  const scoreTop = y + (payload.showBrand ? 92 : 32) * scale;
   const scoreX = x + 30 * scale;
   const scoreW = cardWidth - 60 * scale;
   const scoreH = isSets ? 148 * scale : 92 * scale;
@@ -552,7 +554,7 @@ function drawShareSlimResultCard(
   ctx.stroke();
 
   if (isSets) {
-    const nameW = 210 * scale;
+    const nameW = 238 * scale;
     const headerH = 38 * scale;
     const rowH = 55 * scale;
     const colW = (scoreW - nameW) / Math.max(1, setRows.length);
@@ -566,11 +568,11 @@ function drawShareSlimResultCard(
       const rowY = scoreTop + headerH + rowIdx * rowH;
       ctx.fillStyle = rowIdx === 0 ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.08)";
       ctx.fillRect(scoreX, rowY, scoreW, rowH);
-      drawTinyAvatar(rowIdx === 0 ? avatars?.a : avatars?.b, name, scoreX + 34 * scale, rowY + rowH / 2);
+      drawTinyAvatar(rowIdx === 0 ? avatars?.a : avatars?.b, name, scoreX + 42 * scale, rowY + rowH / 2);
       ctx.textAlign = "left";
       ctx.fillStyle = text;
       ctx.font = `900 ${16 * scale}px Arial, sans-serif`;
-      ctx.fillText(shareFirstName(name), scoreX + 62 * scale, rowY + rowH / 2 + 1 * scale);
+      ctx.fillText(shareFirstName(name), scoreX + 76 * scale, rowY + rowH / 2 + 1 * scale);
       ctx.textAlign = "center";
       setRows.forEach((set, idx) => {
         drawCanvasSetCell(
@@ -1253,17 +1255,30 @@ export function EidConfrontoResumoModal({
     const id = window.setTimeout(async () => {
       try {
         const file = await createResultadoShareImage(sharePayload);
-        const url = await fileToDataUrl(file);
-        if (!cancelled) setSharePreviewDataUrl(url);
+        const url = URL.createObjectURL(file);
+        if (cancelled) {
+          URL.revokeObjectURL(url);
+          return;
+        }
+        setSharePreviewDataUrl((previous) => {
+          if (previous?.startsWith("blob:")) window.setTimeout(() => URL.revokeObjectURL(previous), 0);
+          return url;
+        });
       } catch {
         if (!cancelled) setSharePreviewDataUrl(null);
       }
-    }, 180);
+    }, 40);
     return () => {
       cancelled = true;
       window.clearTimeout(id);
     };
   }, [sharePanelOpen, sharePayload]);
+
+  useEffect(() => {
+    return () => {
+      if (sharePreviewDataUrl?.startsWith("blob:")) URL.revokeObjectURL(sharePreviewDataUrl);
+    };
+  }, [sharePreviewDataUrl]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1707,8 +1722,8 @@ export function EidConfrontoResumoModal({
                           <span
                             className="relative mx-auto block h-4 w-[4.6rem]"
                             style={{
-                              width: `${(shareLayout === "slim" ? 4 : 4.6) * shareBrandLogoScale}rem`,
-                              height: `${(shareLayout === "slim" ? 0.86 : 1) * shareBrandLogoScale}rem`,
+                              width: `${(shareLayout === "slim" ? 5.2 : 4.6) * shareBrandLogoScale}rem`,
+                              height: `${(shareLayout === "slim" ? 1.12 : 1) * shareBrandLogoScale}rem`,
                             }}
                           >
                             <NextImage src={EID_LOGO_WORDMARK_SRC} alt="EsporteID" fill unoptimized className="object-contain" />
@@ -1763,7 +1778,7 @@ export function EidConfrontoResumoModal({
                               <div key={name} className={`${shareLayout === "slim" ? "text-[7px]" : "text-[8px]"} grid border-t border-white/10 font-black`} style={{ gridTemplateColumns: `${shareLayout === "slim" ? "2.35rem" : "2.8rem"} repeat(${Math.max(1, shareSetRows.length)}, minmax(0,1fr))` }}>
                                 <span className="flex min-w-0 items-center gap-1 truncate px-1 py-1 text-left">
                                   {shareLayout === "slim" ? (
-                                    <span className="relative inline-block h-3.5 w-3.5 shrink-0 overflow-hidden rounded-full border border-white/20 bg-white/10">
+                                    <span className="relative inline-block h-5 w-5 shrink-0 overflow-hidden rounded-full border border-white/20 bg-white/10">
                                       {(rowIdx === 0 ? ladoAAvatarUrl : ladoBAvatarUrl) ? (
                                         <NextImage src={(rowIdx === 0 ? ladoAAvatarUrl : ladoBAvatarUrl) ?? ""} alt="" fill unoptimized className="object-cover" />
                                       ) : null}
