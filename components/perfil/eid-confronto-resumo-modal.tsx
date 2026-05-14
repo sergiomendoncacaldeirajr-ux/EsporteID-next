@@ -128,6 +128,12 @@ function sportShareIconText(sportLabel: string | null | undefined) {
   return "◆";
 }
 
+function sportShareDefaultBackgroundSrc(sportLabel: string | null | undefined) {
+  const label = cleanShareText(sportLabel, "").toLowerCase();
+  if (/tenis|tênis/u.test(label)) return "/share-backgrounds/tennis.svg";
+  return null;
+}
+
 function shareUsesSetLines(score: ReturnType<typeof shareScoreSummary>) {
   return score.detail === "Placar por sets" && score.lines.length > 0;
 }
@@ -802,14 +808,22 @@ async function createResultadoShareImage(payload: ResultadoSharePayload) {
   const fg = canvasColorVar(styles, "--eid-fg", "rgb(255, 255, 255)");
   const muted = canvasColorVar(styles, "--eid-text-muted", "rgba(255, 255, 255, 0.72)");
 
-  if (payload.backgroundDataUrl) {
-    const image = await loadCanvasImage(payload.backgroundDataUrl);
-    ctx.save();
-    if (payload.backgroundFilter === "blur") ctx.filter = "blur(10px) saturate(1.08)";
-    drawImageCover(ctx, image, 1080, 1920);
-    ctx.restore();
-    ctx.fillStyle = payload.backgroundFilter === "normal" ? "rgba(0, 0, 0, 0.12)" : "rgba(0, 0, 0, 0.34)";
-    ctx.fillRect(0, 0, 1080, 1920);
+  const defaultBackgroundSrc = sportShareDefaultBackgroundSrc(payload.sportLabel);
+  const backgroundSrc = payload.backgroundDataUrl || defaultBackgroundSrc;
+  if (backgroundSrc) {
+    try {
+      const image = await loadCanvasImage(backgroundSrc);
+      ctx.save();
+      if (payload.backgroundFilter === "blur" && payload.backgroundDataUrl) ctx.filter = "blur(10px) saturate(1.08)";
+      drawImageCover(ctx, image, 1080, 1920);
+      ctx.restore();
+      if (payload.backgroundDataUrl) {
+        ctx.fillStyle = payload.backgroundFilter === "normal" ? "rgba(0, 0, 0, 0.12)" : "rgba(0, 0, 0, 0.34)";
+        ctx.fillRect(0, 0, 1080, 1920);
+      }
+    } catch {
+      drawDefaultSportBackground(ctx, payload, { ink, surface, primary, action });
+    }
   } else {
     drawDefaultSportBackground(ctx, payload, { ink, surface, primary, action });
   }
@@ -1787,7 +1801,13 @@ export function EidConfrontoResumoModal({
                     </div>
                     <div className="flex min-w-0 flex-col justify-center gap-2">
                       <p className="text-[10px] font-black uppercase tracking-[0.12em] text-eid-primary-300">Arte para Stories</p>
-                      <p className="truncate text-[11px] font-semibold text-eid-text-secondary">{shareBackgroundLabel}</p>
+                      <p className="truncate text-[11px] font-semibold text-eid-text-secondary">
+                        {shareBackgroundDataUrl
+                          ? shareBackgroundLabel
+                          : sportShareDefaultBackgroundSrc(sportLabel)
+                            ? `Fundo padrão · ${sportLabel ?? "Esporte"}`
+                            : shareBackgroundLabel}
+                      </p>
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           type="button"
