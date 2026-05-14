@@ -37,14 +37,19 @@ export async function AgendaStreamRest({ supabase, userId, teamClause, agendaTea
         <section id="agenda-status-ranking" className="scroll-mt-4 mt-6 space-y-6 md:scroll-mt-6 md:mt-10">
           {hasRanking ? (
             <div className="overflow-hidden rounded-xl border border-[rgba(217,119,6,0.18)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-warning-500)_3%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] shadow-[0_4px_16px_-8px_rgba(15,23,42,0.3),inset_0_1px_0_rgba(255,255,255,0.03)]">
-              <EidPanelHeader title="Pedidos de ranking em análise" badge={<EidPendingBadge label="Pendente" />} />
-              <p className="px-3 pt-2 text-[11px] text-eid-text-secondary md:text-xs">
-                Status para o elenco: o capitão adversário responde no{" "}
-                <Link href="/comunidade#desafio-pedidos" className="font-bold text-eid-primary-300 hover:underline">
-                  Painel social
-                </Link>
-                . Sem data/local até o pedido ser aceito.
-              </p>
+              <EidPanelHeader
+                title="Pedidos de ranking em análise"
+                badge={<EidPendingBadge label="Pendente" />}
+                info={
+                  <>
+                    Status para o elenco: o capitão adversário responde no{" "}
+                    <Link href="/comunidade#desafio-pedidos" className="font-bold text-eid-primary-300 hover:underline">
+                      Painel social
+                    </Link>
+                    . Sem data/local até o pedido ser aceito.
+                  </>
+                }
+              />
               <ul className="m-3 space-y-2">
                 {p.pendentesRankingStatus.map((m) => {
                   const tid1 = Number(m.desafiante_time_id ?? 0);
@@ -161,7 +166,11 @@ export async function AgendaStreamRest({ supabase, userId, teamClause, agendaTea
       {hasPedidosEnvio ? (
         <section className="mt-6 md:mt-10">
           <div className="overflow-hidden rounded-xl border border-[rgba(37,99,235,0.16)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] shadow-[0_4px_16px_-8px_rgba(15,23,42,0.3),inset_0_1px_0_rgba(255,255,255,0.03)]">
-            <EidPanelHeader title="Pedidos que você enviou" badge={<EidPendingBadge label="Pendentes" />} />
+            <EidPanelHeader
+              title="Pedidos que você enviou"
+              badge={<EidPendingBadge label="Pendentes" />}
+              info="Acompanhe pedidos de desafio que você enviou e que ainda aguardam resposta."
+            />
             <ul className="m-3 space-y-2">
               {(p.pendentesEnvio ?? []).map((m) => {
                 const adv = m.adversario_id ? p.advMap.get(m.adversario_id) : null;

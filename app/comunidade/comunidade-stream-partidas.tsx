@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AgendaAceitosCancelaveis, type AceitosCancelaveisItem } from "@/components/agenda/agenda-aceitos-cancelaveis";
 import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
-import { EidPanelHeader, EID_PANEL_HEADER_CLASS, EID_PANEL_TITLE_CLASS } from "@/components/ui/eid-panel-header";
+import { EidPanelHeader } from "@/components/ui/eid-panel-header";
 import { userIsDesafioAgendaLeaderFromMap } from "@/lib/agenda/desafio-match-leadership";
 import { loadAceitosCancelaveisItems } from "@/lib/agenda/load-aceitos-cancelaveis-items";
 import {
@@ -396,15 +396,18 @@ export async function ComunidadeStreamPartidas({
                 Fluxo de placar
               </span>
             }
+            info="Acompanhe partidas que precisam de placar e desafios já prontos para lançar resultado."
           />
 
           <div className="px-3 py-3 md:px-4 md:py-4">
             <div className="space-y-6">
               {(painelPlacarPendente ?? []).length > 0 ? (
                 <div className="overflow-hidden rounded-2xl border border-eid-action-500/20 bg-eid-action-500/5">
-                  <div className={EID_PANEL_HEADER_CLASS}>
-                    <h3 className={EID_PANEL_TITLE_CLASS}>Placar aguardando você</h3>
-                  </div>
+                  <EidPanelHeader
+                    title="Placar aguardando você"
+                    titleAs="h3"
+                    info="Resultados que aguardam sua revisão ou confirmação."
+                  />
                   <div className="space-y-4 p-3">
                     {(painelPlacarPendente ?? []).map((row) => {
                       const esp = firstOfRelation(row.esportes);
@@ -461,9 +464,11 @@ export async function ComunidadeStreamPartidas({
 
               {painelAgendadasVisiveis.length > 0 ? (
                 <div className="overflow-hidden rounded-2xl border border-eid-primary-500/20 bg-eid-primary-500/5">
-                  <div className={EID_PANEL_HEADER_CLASS}>
-                    <h3 className={EID_PANEL_TITLE_CLASS}>Lançar resultado</h3>
-                  </div>
+                  <EidPanelHeader
+                    title="Lançar resultado"
+                    titleAs="h3"
+                    info="Partidas agendadas que já podem receber o placar."
+                  />
                   <div className="space-y-4 p-3">
                     {painelAgendadasVisiveis.map((row) => {
                       const esp = firstOfRelation(row.esportes);

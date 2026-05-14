@@ -332,6 +332,7 @@ export async function ComunidadeStreamDesafio({ supabase, viewerUserId }: Comuni
             Social
           </span>
         }
+        info="Central dos pedidos de desafio: aceite, recuse ou acompanhe respostas sem poluir a tela principal."
       />
       <div className="px-3 py-3 md:px-4 md:py-4">
         <div className="space-y-4">
@@ -339,6 +340,7 @@ export async function ComunidadeStreamDesafio({ supabase, viewerUserId }: Comuni
             id="desafio-pedidos-recebidos"
             title="Pedidos recebidos"
             hasPending={pedidosItems.length > 0}
+            info="Pedidos que chegaram para você ou para seu elenco. Aceite ou recuse para seguir o fluxo do ranking."
             headerBadgeExtra={
               pedidosItems.length === 1 ? <PedidoMatchFinalidadeSeal finalidade={pedidosItems[0]?.finalidade} /> : null
             }
@@ -349,6 +351,7 @@ export async function ComunidadeStreamDesafio({ supabase, viewerUserId }: Comuni
             id="desafio-pedidos-enviados"
             title="Pedidos enviados (aguardando resposta)"
             hasPending={pedidosEnviadosItems.length > 0}
+            info="Pedidos que você enviou e ainda dependem da resposta do adversário."
           >
             <ComunidadePedidosEnviados items={pedidosEnviadosItems} />
           </ComunidadeQuadro>

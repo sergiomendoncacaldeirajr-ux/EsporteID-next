@@ -41,6 +41,19 @@ export function ComunidadeNotificacoesSection({ items }: { items: NotifRow[] }) 
     >
       <EidPanelHeader
         title="Notificações"
+        info={
+          <>
+            Pedidos para aceitar estão na seção &quot;Desafio&quot; abaixo.{" "}
+            <Link href="/agenda" className="font-semibold text-eid-primary-300 hover:underline">
+              Agenda
+            </Link>{" "}
+            concentra data e local;{" "}
+            <Link href="/comunidade#resultados-partida" className="font-semibold text-eid-primary-300 hover:underline">
+              Partidas e resultados
+            </Link>{" "}
+            concentra placar.
+          </>
+        }
         badge={
           unread > 0 ? (
             <form action={marcarTodasNotificacoesLidas}>
@@ -112,17 +125,6 @@ export function ComunidadeNotificacoesSection({ items }: { items: NotifRow[] }) 
         </ul>
       )}
 
-      <p className="mt-4 text-center text-[11px] text-eid-text-secondary">
-        Pedidos para aceitar estão na seção &quot;Desafio&quot; abaixo.{" "}
-        <Link href="/agenda" className="font-semibold text-eid-primary-300 hover:underline">
-          Agenda
-        </Link>{" "}
-        (data e local) ·{" "}
-        <Link href="/comunidade#resultados-partida" className="font-semibold text-eid-primary-300 hover:underline">
-          Partidas e resultados
-        </Link>
-        .
-      </p>
     </section>
   );
 }

@@ -127,6 +127,7 @@ declare global {
     eidNativeScheduleMatchReminder?: (payload: NativeReminderPayload) => Promise<void>;
     eidNativeOpenMaps?: (payload: { query: string }) => Promise<void>;
     eidNativeExplainPermission?: (payload: { kind: NativePermissionKind }) => Promise<boolean>;
+    eidNativeRegisterPush?: () => Promise<boolean>;
     EsporteIDAndroid?: {
       addCalendarEvent?: (payload: string) => void;
     };
@@ -853,6 +854,7 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
 
     async function configureNativePush() {
       const { PushNotifications } = await import("@capacitor/push-notifications");
+      let registrationInFlight: Promise<boolean> | null = null;
 
       await Promise.allSettled(
         EID_ANDROID_PUSH_CHANNELS.map((channel) =>
@@ -869,7 +871,11 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
       const [registrationHandle, registrationErrorHandle, receivedHandle, actionHandle] = await Promise.all([
         PushNotifications.addListener("registration", (token) => {
           rememberAndroidFcmToken(token.value);
-          if (!getAndroidNativePushOptOut()) void syncAndroidNativePushToken();
+          if (!getAndroidNativePushOptOut()) {
+            void syncAndroidNativePushToken().then((ok) => {
+              if (!ok) window.setTimeout(() => void syncAndroidNativePushToken().catch(() => false), 2500);
+            });
+          }
         }),
         PushNotifications.addListener("registrationError", (error) => {
           console.warn("Falha ao registrar push nativo.", error);
@@ -886,17 +892,43 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
       ]);
       handles.push(registrationHandle, registrationErrorHandle, receivedHandle, actionHandle);
 
-      const permission = await PushNotifications.checkPermissions();
-      let receive = permission.receive;
-      if (receive === "prompt") {
-        const allowed = await window.eidNativeExplainPermission?.({ kind: "notifications" });
-        if (allowed === false) return;
-        receive = (await PushNotifications.requestPermissions()).receive;
-      }
-      if (disposed || receive !== "granted") return;
+      const registerNativePush = async () => {
+        if (registrationInFlight) return registrationInFlight;
+        registrationInFlight = (async () => {
+          const permission = await PushNotifications.checkPermissions();
+          let receive = permission.receive;
+          if (receive === "prompt") {
+            const allowed = await window.eidNativeExplainPermission?.({ kind: "notifications" });
+            if (allowed === false) return false;
+            receive = (await PushNotifications.requestPermissions()).receive;
+          }
+          if (disposed || receive !== "granted" || getAndroidNativePushOptOut()) return false;
 
-      await PushNotifications.register();
-      await PushNotifications.removeAllDeliveredNotifications();
+          await PushNotifications.register();
+          const synced = await syncAndroidNativePushToken().catch(() => false);
+          await PushNotifications.removeAllDeliveredNotifications();
+          return synced || Boolean(getRememberedAndroidFcmToken());
+        })().finally(() => {
+          registrationInFlight = null;
+        });
+        return registrationInFlight;
+      };
+
+      window.eidNativeRegisterPush = registerNativePush;
+      const retryNativePush = () => {
+        if (!getAndroidNativePushOptOut()) void registerNativePush().catch(() => false);
+      };
+      window.addEventListener("eid:pwa-resume", retryNativePush);
+      window.addEventListener("online", retryNativePush);
+      handles.push({
+        remove: async () => {
+          window.removeEventListener("eid:pwa-resume", retryNativePush);
+          window.removeEventListener("online", retryNativePush);
+          if (window.eidNativeRegisterPush === registerNativePush) delete window.eidNativeRegisterPush;
+        },
+      });
+
+      void registerNativePush();
     }
 
     void configureNativePush();

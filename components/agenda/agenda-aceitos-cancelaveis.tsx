@@ -188,22 +188,22 @@ export function AgendaAceitosCancelaveis({
             {somenteInformativo ? "Status" : "Gestão social"}
           </span>
         }
+        info={
+          somenteInformativo ? (
+            <>
+              Aqui é só referência do status do ranking. Cancelamento de desafio tratamos no{" "}
+              <Link href="/comunidade#desafios-aceitos-gestao" className="font-bold text-eid-primary-300 hover:underline">
+                Painel social
+              </Link>
+              ; reagendamento pode ser pedido por aqui.
+            </>
+          ) : hasSpecialStatuses ? (
+            "Se pedirem cancelamento ou nova data, responda no prazo."
+          ) : (
+            "Acompanhe o status dos desafios aceitos abaixo."
+          )
+        }
       />
-      <p className="px-3 pt-2 text-[11px] text-eid-text-secondary md:text-xs">
-        {somenteInformativo ? (
-          <>
-            Aqui é só referência do status do ranking. Cancelamento de desafio tratamos no{" "}
-            <Link href="/comunidade#desafios-aceitos-gestao" className="font-bold text-eid-primary-300 hover:underline">
-              Painel social
-            </Link>
-            ; reagendamento pode ser pedido por aqui.
-          </>
-        ) : hasSpecialStatuses ? (
-          "Se pedirem cancelamento ou nova data, responda no prazo."
-        ) : (
-          "Acompanhe o status dos desafios aceitos abaixo."
-        )}
-      </p>
       <div className="m-2.5 space-y-1.5 md:m-3 md:space-y-2">
         {okMsg ? (
           <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-center text-[11px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#10b981_45%)] md:text-xs">
@@ -343,16 +343,6 @@ export function AgendaAceitosCancelaveis({
               ) : null}
             </div>
             <div className="mt-2.5 flex w-full flex-col gap-2 border-t border-[rgba(37,99,235,0.1)] pt-2.5 sm:w-auto md:mt-3 md:gap-2.5 md:pt-3">
-              {somenteInformativo ? (
-                <p className="rounded-lg border border-[rgba(37,99,235,0.1)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_5%,var(--eid-surface)),var(--eid-surface))] px-2 py-1.5 text-[10px] leading-snug text-eid-text-secondary md:text-[11px]">
-                  Cancelamento e respostas de disputa:{" "}
-                  <Link href="/comunidade#desafios-aceitos-gestao" className="font-semibold text-eid-primary-300 hover:underline">
-                    abrir na Comunidade
-                  </Link>
-                  .
-                </p>
-              ) : null}
-
               {!somenteInformativo && m.gestaoSomenteLeitura && m.status === "Aceito" ? (
                 <p className="rounded-lg border border-[rgba(37,99,235,0.1)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_5%,var(--eid-surface)),var(--eid-surface))] px-2 py-1.5 text-[10px] leading-snug text-eid-text-secondary md:text-[11px]">
                   Você integra o elenco: acompanhe o status aqui. <span className="font-semibold text-eid-fg">Só o líder</span>{" "}

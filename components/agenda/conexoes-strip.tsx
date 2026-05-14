@@ -28,10 +28,8 @@ export function ConexoesStrip({ peers }: { peers: ConexaoPeer[] }) {
               Atalhos
             </span>
           }
+          info="Atletas com desafio aceito; use como atalho para abrir o perfil."
         />
-        <p className="px-3 pt-1.5 text-[10px] text-eid-text-secondary md:pt-2 md:text-xs">
-          Atletas com desafio aceito — atalho para o perfil.
-        </p>
         <div className="mt-2 flex gap-3 overflow-x-auto px-3 pb-2.5 [scrollbar-width:none] md:mt-3 md:gap-4 md:pb-3 [&::-webkit-scrollbar]:hidden">
         {peers.length === 0 ? (
           <div className="flex min-w-[64px] flex-col items-center opacity-40 md:min-w-[72px]">

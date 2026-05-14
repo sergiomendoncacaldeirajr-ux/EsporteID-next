@@ -5,12 +5,13 @@ import { Capacitor } from "@capacitor/core";
 const EID_PUSH_OPT_OUT_KEY = "eid_push_opt_out";
 const EID_ANDROID_FCM_TOKEN_KEY = "eid_android_fcm_token";
 const EID_ANDROID_FCM_OPT_OUT_KEY = "eid_android_fcm_opt_out";
-export const EID_NATIVE_APP_VERSION = "7.0.14";
+export const EID_NATIVE_APP_VERSION = "7.0.18";
 let enablePushInFlight: Promise<PushSubscription> | null = null;
 
 declare global {
   interface Window {
     eidNativeExplainPermission?: (payload: { kind: "camera" | "photos" | "notifications" | "calendar" | "files" }) => Promise<boolean>;
+    eidNativeRegisterPush?: () => Promise<boolean>;
   }
 }
 
@@ -155,8 +156,11 @@ export async function hasAndroidNativePushEnabled(): Promise<boolean> {
 }
 
 export async function setAndroidNativePushEnabled(enabled: boolean): Promise<void> {
-  const token = getRememberedAndroidFcmToken();
   setAndroidNativePushOptOut(!enabled);
+  if (enabled && !getRememberedAndroidFcmToken()) {
+    await window.eidNativeRegisterPush?.().catch(() => false);
+  }
+  const token = getRememberedAndroidFcmToken();
   const resp = token
     ? await fetch("/api/push/fcm/register", {
         method: "POST",

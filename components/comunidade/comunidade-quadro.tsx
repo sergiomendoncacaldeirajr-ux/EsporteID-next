@@ -9,6 +9,7 @@ export function ComunidadeQuadro({
   hasPending,
   badgeLabel = "Pendente",
   headerBadgeExtra,
+  info,
   children,
 }: {
   id: string;
@@ -17,6 +18,7 @@ export function ComunidadeQuadro({
   badgeLabel?: string;
   /** Selos extras ao lado do pendente (ex.: Ranking no único pedido recebido). */
   headerBadgeExtra?: ReactNode;
+  info?: ReactNode;
   children: ReactNode;
 }) {
   if (!hasPending) return null;
@@ -31,6 +33,7 @@ export function ComunidadeQuadro({
             {headerBadgeExtra}
           </>
         }
+        info={info}
       />
       <div className="min-w-0 p-2.5 md:p-3">{children}</div>
     </div>

@@ -15,7 +15,7 @@ import { ComunidadeSugestoesMatch, type SugestaoMatchItem } from "@/components/c
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { EidCityState } from "@/components/ui/eid-city-state";
-import { EidPanelHeader, EID_PANEL_HEADER_CLASS, EID_PANEL_TITLE_CLASS } from "@/components/ui/eid-panel-header";
+import { EidPanelHeader, EID_PANEL_HEADER_CLASS } from "@/components/ui/eid-panel-header";
 import { CancelarCandidaturaForm } from "@/components/vagas/vagas-actions";
 import { CandidaturaResponseActions } from "@/components/vagas/candidatura-response-actions";
 import {
@@ -643,10 +643,16 @@ export async function ComunidadeStreamEquipe({
             Formações
           </span>
         }
+        info="Central social das formações: sugestões, convites e pedidos de entrada aparecem aqui quando exigem ação."
       />
       <div className="px-2 py-2.5 md:px-3 md:py-3">
         <div className="space-y-3">
-          <ComunidadeQuadro id="equipe-sugestoes" title="Sugestões da equipe (liderança)" hasPending={sugestoesItems.length > 0}>
+          <ComunidadeQuadro
+            id="equipe-sugestoes"
+            title="Sugestões da equipe (liderança)"
+            hasPending={sugestoesItems.length > 0}
+            info="Atletas da formação sugerem adversários; a liderança aprova ou recusa."
+          >
             <ComunidadeSugestoesMatch items={sugestoesItems} />
           </ComunidadeQuadro>
           <ComunidadeQuadro
@@ -654,16 +660,27 @@ export async function ComunidadeStreamEquipe({
             title="Sugestões enviadas (aguardando resposta)"
             hasPending={sugestoesEnviadasSoPendentes.length > 0}
             badgeLabel="Pendente"
+            info="Sugestões que você enviou para a liderança da formação e ainda aguardam resposta."
           >
             <ComunidadeSugestoesEnviadasMatch items={sugestoesEnviadasSoPendentes} viewerUserId={viewerUserId} />
           </ComunidadeQuadro>
-          <ComunidadeQuadro id="equipe-convites" title="Convites recebidos" hasPending={conviteItems.length > 0}>
+          <ComunidadeQuadro
+            id="equipe-convites"
+            title="Convites recebidos"
+            hasPending={conviteItems.length > 0}
+            info="Convites para entrar em formações. Responda para liberar ou encerrar a pendência."
+          >
             <ComunidadeConvitesTime items={conviteItems} />
           </ComunidadeQuadro>
           {candidaturasEquipe.length > 0 ? (
             <>
               {candidaturasEquipe.length > 1 ? (
-                <EidPanelHeader id="equipe-pedidos-entrada" title="Pedidos para entrar no elenco" titleAs="h3" />
+                <EidPanelHeader
+                  id="equipe-pedidos-entrada"
+                  title="Pedidos para entrar no elenco"
+                  titleAs="h3"
+                  info="Pedidos de atletas para entrar no elenco; a liderança decide se aceita ou recusa."
+                />
               ) : null}
               <ul id={candidaturasEquipe.length === 1 ? "equipe-pedidos-entrada" : undefined} className="space-y-4">
                 {candidaturasEquipe.map((c) => {
@@ -680,19 +697,28 @@ export async function ComunidadeStreamEquipe({
                       : "/comunidade";
                   return (
                     <li key={c.id} className={`${getSocialStatusPanelItemShell("pendente")} p-0 text-sm`}>
-                      <div className={EID_PANEL_HEADER_CLASS}>
-                        {candidaturasEquipe.length === 1 ? (
-                          <h3 className={EID_PANEL_TITLE_CLASS}>
-                            Pedidos para entrar no elenco
-                          </h3>
-                        ) : (
+                      {candidaturasEquipe.length === 1 ? (
+                        <EidPanelHeader
+                          id="equipe-pedidos-entrada"
+                          title="Pedidos para entrar no elenco"
+                          titleAs="h3"
+                          badge={
+                            <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-amber-500/40 bg-amber-500/12 px-1.5 py-0.5 text-[7px] font-semibold uppercase tracking-[0.06em] text-amber-800 eid-dark:border-amber-300/65 eid-dark:bg-amber-950/55 eid-dark:text-amber-100 eid-light:border-amber-400 eid-light:bg-yellow-50 eid-light:text-amber-600">
+                              <Clock3 className="h-3 w-3 shrink-0 text-amber-800 eid-dark:text-amber-100 eid-light:text-amber-600" strokeWidth={2.25} aria-hidden />
+                              Pendente
+                            </span>
+                          }
+                          info="Pedidos de atletas para entrar no elenco; a liderança decide se aceita ou recusa."
+                        />
+                      ) : (
+                        <div className={EID_PANEL_HEADER_CLASS}>
                           <p className="min-w-0 truncate text-[11px] font-medium text-eid-fg">{c.primeiroNome}</p>
-                        )}
-                        <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-amber-500/40 bg-amber-500/12 px-1.5 py-0.5 text-[7px] font-semibold uppercase tracking-[0.06em] text-amber-800 eid-dark:border-amber-300/65 eid-dark:bg-amber-950/55 eid-dark:text-amber-100 eid-light:border-amber-400 eid-light:bg-yellow-50 eid-light:text-amber-600">
-                          <Clock3 className="h-3 w-3 shrink-0 text-amber-800 eid-dark:text-amber-100 eid-light:text-amber-600" strokeWidth={2.25} aria-hidden />
-                          Pendente
-                        </span>
-                      </div>
+                          <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-amber-500/40 bg-amber-500/12 px-1.5 py-0.5 text-[7px] font-semibold uppercase tracking-[0.06em] text-amber-800 eid-dark:border-amber-300/65 eid-dark:bg-amber-950/55 eid-dark:text-amber-100 eid-light:border-amber-400 eid-light:bg-yellow-50 eid-light:text-amber-600">
+                            <Clock3 className="h-3 w-3 shrink-0 text-amber-800 eid-dark:text-amber-100 eid-light:text-amber-600" strokeWidth={2.25} aria-hidden />
+                            Pendente
+                          </span>
+                        </div>
+                      )}
 
                       <div className="mt-2 px-0.5 pb-1 pt-0.5 sm:px-1 sm:pb-2 sm:pt-1">
                         <div className="grid min-w-0 grid-cols-3 gap-x-2 gap-y-1 sm:gap-x-5">
@@ -819,6 +845,7 @@ export async function ComunidadeStreamEquipe({
             id="equipe-convites-enviados"
             title="Convites enviados (aguardando resposta)"
             hasPending={convitesEnviadosSoPendentes.length > 0}
+            info="Convites que sua formação enviou e ainda dependem da resposta do atleta."
           >
             <ComunidadeConvitesEnviadosTime items={convitesEnviadosSoPendentes} />
           </ComunidadeQuadro>
@@ -826,6 +853,7 @@ export async function ComunidadeStreamEquipe({
             id="equipe-pedidos-enviados"
             title="Pedidos de entrada enviados"
             hasPending={minhasCandSoPendentes.length > 0}
+            info="Pedidos que você enviou para entrar em uma formação e ainda aguardam resposta."
           >
             {minhasCandSoPendentes.length === 0 ? null : (
               <ul className="mt-3 space-y-3">

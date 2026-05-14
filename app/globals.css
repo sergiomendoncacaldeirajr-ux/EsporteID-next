@@ -196,6 +196,11 @@ body.eid-app-shell {
   --eid-surface: #ffffff;
   --eid-card: #ffffff;
   --eid-field-bg: #f1f5f9;
+  /* Azul estrutural em tema claro: mais profundo para títulos, links e ícones sobre branco. */
+  --eid-primary-700: #1d3f91;
+  --eid-primary-500: #1d4ed8;
+  --eid-primary-400: #1e40af;
+  --eid-primary-300: #1e3a8a;
   /* Chips/status: âmbar padrão (#f59e0b) com pouco contraste em fundo claro — tons mais escuros só aqui. */
   --eid-warning-500: #d97706;
   --eid-warning-400: #b45309;

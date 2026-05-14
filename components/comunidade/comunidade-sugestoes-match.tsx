@@ -61,9 +61,6 @@ function sugeridorHref(item: SugestaoMatchItem): string {
     : `/perfil/${item.sugeridorId}?from=/comunidade`;
 }
 
-const sugestaoCardShell =
-  "relative overflow-hidden rounded-xl border border-[rgba(217,119,6,0.2)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-warning-500)_12%,var(--eid-card)),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] text-sm shadow-[0_8px_22px_-14px_rgba(217,119,6,0.4),inset_0_1px_0_rgba(255,255,255,0.04)]";
-
 export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[] }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(responderSugestaoMatch, initial);
@@ -73,7 +70,6 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
 
   useEffect(() => {
     if (state.ok) {
-      setClickedAction(null);
       router.refresh();
     }
   }, [state.ok, router]);
@@ -243,10 +239,6 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
                   />
                 </form>
               </div>
-              <p className="border-t border-amber-500/15 px-3 py-2 text-[10px] text-eid-text-secondary md:px-4">
-                Ao aprovar, o sistema registra o desafio como <strong className="text-eid-fg">confirmado</strong> e notifica todos os
-                membros ativos das duas formações.
-              </p>
             </li>
           );
         })}

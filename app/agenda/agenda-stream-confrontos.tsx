@@ -33,18 +33,20 @@ export async function AgendaStreamConfrontos({ supabase, userId, teamClause, age
           badge={<span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
             Agenda
           </span>}
+          info={
+            <>
+              Ajuste <strong className="text-eid-fg">data e local</strong> aqui. Pedidos de cancelamento ou nova data:{" "}
+              <Link href="/comunidade#desafios-aceitos-gestao" className="font-bold text-eid-primary-300 hover:underline">
+                Painel social
+              </Link>
+              . Placar:{" "}
+              <Link href="/comunidade#resultados-partida" className="font-bold text-eid-primary-300 hover:underline">
+                Partidas e resultados
+              </Link>
+              .
+            </>
+          }
         />
-        <p className="px-3 pt-2 text-[11px] text-eid-text-secondary md:text-xs">
-          Ajuste <strong className="text-eid-fg">data e local</strong> aqui. Pedidos de cancelamento ou nova data:{" "}
-          <Link href="/comunidade#desafios-aceitos-gestao" className="font-bold text-eid-primary-300 hover:underline">
-            Painel social
-          </Link>
-          . Placar:{" "}
-          <Link href="/comunidade#resultados-partida" className="font-bold text-eid-primary-300 hover:underline">
-            Partidas e resultados
-          </Link>
-          .
-        </p>
         <div className="mt-3 space-y-4 px-2.5 pb-2.5">
           {p.partidasAgendadasVisiveis.map((row) => {
               const esp = firstOfRelation(row.esportes);

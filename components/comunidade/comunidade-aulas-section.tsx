@@ -5,7 +5,7 @@ import {
 } from "@/app/professor/actions";
 import { descreverPoliticaCancelamentoProfessor } from "@/lib/professor/cancellation";
 import { EidCancelAction } from "@/components/ui/eid-cancel-action";
-import { EidPanelHeader, EID_PANEL_HEADER_CLASS, EID_PANEL_TITLE_CLASS } from "@/components/ui/eid-panel-header";
+import { EidPanelHeader } from "@/components/ui/eid-panel-header";
 
 export type ComunidadeProfessorProfileRow = {
   id: string;
@@ -76,13 +76,11 @@ export function ComunidadeAulasSection({
 }) {
   return (
     <section className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90">
-      <EidPanelHeader title="Minhas aulas" />
+      <EidPanelHeader title="Minhas aulas" info="Pedidos, aulas confirmadas e avisos aparecem aqui quando há algo para acompanhar." />
 
       <div className="space-y-4 p-4 md:p-5">
         <div>
-          <div className={EID_PANEL_HEADER_CLASS}>
-            <h3 className={EID_PANEL_TITLE_CLASS}>Pedidos de aula</h3>
-          </div>
+          <EidPanelHeader title="Pedidos de aula" titleAs="h3" info="Solicitações de aula recebidas ou enviadas, com ações quando dependerem de você." />
           <div className="mt-2 space-y-3">
           {solicitacoes.length ? (
             solicitacoes.map((solicitacao) => {
@@ -154,9 +152,11 @@ export function ComunidadeAulasSection({
         </div>
 
         <div>
-          <div className={EID_PANEL_HEADER_CLASS}>
-            <h3 className={EID_PANEL_TITLE_CLASS}>Aulas confirmadas e em andamento</h3>
-          </div>
+          <EidPanelHeader
+            title="Aulas confirmadas e em andamento"
+            titleAs="h3"
+            info="Aulas aceitas, com data, local, política de cancelamento e ações disponíveis."
+          />
           <div className="mt-2 space-y-3">
           {vinculos.length ? (
             vinculos.map((vinculo) => {
@@ -251,9 +251,7 @@ export function ComunidadeAulasSection({
         </div>
 
         <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3">
-          <div className={EID_PANEL_HEADER_CLASS}>
-            <h3 className={EID_PANEL_TITLE_CLASS}>Avisos das suas aulas</h3>
-          </div>
+          <EidPanelHeader title="Avisos das suas aulas" titleAs="h3" info="Notificações relacionadas às suas aulas." />
           {professorNotifs.length === 0 ? (
             <p className="mt-2 text-xs text-eid-text-secondary">Sem avisos de aula no momento.</p>
           ) : (

@@ -101,7 +101,6 @@ export function ComunidadeSugestoesEnviadasMatch({
 
   useEffect(() => {
     if ("ok" in state && state.ok) {
-      setClickedClearId(null);
       router.refresh();
     }
   }, [state, router]);
@@ -208,10 +207,6 @@ export function ComunidadeSugestoesEnviadasMatch({
                   </div>
                 </div>
               </div>
-
-              <p className="border-t border-transparent px-3 py-2 text-[10px] text-eid-text-secondary md:px-4">
-                {s.statusRaw === "aprovado" ? "Confira também na Agenda." : null}
-              </p>
 
               {s.statusRaw !== "pendente" ? (
                 <div className={EID_SOCIAL_PANEL_FOOTER}>
