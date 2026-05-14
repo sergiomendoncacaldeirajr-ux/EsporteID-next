@@ -10,7 +10,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 import { getPresetForSport } from "@/lib/desafio/score-rules";
 import { revalidateAfterTimeRosterOrConviteChange } from "@/lib/comunidade/revalidate-time-social-paths";
-import { fiscalDocumentoDigits } from "@/lib/fiscal/nfse";
+import { createNfeioServiceInvoice } from "@/lib/fiscal/nfeio";
+import { fiscalDocumentoDigits, fiscalParseConfigJson } from "@/lib/fiscal/nfse";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 function svc() {
@@ -809,6 +810,14 @@ export async function adminUpdateFinanceiro(formData: FormData) {
       asaas_simulacao_locais: formData.get("asaas_simulacao_locais") === "on",
       asaas_simulacao_professores: formData.get("asaas_simulacao_professores") === "on",
       asaas_simulacao_torneios: formData.get("asaas_simulacao_torneios") === "on",
+      asaas_pix_taxa_fixa_centavos: Math.round(Number(formData.get("asaas_pix_taxa_fixa_reais")) * 100),
+      asaas_boleto_taxa_fixa_centavos: Math.round(Number(formData.get("asaas_boleto_taxa_fixa_reais")) * 100),
+      asaas_credito_taxa_percentual: Number(formData.get("asaas_credito_taxa_percentual")),
+      asaas_credito_taxa_fixa_centavos: Math.round(Number(formData.get("asaas_credito_taxa_fixa_reais")) * 100),
+      asaas_debito_taxa_percentual: Number(formData.get("asaas_debito_taxa_percentual")),
+      asaas_debito_taxa_fixa_centavos: Math.round(Number(formData.get("asaas_debito_taxa_fixa_reais")) * 100),
+      asaas_taxas_atualizadas_em: new Date().toISOString(),
+      asaas_taxas_fonte: "admin",
     };
     const numericKeys = [
       "torneio_taxa_fixa",
@@ -837,6 +846,12 @@ export async function adminUpdateFinanceiro(formData: FormData) {
       "espaco_trial_dias_default",
       "espaco_socio_comissao_percentual",
       "espaco_clube_assinatura_comissao_percentual",
+      "asaas_pix_taxa_fixa_centavos",
+      "asaas_boleto_taxa_fixa_centavos",
+      "asaas_credito_taxa_percentual",
+      "asaas_credito_taxa_fixa_centavos",
+      "asaas_debito_taxa_percentual",
+      "asaas_debito_taxa_fixa_centavos",
     ] as const;
     if (numericKeys.some((key) => Number.isNaN(row[key]))) return;
     const { error } = await svc().from("ei_financeiro_config").update(row).eq("id", 1);
@@ -846,6 +861,7 @@ export async function adminUpdateFinanceiro(formData: FormData) {
     revalidatePath("/admin/integracoes-pagamento");
     revalidatePath("/espaco");
     revalidatePath("/espaco/financeiro");
+    revalidatePath("/espaco/taxas");
     revalidatePath("/professor/recebimentos");
   } catch {
     return;
@@ -2412,6 +2428,71 @@ function adminFiscalNumber(formData: FormData, field: string) {
   return Number.isFinite(value) ? value : null;
 }
 
+async function adminEmitirNotaFiscalNfeioSeConfigurada(notaId: number) {
+  const db = svc();
+  const { data: nota, error: notaErr } = await db
+    .from("fiscal_notas")
+    .select("id, emitente_id, tomador_nome, tomador_documento, tomador_email, descricao, valor_servico_centavos, escopo")
+    .eq("id", notaId)
+    .maybeSingle();
+  if (notaErr) throw new Error(notaErr.message);
+  if (!nota?.emitente_id) throw new Error("Nota fiscal sem emitente vinculado.");
+  const { data: emitente, error: emitenteErr } = await db
+    .from("fiscal_emitentes")
+    .select("id, provedor, codigo_servico, config_json")
+    .eq("id", nota.emitente_id)
+    .maybeSingle();
+  if (emitenteErr) throw new Error(emitenteErr.message);
+  const cfg = fiscalParseConfigJson(emitente?.config_json);
+  const companyId = String(cfg.nfeio_company_id ?? "").trim();
+  const autoEmitir = cfg.auto_emitir_nfse === true;
+  if (emitente?.provedor !== "nfeio" || !companyId || !autoEmitir) {
+    await db.from("fiscal_notas").update({ status: "fila_emissao", atualizado_em: new Date().toISOString() }).eq("id", notaId);
+    return;
+  }
+  try {
+    const invoice = await createNfeioServiceInvoice(companyId, {
+      borrower: {
+        name: String(nota.tomador_nome ?? "Tomador"),
+        federalTaxNumber: String(nota.tomador_documento ?? "").replace(/\D/g, ""),
+        email: nota.tomador_email ?? null,
+      },
+      services: [
+        {
+          description: nota.descricao,
+          amount: Number(((Number(nota.valor_servico_centavos ?? 0) || 0) / 100).toFixed(2)),
+          cityServiceCode: emitente.codigo_servico ?? null,
+        },
+      ],
+      externalId: `${nota.escopo}:${nota.id}`,
+    });
+    await db
+      .from("fiscal_notas")
+      .update({
+        status: "emitida",
+        referencia_externa: invoice.id ?? null,
+        numero_nfse: invoice.number ?? null,
+        codigo_verificacao: invoice.verificationCode ?? null,
+        pdf_url: invoice.pdfUrl ?? invoice.pdf ?? null,
+        xml_url: invoice.xmlUrl ?? invoice.xml ?? null,
+        emitida_em: new Date().toISOString(),
+        atualizado_em: new Date().toISOString(),
+        detalhes_json: { nfeio: invoice },
+      })
+      .eq("id", notaId);
+  } catch (error) {
+    await db
+      .from("fiscal_notas")
+      .update({
+        status: "erro",
+        erro_mensagem: error instanceof Error ? error.message : "Falha na emissão NFE.io.",
+        atualizado_em: new Date().toISOString(),
+      })
+      .eq("id", notaId);
+    throw error;
+  }
+}
+
 export async function adminSalvarConfiguracaoFiscalPlataformaAction(formData: FormData) {
   try {
     await guard();
@@ -2435,7 +2516,11 @@ export async function adminSalvarConfiguracaoFiscalPlataformaAction(formData: Fo
       provedor: adminFiscalText(formData, "provedor") || "manual",
       ambiente: adminFiscalText(formData, "ambiente") === "homologacao" ? "homologacao" : "producao",
       status: "pronto",
-      config_json: { observacoes: adminFiscalText(formData, "observacoes") },
+      config_json: {
+        observacoes: adminFiscalText(formData, "observacoes"),
+        nfeio_company_id: adminFiscalText(formData, "nfeio_company_id"),
+        auto_emitir_nfse: formData.get("auto_emitir_nfse") === "on",
+      },
       atualizado_em: new Date().toISOString(),
     };
     const { data: atual } = await db.from("fiscal_emitentes").select("id").eq("escopo", "plataforma").maybeSingle();
@@ -2483,7 +2568,7 @@ export async function adminSolicitarNotaFiscalPlataformaAction(formData: FormDat
     if (existente) redirect("/admin/notas-fiscais?adm_flash=fiscal_nota_duplicada");
     const valor = Number(transacao.comissao_plataforma_centavos ?? 0);
     if (valor <= 0) redirect("/admin/notas-fiscais?adm_flash=fiscal_sem_comissao");
-    const { error } = await db.from("fiscal_notas").insert({
+    const { data: notaCriada, error } = await db.from("fiscal_notas").insert({
       escopo: "plataforma_espaco",
       espaco_generico_id: espaco.id,
       emitente_id: emitente.id,
@@ -2493,8 +2578,9 @@ export async function adminSolicitarNotaFiscalPlataformaAction(formData: FormDat
       valor_servico_centavos: valor,
       status: "solicitada",
       detalhes_json: { origem: "admin_notas_fiscais" },
-    });
+    }).select("id").single();
     if (error) redirect(`/admin/notas-fiscais?adm_flash=fiscal_nota_erro${adminQueryDetail(error.message)}`);
+    if (notaCriada?.id) await adminEmitirNotaFiscalNfeioSeConfigurada(Number(notaCriada.id));
     revalidatePath("/admin/notas-fiscais");
     redirect("/admin/notas-fiscais?adm_flash=fiscal_nota_ok");
   } catch (e) {

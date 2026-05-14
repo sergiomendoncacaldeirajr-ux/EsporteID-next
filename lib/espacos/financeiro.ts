@@ -1,4 +1,5 @@
 import { getEspacoFinanceiro } from "@/lib/financeiro/config";
+import { calcularTaxasAsaasEspaco, type MetodoPagamentoTaxa } from "@/lib/financeiro/asaas-taxas";
 
 export type CalculoFinanceiroEspaco = {
   /** Valor pago à quadra / local, antes da taxa EsporteID por reserva. */
@@ -21,6 +22,7 @@ export function calcularFinanceiroEspaco({
   config,
   taxaReservaPlataformaCentavos: taxaReservaIn = 0,
   comissaoPercentualPlataforma = 0,
+  metodoPagamento = "PIX",
 }: {
   valorCentavos: number;
   config: unknown;
@@ -28,6 +30,7 @@ export function calcularFinanceiroEspaco({
   taxaReservaPlataformaCentavos?: number;
   /** Comissão percentual da plataforma sobre o valor do local, em decimal. Ex.: 0.05 = 5%. */
   comissaoPercentualPlataforma?: number;
+  metodoPagamento?: MetodoPagamentoTaxa;
 }): CalculoFinanceiroEspaco {
   const valorLocalCentavos = Math.max(0, Math.round(Number(valorCentavos ?? 0)));
   const taxaRes = Math.max(0, Math.round(Number(taxaReservaIn ?? 0)));
@@ -38,9 +41,11 @@ export function calcularFinanceiroEspaco({
   const financeiro = getEspacoFinanceiro(
     config as Parameters<typeof getEspacoFinanceiro>[0]
   );
-  const taxaGatewayCentavos = Math.round(
-    brutoCentavos * Number(financeiro.asaasTaxaPercentual ?? 0)
+  const taxaMetodo = calcularTaxasAsaasEspaco({ valorCentavos: brutoCentavos, config }).find(
+    (item) => item.metodo === metodoPagamento
   );
+  const taxaGatewayCentavos =
+    taxaMetodo?.baseAsaasCentavos ?? Math.round(brutoCentavos * Number(financeiro.asaasTaxaPercentual ?? 0));
   const taxaFixaCentavos = Math.round(Number(financeiro.taxaFixa ?? 0) * 100);
   const comissaoPlataformaCentavos =
     Math.round(

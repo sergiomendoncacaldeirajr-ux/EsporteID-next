@@ -23,3 +23,24 @@ export function fiscalCentavosToCurrency(value: number | null | undefined) {
     currency: "BRL",
   }).format((Number(value ?? 0) || 0) / 100);
 }
+
+export function fiscalParseConfigJson(value: unknown) {
+  if (!value) return {};
+  if (typeof value === "object" && !Array.isArray(value)) return value as Record<string, unknown>;
+  try {
+    const parsed = JSON.parse(String(value));
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+export function fiscalConfigText(config: Record<string, unknown>, key: string) {
+  return typeof config[key] === "string" ? String(config[key]) : "";
+}
+
+export function fiscalConfigBool(config: Record<string, unknown>, key: string) {
+  return config[key] === true;
+}

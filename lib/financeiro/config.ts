@@ -19,6 +19,14 @@ export type FinanceiroConfig = {
   espaco_promocao_ate: string | null;
   torneio_promocao_ativa: boolean;
   torneio_promocao_ate: string | null;
+  asaas_pix_taxa_fixa_centavos: number;
+  asaas_boleto_taxa_fixa_centavos: number;
+  asaas_credito_taxa_percentual: number;
+  asaas_credito_taxa_fixa_centavos: number;
+  asaas_debito_taxa_percentual: number;
+  asaas_debito_taxa_fixa_centavos: number;
+  asaas_taxas_atualizadas_em: string | null;
+  asaas_taxas_fonte: string | null;
 };
 
 type ConfigInput = Partial<Record<keyof FinanceiroConfig, unknown>> | null | undefined;
@@ -79,6 +87,14 @@ export function normalizeFinanceiroConfig(input: ConfigInput): FinanceiroConfig 
     espaco_promocao_ate: dateValue(input?.espaco_promocao_ate),
     torneio_promocao_ativa: bool(input?.torneio_promocao_ativa, false),
     torneio_promocao_ate: dateValue(input?.torneio_promocao_ate),
+    asaas_pix_taxa_fixa_centavos: Math.max(0, Math.round(num(input?.asaas_pix_taxa_fixa_centavos, 199))),
+    asaas_boleto_taxa_fixa_centavos: Math.max(0, Math.round(num(input?.asaas_boleto_taxa_fixa_centavos, 199))),
+    asaas_credito_taxa_percentual: num(input?.asaas_credito_taxa_percentual, 0.0499),
+    asaas_credito_taxa_fixa_centavos: Math.max(0, Math.round(num(input?.asaas_credito_taxa_fixa_centavos, 0))),
+    asaas_debito_taxa_percentual: num(input?.asaas_debito_taxa_percentual, 0.0299),
+    asaas_debito_taxa_fixa_centavos: Math.max(0, Math.round(num(input?.asaas_debito_taxa_fixa_centavos, 0))),
+    asaas_taxas_atualizadas_em: dateValue(input?.asaas_taxas_atualizadas_em),
+    asaas_taxas_fonte: typeof input?.asaas_taxas_fonte === "string" ? input.asaas_taxas_fonte : "admin",
   };
 }
 

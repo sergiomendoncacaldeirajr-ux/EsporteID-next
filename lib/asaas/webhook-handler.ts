@@ -7,6 +7,8 @@ export type AsaasWebhookPayload = {
     id?: string;
     status?: string;
     value?: number;
+    netValue?: number | null;
+    billingType?: string | null;
     invoiceUrl?: string | null;
     bankSlipUrl?: string | null;
     subscription?: string | null;
@@ -89,6 +91,12 @@ export async function processAsaasWebhookPayload(payload: AsaasWebhookPayload | 
 
   const mapped = mapPaymentStatus(payload?.payment?.status);
   const chargeUrl = payload?.payment?.invoiceUrl ?? payload?.payment?.bankSlipUrl ?? null;
+  const paymentValueCentavos = Math.round(Number(payload?.payment?.value ?? 0) * 100);
+  const paymentNetValueCentavos =
+    payload?.payment?.netValue == null ? null : Math.round(Number(payload.payment.netValue) * 100);
+  const paymentFeeCentavos =
+    paymentNetValueCentavos == null ? null : Math.max(0, paymentValueCentavos - paymentNetValueCentavos);
+  const paymentBillingType = payload?.payment?.billingType ?? null;
 
   if (pagamento) {
     await admin
@@ -151,6 +159,9 @@ export async function processAsaasWebhookPayload(payload: AsaasWebhookPayload | 
       .update({
         status: mapped.pagamento,
         asaas_charge_url: chargeUrl,
+        asaas_billing_type: paymentBillingType,
+        asaas_net_value_centavos: paymentNetValueCentavos,
+        asaas_fee_centavos: paymentFeeCentavos,
         detalhes_json: payload ?? {},
         pago_em: mapped.pagamento === "received" ? new Date().toISOString() : null,
         atualizado_em: new Date().toISOString(),

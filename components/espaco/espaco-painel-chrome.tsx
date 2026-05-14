@@ -10,6 +10,7 @@ import {
   FileText,
   Home,
   Landmark,
+  Percent,
   Settings,
   UserPlus,
   Users,
@@ -44,6 +45,7 @@ function PainelChromeInner({ space }: { space: EspacoPainelSpace }) {
     { href: "/espaco/agenda", label: "Agenda", Icon: CalendarDays },
     { href: "/espaco/socios", label: "Sócios", Icon: Users },
     ...(mostrarFinanceiro ? [{ href: "/espaco/financeiro", label: "Financ.", Icon: Wallet }] : []),
+    { href: "/espaco/taxas", label: "Taxas", Icon: Percent },
     { href: "/espaco/notas-fiscais", label: "Notas", Icon: FileText },
     { href: "/espaco/configuracao", label: "Ajustes", Icon: Settings },
   ] as const;

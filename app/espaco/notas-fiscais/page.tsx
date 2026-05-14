@@ -3,7 +3,13 @@ import {
   salvarConfiguracaoFiscalEspacoAction,
   solicitarNotaFiscalEspacoClienteAction,
 } from "@/app/espaco/actions";
-import { fiscalCentavosToCurrency, fiscalStatusLabel } from "@/lib/fiscal/nfse";
+import {
+  fiscalCentavosToCurrency,
+  fiscalConfigBool,
+  fiscalConfigText,
+  fiscalParseConfigJson,
+  fiscalStatusLabel,
+} from "@/lib/fiscal/nfse";
 import { getEspacoSelecionado } from "@/lib/espacos/server";
 import { FileText, ReceiptText, Settings2 } from "lucide-react";
 
@@ -44,6 +50,7 @@ export default async function EspacoNotasFiscaisPage({ searchParams }: Props) {
 
   const notasPorTransacao = new Set((notas ?? []).map((nota) => Number(nota.transacao_id ?? 0)).filter(Boolean));
   const emitentePronto = emitente?.status === "pronto";
+  const emitenteConfig = fiscalParseConfigJson(emitente?.config_json);
 
   return (
     <div className="space-y-5">
@@ -80,8 +87,9 @@ export default async function EspacoNotasFiscaisPage({ searchParams }: Props) {
               <input name="aliquota_iss" defaultValue={emitente?.aliquota_iss ?? ""} placeholder="Alíquota ISS (%)" className="eid-input-dark rounded-xl px-3 py-2.5 text-sm" />
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              <select name="provedor" defaultValue={emitente?.provedor ?? "manual"} className="eid-input-dark rounded-xl px-3 py-2.5 text-sm">
+              <select name="provedor" defaultValue={emitente?.provedor ?? "nfeio"} className="eid-input-dark rounded-xl px-3 py-2.5 text-sm">
                 <option value="manual">Manual / fila operacional</option>
+                <option value="nfeio">NFE.io automática</option>
                 <option value="nfse_nacional">NFS-e Nacional</option>
                 <option value="provedor_api">Provedor fiscal/API</option>
               </select>
@@ -89,6 +97,17 @@ export default async function EspacoNotasFiscaisPage({ searchParams }: Props) {
                 <option value="producao">Produção</option>
                 <option value="homologacao">Homologação</option>
               </select>
+            </div>
+            <div className="rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 p-3">
+              <p className="text-xs font-bold text-eid-primary-200">NFE.io</p>
+              <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">
+                Cadastre a empresa do espaço na NFE.io, vincule certificado A1 e inscrição municipal, depois cole aqui o Company ID.
+              </p>
+              <input name="nfeio_company_id" defaultValue={fiscalConfigText(emitenteConfig, "nfeio_company_id")} placeholder="Company ID da empresa na NFE.io" className="eid-input-dark mt-3 w-full rounded-xl px-3 py-2.5 text-sm" />
+              <label className="mt-3 flex items-start gap-2 text-xs font-semibold text-eid-fg">
+                <input type="checkbox" name="auto_emitir_nfse" defaultChecked={fiscalConfigBool(emitenteConfig, "auto_emitir_nfse")} className="mt-0.5" />
+                Emitir automaticamente quando a nota for solicitada
+              </label>
             </div>
             <textarea name="observacoes" rows={2} placeholder="Observações fiscais internas" className="eid-input-dark rounded-xl px-3 py-2.5 text-sm" />
             <button className="eid-btn-primary rounded-xl px-4 py-3 text-sm font-bold">Salvar dados fiscais</button>

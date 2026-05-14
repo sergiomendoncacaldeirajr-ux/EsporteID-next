@@ -19,7 +19,8 @@ import { avaliarBeneficiosSocioEspaco } from "@/lib/espacos/eligibility";
 import {
   calcularFinanceiroEspaco,
 } from "@/lib/espacos/financeiro";
-import { fiscalDocumentoDigits } from "@/lib/fiscal/nfse";
+import { createNfeioServiceInvoice } from "@/lib/fiscal/nfeio";
+import { fiscalDocumentoDigits, fiscalParseConfigJson } from "@/lib/fiscal/nfse";
 import {
   checkEspacoConflict,
   fetchAutomaticHolidaysForYear,
@@ -158,6 +159,70 @@ async function buscarWalletRecebedorEspaco(
     .eq("usuario_id", usuarioId)
     .maybeSingle();
   return data?.wallet_id ? String(data.wallet_id) : null;
+}
+
+async function emitirNotaFiscalNfeioSeConfigurada(admin: SupabaseAdminClient, notaId: number) {
+  const { data: nota, error: notaErr } = await admin
+    .from("fiscal_notas")
+    .select("id, emitente_id, tomador_nome, tomador_documento, tomador_email, descricao, valor_servico_centavos, escopo")
+    .eq("id", notaId)
+    .maybeSingle();
+  if (notaErr) throw new Error(notaErr.message);
+  if (!nota?.emitente_id) throw new Error("Nota fiscal sem emitente vinculado.");
+  const { data: emitente, error: emitenteErr } = await admin
+    .from("fiscal_emitentes")
+    .select("id, provedor, codigo_servico, config_json")
+    .eq("id", nota.emitente_id)
+    .maybeSingle();
+  if (emitenteErr) throw new Error(emitenteErr.message);
+  const cfg = fiscalParseConfigJson(emitente?.config_json);
+  const companyId = String(cfg.nfeio_company_id ?? "").trim();
+  const autoEmitir = cfg.auto_emitir_nfse === true;
+  if (emitente?.provedor !== "nfeio" || !companyId || !autoEmitir) {
+    await admin.from("fiscal_notas").update({ status: "fila_emissao", atualizado_em: new Date().toISOString() }).eq("id", notaId);
+    return;
+  }
+  try {
+    const invoice = await createNfeioServiceInvoice(companyId, {
+      borrower: {
+        name: String(nota.tomador_nome ?? "Tomador"),
+        federalTaxNumber: String(nota.tomador_documento ?? "").replace(/\D/g, ""),
+        email: nota.tomador_email ?? null,
+      },
+      services: [
+        {
+          description: nota.descricao,
+          amount: Number(((Number(nota.valor_servico_centavos ?? 0) || 0) / 100).toFixed(2)),
+          cityServiceCode: emitente.codigo_servico ?? null,
+        },
+      ],
+      externalId: `${nota.escopo}:${nota.id}`,
+    });
+    await admin
+      .from("fiscal_notas")
+      .update({
+        status: "emitida",
+        referencia_externa: invoice.id ?? null,
+        numero_nfse: invoice.number ?? null,
+        codigo_verificacao: invoice.verificationCode ?? null,
+        pdf_url: invoice.pdfUrl ?? invoice.pdf ?? null,
+        xml_url: invoice.xmlUrl ?? invoice.xml ?? null,
+        emitida_em: new Date().toISOString(),
+        atualizado_em: new Date().toISOString(),
+        detalhes_json: { nfeio: invoice },
+      })
+      .eq("id", notaId);
+  } catch (error) {
+    await admin
+      .from("fiscal_notas")
+      .update({
+        status: "erro",
+        erro_mensagem: error instanceof Error ? error.message : "Falha na emissão NFE.io.",
+        atualizado_em: new Date().toISOString(),
+      })
+      .eq("id", notaId);
+    throw error;
+  }
 }
 
 function intOrNull(formData: FormData, field: string) {
@@ -2497,6 +2562,7 @@ export async function criarReservaEspacoAction(
         reserva_quadra_id: reserva.id,
         tipo: "reserva_avulsa",
         billing_type: "PIX",
+        asaas_billing_type: "PIX",
         status: "pending",
         valor_bruto_centavos: calculo.brutoCentavos,
         taxa_gateway_centavos: calculo.taxaGatewayCentavos,
@@ -3079,6 +3145,7 @@ export async function gerarCobrancaSocioEspacoAction(formData: FormData) {
     espaco_socio_id: socioId,
     tipo: "mensalidade_socio",
     billing_type: "PIX",
+    asaas_billing_type: "PIX",
     status: "pending",
     valor_bruto_centavos: calculo.brutoCentavos,
     taxa_gateway_centavos: calculo.taxaGatewayCentavos,
@@ -3532,14 +3599,16 @@ export async function salvarConfiguracaoFiscalEspacoAction(formData: FormData) {
     codigo_servico: text(formData, "codigo_servico") || null,
     item_lista_servico: text(formData, "item_lista_servico") || null,
     aliquota_iss: numberInputOrNull(formData, "aliquota_iss"),
-    provedor: text(formData, "provedor") || "manual",
-    ambiente: text(formData, "ambiente") === "homologacao" ? "homologacao" : "producao",
-    status: "pronto",
-    config_json: {
-      atualizado_por: user.id,
-      observacoes: text(formData, "observacoes"),
-    },
-    atualizado_em: new Date().toISOString(),
+      provedor: text(formData, "provedor") || "manual",
+      ambiente: text(formData, "ambiente") === "homologacao" ? "homologacao" : "producao",
+      status: "pronto",
+      config_json: {
+        atualizado_por: user.id,
+        observacoes: text(formData, "observacoes"),
+        nfeio_company_id: text(formData, "nfeio_company_id"),
+        auto_emitir_nfse: checkbox(formData, "auto_emitir_nfse"),
+      },
+      atualizado_em: new Date().toISOString(),
   };
   const { data: atual } = await admin
     .from("fiscal_emitentes")
@@ -3586,7 +3655,7 @@ export async function solicitarNotaFiscalEspacoClienteAction(formData: FormData)
   const tomadorDocumento = fiscalDocumentoDigits(formData.get("tomador_documento"));
   const tomadorEmail = text(formData, "tomador_email");
   if (!tomadorNome || !tomadorDocumento) throw new Error("Informe nome e CPF/CNPJ do tomador.");
-  const { error } = await admin.from("fiscal_notas").insert({
+  const { data: notaCriada, error } = await admin.from("fiscal_notas").insert({
     escopo: "espaco_cliente",
     espaco_generico_id: espacoId,
     emitente_id: emitente.id,
@@ -3600,7 +3669,8 @@ export async function solicitarNotaFiscalEspacoClienteAction(formData: FormData)
     status: "solicitada",
     solicitada_por_usuario_id: user.id,
     detalhes_json: { origem: "painel_espaco" },
-  });
+  }).select("id").single();
   if (error) throw new Error(error.message);
+  if (notaCriada?.id) await emitirNotaFiscalNfeioSeConfigurada(admin, Number(notaCriada.id));
   revalidatePath("/espaco/notas-fiscais");
 }

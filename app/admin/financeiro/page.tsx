@@ -64,6 +64,38 @@ export default async function AdminFinanceiroPage() {
               Asaas taxa % (decimal)
               <input type="number" step="0.000001" name="asaas_taxa_percentual" defaultValue={Number(data.asaas_taxa_percentual)} className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm" />
             </label>
+            <div className="rounded-lg border border-eid-primary-500/25 bg-eid-primary-500/8 p-3">
+              <p className="text-xs font-bold text-eid-primary-200">Taxas por método</p>
+              <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">
+                Base exibida ao dono do espaço. A comissão padrão da plataforma é 50% sobre a taxa base do Asaas.
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <label className="block text-xs font-semibold text-eid-text-secondary">
+                  Pix taxa fixa (R$)
+                  <input type="number" step="0.01" name="asaas_pix_taxa_fixa_reais" defaultValue={(Number((data as Record<string, unknown>).asaas_pix_taxa_fixa_centavos ?? 199) / 100).toFixed(2)} className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm" />
+                </label>
+                <label className="block text-xs font-semibold text-eid-text-secondary">
+                  Boleto taxa fixa (R$)
+                  <input type="number" step="0.01" name="asaas_boleto_taxa_fixa_reais" defaultValue={(Number((data as Record<string, unknown>).asaas_boleto_taxa_fixa_centavos ?? 199) / 100).toFixed(2)} className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm" />
+                </label>
+                <label className="block text-xs font-semibold text-eid-text-secondary">
+                  Crédito % (decimal)
+                  <input type="number" step="0.000001" name="asaas_credito_taxa_percentual" defaultValue={Number((data as Record<string, unknown>).asaas_credito_taxa_percentual ?? 0.0499)} className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm" />
+                </label>
+                <label className="block text-xs font-semibold text-eid-text-secondary">
+                  Crédito fixa (R$)
+                  <input type="number" step="0.01" name="asaas_credito_taxa_fixa_reais" defaultValue={(Number((data as Record<string, unknown>).asaas_credito_taxa_fixa_centavos ?? 0) / 100).toFixed(2)} className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm" />
+                </label>
+                <label className="block text-xs font-semibold text-eid-text-secondary">
+                  Débito % (decimal)
+                  <input type="number" step="0.000001" name="asaas_debito_taxa_percentual" defaultValue={Number((data as Record<string, unknown>).asaas_debito_taxa_percentual ?? 0.0299)} className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm" />
+                </label>
+                <label className="block text-xs font-semibold text-eid-text-secondary">
+                  Débito fixa (R$)
+                  <input type="number" step="0.01" name="asaas_debito_taxa_fixa_reais" defaultValue={(Number((data as Record<string, unknown>).asaas_debito_taxa_fixa_centavos ?? 0) / 100).toFixed(2)} className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm" />
+                </label>
+              </div>
+            </div>
             <label className="block text-xs font-semibold text-eid-text-secondary">
               Gateway padrão: plataforma sobre taxa
               <input
