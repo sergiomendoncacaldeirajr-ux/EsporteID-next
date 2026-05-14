@@ -130,6 +130,7 @@ function sportShareIconText(sportLabel: string | null | undefined) {
 
 function sportShareDefaultBackgroundSrc(sportLabel: string | null | undefined) {
   const label = cleanShareText(sportLabel, "").toLowerCase();
+  if (/fute\s*v[oô]lei|futevolei|footvolley/u.test(label)) return "/share-backgrounds/footvolley.svg";
   if (/fut|soccer|campo|society|futsal/u.test(label)) return "/share-backgrounds/soccer.svg";
   if (/basquete|basket/u.test(label)) return "/share-backgrounds/basketball.svg";
   if (/badminton|badmínton|peteca/u.test(label)) return "/share-backgrounds/badminton.svg";
