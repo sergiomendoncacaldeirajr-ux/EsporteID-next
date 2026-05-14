@@ -137,6 +137,7 @@ function sportShareDefaultBackgroundSrc(sportLabel: string | null | undefined) {
   if (/pickle/u.test(label)) return "/share-backgrounds/pickleball.svg";
   if (/padel|pádel/u.test(label)) return "/share-backgrounds/padel.svg";
   if (/beach\s*tennis|beachtennis|praia/u.test(label)) return "/share-backgrounds/beach-tennis.svg";
+  if (/t[eê]nis\s*de\s*mesa|mesa|ping\s*pong|table\s*tennis/u.test(label)) return "/share-backgrounds/table-tennis.svg";
   if (/volei|vôlei|volley|voleibol/u.test(label)) return "/share-backgrounds/volleyball.svg";
   if (/tenis|tênis/u.test(label)) return "/share-backgrounds/tennis.svg";
   return null;
@@ -884,7 +885,7 @@ async function createResultadoShareImage(payload: ResultadoSharePayload) {
 }
 
 async function createResultadoSharePreviewUrl(payload: ResultadoSharePayload) {
-  const canvas = await renderResultadoShareCanvas(payload, 0.22);
+  const canvas = await renderResultadoShareCanvas(payload, 0.14);
   const blob = await canvasToBlob(canvas);
   return URL.createObjectURL(blob);
 }
@@ -1180,6 +1181,7 @@ export function EidConfrontoResumoModal({
   const [shareShowBrand, setShareShowBrand] = useState(true);
   const [sharePanelOpen, setSharePanelOpen] = useState(false);
   const [sharePreviewDataUrl, setSharePreviewDataUrl] = useState<string | null>(null);
+  const [sharePreviewLiveMode, setSharePreviewLiveMode] = useState(false);
   const sharePreviewRef = useRef<HTMLDivElement | null>(null);
   const shareFileInputRef = useRef<HTMLInputElement | null>(null);
   const shareCameraInputRef = useRef<HTMLInputElement | null>(null);
@@ -1290,6 +1292,7 @@ export function EidConfrontoResumoModal({
           if (previous?.startsWith("blob:")) window.setTimeout(() => URL.revokeObjectURL(previous), 0);
           return url;
         });
+        setSharePreviewLiveMode(false);
       } catch {
         if (!cancelled) setSharePreviewDataUrl(null);
       }
@@ -1361,6 +1364,11 @@ export function EidConfrontoResumoModal({
       x: Math.min(0.86, Math.max(0.14, (clientX - rect.left) / rect.width)),
       y: Math.min(0.82, Math.max(0.18, (clientY - rect.top) / rect.height)),
     });
+  }, []);
+
+  const pulseSharePreviewLive = useCallback(() => {
+    setSharePreviewLiveMode(true);
+    window.setTimeout(() => setSharePreviewLiveMode(false), 180);
   }, []);
 
   const handleSharePhotoChange = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
@@ -1719,6 +1727,7 @@ export function EidConfrontoResumoModal({
                           : undefined
                       }
                       onPointerDown={(event) => {
+                        setSharePreviewLiveMode(true);
                         event.currentTarget.setPointerCapture(event.pointerId);
                         updateShareOverlayFromPointer(event.clientX, event.clientY);
                       }}
@@ -1726,6 +1735,8 @@ export function EidConfrontoResumoModal({
                         if (event.buttons !== 1) return;
                         updateShareOverlayFromPointer(event.clientX, event.clientY);
                       }}
+                      onPointerUp={() => setSharePreviewLiveMode(false)}
+                      onPointerCancel={() => setSharePreviewLiveMode(false)}
                     >
                       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_12%,color-mix(in_srgb,var(--eid-primary-500)_40%,transparent),transparent_38%),radial-gradient(circle_at_18%_86%,color-mix(in_srgb,var(--eid-action-500)_30%,transparent),transparent_40%),linear-gradient(180deg,rgba(255,255,255,0.05),transparent_22%,rgba(0,0,0,0.18))]" />
                       {sharePreviewDataUrl ? (
@@ -1734,7 +1745,9 @@ export function EidConfrontoResumoModal({
                           alt="Prévia da arte de resultado"
                           fill
                           unoptimized
-                          className="pointer-events-none absolute inset-0 z-20 object-cover"
+                          className={`pointer-events-none absolute inset-0 z-20 object-cover transition-opacity duration-75 ${
+                            sharePreviewLiveMode ? "opacity-0" : "opacity-100"
+                          }`}
                         />
                       ) : null}
                       <div
@@ -1908,6 +1921,7 @@ export function EidConfrontoResumoModal({
                           key={value}
                           type="button"
                           onClick={() => {
+                            pulseSharePreviewLive();
                             setShareLayout(value as ResultadoSharePayload["shareLayout"]);
                             setShareOverlayScale(value === "slim" ? 0.92 : 1);
                           }}
@@ -1929,7 +1943,10 @@ export function EidConfrontoResumoModal({
                         max="1.18"
                         step="0.02"
                         value={shareOverlayScale}
-                        onChange={(event) => setShareOverlayScale(Number(event.currentTarget.value))}
+                        onChange={(event) => {
+                          pulseSharePreviewLive();
+                          setShareOverlayScale(Number(event.currentTarget.value));
+                        }}
                         className="mt-1 block w-full accent-[color:var(--eid-action-500)]"
                       />
                     </label>
@@ -1941,7 +1958,10 @@ export function EidConfrontoResumoModal({
                         max="1.7"
                         step="0.05"
                         value={shareBrandLogoScale}
-                        onChange={(event) => setShareBrandLogoScale(Number(event.currentTarget.value))}
+                        onChange={(event) => {
+                          pulseSharePreviewLive();
+                          setShareBrandLogoScale(Number(event.currentTarget.value));
+                        }}
                         className="mt-1 block w-full accent-[color:var(--eid-primary-500)]"
                       />
                     </label>
@@ -1971,7 +1991,10 @@ export function EidConfrontoResumoModal({
                         <button
                           key={value}
                           type="button"
-                          onClick={() => setShareCardVariant(value as ResultadoSharePayload["cardVariant"])}
+                          onClick={() => {
+                            pulseSharePreviewLive();
+                            setShareCardVariant(value as ResultadoSharePayload["cardVariant"]);
+                          }}
                           className={`min-h-[2.15rem] rounded-lg border px-1.5 text-[9px] font-black transition ${
                             shareCardVariant === value
                               ? "border-eid-primary-500/45 bg-eid-primary-500/16 text-eid-primary-100"
@@ -1991,7 +2014,10 @@ export function EidConfrontoResumoModal({
                         <button
                           key={value}
                           type="button"
-                          onClick={() => setShareBackgroundFilter(value as ResultadoSharePayload["backgroundFilter"])}
+                          onClick={() => {
+                            pulseSharePreviewLive();
+                            setShareBackgroundFilter(value as ResultadoSharePayload["backgroundFilter"]);
+                          }}
                           className={`min-h-[2.15rem] rounded-lg border px-1.5 text-[9px] font-black transition ${
                             shareBackgroundFilter === value
                               ? "border-eid-action-500/45 bg-eid-action-500/16 text-eid-action-100"
@@ -2005,11 +2031,25 @@ export function EidConfrontoResumoModal({
                     <div className="grid grid-cols-2 gap-1.5">
                       <label className="flex min-h-[2.25rem] items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-2 text-[10px] font-black text-eid-text-secondary">
                         Data/local
-                        <input type="checkbox" checked={shareShowMeta} onChange={(event) => setShareShowMeta(event.currentTarget.checked)} />
+                        <input
+                          type="checkbox"
+                          checked={shareShowMeta}
+                          onChange={(event) => {
+                            pulseSharePreviewLive();
+                            setShareShowMeta(event.currentTarget.checked);
+                          }}
+                        />
                       </label>
                       <label className="flex min-h-[2.25rem] items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-2 text-[10px] font-black text-eid-text-secondary">
                         Marca
-                        <input type="checkbox" checked={shareShowBrand} onChange={(event) => setShareShowBrand(event.currentTarget.checked)} />
+                        <input
+                          type="checkbox"
+                          checked={shareShowBrand}
+                          onChange={(event) => {
+                            pulseSharePreviewLive();
+                            setShareShowBrand(event.currentTarget.checked);
+                          }}
+                        />
                       </label>
                     </div>
                   </div>
