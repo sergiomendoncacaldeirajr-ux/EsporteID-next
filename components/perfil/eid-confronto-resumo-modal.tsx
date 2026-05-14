@@ -884,12 +884,6 @@ async function createResultadoShareImage(payload: ResultadoSharePayload) {
   return new File([blob], `esporteid-resultado-${Date.now()}.png`, { type: "image/png" });
 }
 
-async function createResultadoSharePreviewUrl(payload: ResultadoSharePayload) {
-  const canvas = await renderResultadoShareCanvas(payload, 0.14);
-  const blob = await canvasToBlob(canvas);
-  return URL.createObjectURL(blob);
-}
-
 function downloadResultadoFile(file: File) {
   const url = URL.createObjectURL(file);
   const anchor = document.createElement("a");
@@ -1172,17 +1166,17 @@ export function EidConfrontoResumoModal({
   const [shareBackgroundDataUrl, setShareBackgroundDataUrl] = useState<string | null>(null);
   const [shareBackgroundLabel, setShareBackgroundLabel] = useState("Fundo padrão");
   const [shareOverlayPosition, setShareOverlayPosition] = useState({ x: 0.5, y: 0.58 });
-  const [shareOverlayScale, setShareOverlayScale] = useState(0.92);
-  const [shareBrandLogoScale, setShareBrandLogoScale] = useState(1.22);
-  const [shareLayout, setShareLayout] = useState<ResultadoSharePayload["shareLayout"]>("slim");
+  const [shareOverlayScale, setShareOverlayScale] = useState(1);
+  const [shareBrandLogoScale, setShareBrandLogoScale] = useState(1.7);
+  const [shareLayout, setShareLayout] = useState<ResultadoSharePayload["shareLayout"]>("complete");
   const [shareCardVariant, setShareCardVariant] = useState<ResultadoSharePayload["cardVariant"]>("dark");
   const [shareBackgroundFilter, setShareBackgroundFilter] = useState<ResultadoSharePayload["backgroundFilter"]>("dim");
   const [shareShowMeta, setShareShowMeta] = useState(true);
   const [shareShowBrand, setShareShowBrand] = useState(true);
   const [sharePanelOpen, setSharePanelOpen] = useState(false);
-  const [sharePreviewDataUrl, setSharePreviewDataUrl] = useState<string | null>(null);
-  const [sharePreviewLiveMode, setSharePreviewLiveMode] = useState(false);
   const sharePreviewRef = useRef<HTMLDivElement | null>(null);
+  const shareOverlayPointerFrameRef = useRef<number | null>(null);
+  const shareOverlayPointerPositionRef = useRef<{ x: number; y: number } | null>(null);
   const shareFileInputRef = useRef<HTMLInputElement | null>(null);
   const shareCameraInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -1279,37 +1273,6 @@ export function EidConfrontoResumoModal({
   const shareIsGoals = shareUsesGoalsScore(sharePayload, shareScore);
 
   useEffect(() => {
-    if (!sharePanelOpen) return;
-    let cancelled = false;
-    const id = window.setTimeout(async () => {
-      try {
-        const url = await createResultadoSharePreviewUrl(sharePayload);
-        if (cancelled) {
-          URL.revokeObjectURL(url);
-          return;
-        }
-        setSharePreviewDataUrl((previous) => {
-          if (previous?.startsWith("blob:")) window.setTimeout(() => URL.revokeObjectURL(previous), 0);
-          return url;
-        });
-        setSharePreviewLiveMode(false);
-      } catch {
-        if (!cancelled) setSharePreviewDataUrl(null);
-      }
-    }, 40);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(id);
-    };
-  }, [sharePanelOpen, sharePayload]);
-
-  useEffect(() => {
-    return () => {
-      if (sharePreviewDataUrl?.startsWith("blob:")) URL.revokeObjectURL(sharePreviewDataUrl);
-    };
-  }, [sharePreviewDataUrl]);
-
-  useEffect(() => {
     let cancelled = false;
     const id = window.setTimeout(() => {
       if (cancelled) return;
@@ -1319,12 +1282,7 @@ export function EidConfrontoResumoModal({
       const saved = JSON.parse(raw) as Partial<ResultadoSharePayload>;
       if (saved.overlayPosition) setShareOverlayPosition(saved.overlayPosition);
       if (typeof saved.overlayScale === "number") setShareOverlayScale(Math.min(1.18, Math.max(0.74, saved.overlayScale)));
-      if (typeof saved.brandLogoScale === "number") setShareBrandLogoScale(Math.min(1.7, Math.max(0.75, saved.brandLogoScale)));
-      setShareLayout(saved.shareLayout === "complete" ? "complete" : "slim");
       if (saved.cardVariant) setShareCardVariant(saved.cardVariant);
-      if (saved.backgroundFilter) setShareBackgroundFilter(saved.backgroundFilter);
-      if (typeof saved.showMeta === "boolean") setShareShowMeta(saved.showMeta);
-      if (typeof saved.showBrand === "boolean") setShareShowBrand(saved.showBrand);
     } catch {
       /* ignore */
     }
@@ -1342,34 +1300,39 @@ export function EidConfrontoResumoModal({
         JSON.stringify({
           overlayPosition: shareOverlayPosition,
           overlayScale: shareOverlayScale,
-          brandLogoScale: shareBrandLogoScale,
-          shareLayout,
           cardVariant: shareCardVariant,
-          backgroundFilter: shareBackgroundFilter,
-          showMeta: shareShowMeta,
-          showBrand: shareShowBrand,
         }),
       );
     } catch {
       /* ignore */
     }
-  }, [shareBackgroundFilter, shareBrandLogoScale, shareCardVariant, shareLayout, shareOverlayPosition, shareOverlayScale, shareShowBrand, shareShowMeta]);
+  }, [shareCardVariant, shareOverlayPosition, shareOverlayScale]);
 
   const updateShareOverlayFromPointer = useCallback((clientX: number, clientY: number) => {
     const preview = sharePreviewRef.current;
     if (!preview) return;
     const rect = preview.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
-    setShareOverlayPosition({
+    shareOverlayPointerPositionRef.current = {
       x: Math.min(0.86, Math.max(0.14, (clientX - rect.left) / rect.width)),
       y: Math.min(0.82, Math.max(0.18, (clientY - rect.top) / rect.height)),
+    };
+    if (shareOverlayPointerFrameRef.current != null) return;
+    shareOverlayPointerFrameRef.current = window.requestAnimationFrame(() => {
+      shareOverlayPointerFrameRef.current = null;
+      const nextPosition = shareOverlayPointerPositionRef.current;
+      if (nextPosition) setShareOverlayPosition(nextPosition);
     });
   }, []);
 
-  const pulseSharePreviewLive = useCallback(() => {
-    setSharePreviewLiveMode(true);
-    window.setTimeout(() => setSharePreviewLiveMode(false), 180);
-  }, []);
+  useEffect(
+    () => () => {
+      if (shareOverlayPointerFrameRef.current != null) {
+        window.cancelAnimationFrame(shareOverlayPointerFrameRef.current);
+      }
+    },
+    [],
+  );
 
   const handleSharePhotoChange = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
@@ -1389,9 +1352,9 @@ export function EidConfrontoResumoModal({
     setShareBackgroundDataUrl(null);
     setShareBackgroundLabel("Fundo padrão");
     setShareOverlayPosition({ x: 0.5, y: 0.58 });
-    setShareOverlayScale(0.92);
-    setShareBrandLogoScale(1.22);
-    setShareLayout("slim");
+    setShareOverlayScale(1);
+    setShareBrandLogoScale(1.7);
+    setShareLayout("complete");
     setShareCardVariant("dark");
     setShareBackgroundFilter("dim");
     setShareShowMeta(true);
@@ -1727,7 +1690,6 @@ export function EidConfrontoResumoModal({
                           : undefined
                       }
                       onPointerDown={(event) => {
-                        setSharePreviewLiveMode(true);
                         event.currentTarget.setPointerCapture(event.pointerId);
                         updateShareOverlayFromPointer(event.clientX, event.clientY);
                       }}
@@ -1735,20 +1697,18 @@ export function EidConfrontoResumoModal({
                         if (event.buttons !== 1) return;
                         updateShareOverlayFromPointer(event.clientX, event.clientY);
                       }}
-                      onPointerUp={() => setSharePreviewLiveMode(false)}
-                      onPointerCancel={() => setSharePreviewLiveMode(false)}
                     >
                       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_12%,color-mix(in_srgb,var(--eid-primary-500)_40%,transparent),transparent_38%),radial-gradient(circle_at_18%_86%,color-mix(in_srgb,var(--eid-action-500)_30%,transparent),transparent_40%),linear-gradient(180deg,rgba(255,255,255,0.05),transparent_22%,rgba(0,0,0,0.18))]" />
-                      {sharePreviewDataUrl ? (
-                        <NextImage
-                          src={sharePreviewDataUrl}
-                          alt="Prévia da arte de resultado"
-                          fill
-                          unoptimized
-                          className={`pointer-events-none absolute inset-0 z-20 object-cover transition-opacity duration-75 ${
-                            sharePreviewLiveMode ? "opacity-0" : "opacity-100"
-                          }`}
-                        />
+                      {shareLayout === "slim" ? (
+                        <span
+                          className="pointer-events-none absolute left-1/2 top-[8%] block -translate-x-1/2"
+                          style={{
+                            width: `${6.2 * shareBrandLogoScale}rem`,
+                            height: `${1.34 * shareBrandLogoScale}rem`,
+                          }}
+                        >
+                          <NextImage src={EID_LOGO_WORDMARK_SRC} alt="EsporteID" fill unoptimized className="object-contain" />
+                        </span>
                       ) : null}
                       <div
                         className={`absolute -translate-x-1/2 -translate-y-1/2 border text-center shadow-[0_18px_34px_-18px_rgba(0,0,0,0.95)] ${
@@ -1766,12 +1726,12 @@ export function EidConfrontoResumoModal({
                           width: `${(shareLayout === "slim" ? 70 : shareCardVariant === "compact" ? 64 : 78) * shareOverlayScale}%`,
                         }}
                       >
-                        {shareShowBrand || shareLayout === "slim" ? (
+                        {shareShowBrand && shareLayout === "complete" ? (
                           <span
                             className="relative mx-auto block h-4 w-[4.6rem]"
                             style={{
-                              width: `${(shareLayout === "slim" ? 5.2 : 4.6) * shareBrandLogoScale}rem`,
-                              height: `${(shareLayout === "slim" ? 1.12 : 1) * shareBrandLogoScale}rem`,
+                              width: `${4.6 * shareBrandLogoScale}rem`,
+                              height: `${1 * shareBrandLogoScale}rem`,
                             }}
                           >
                             <NextImage src={EID_LOGO_WORDMARK_SRC} alt="EsporteID" fill unoptimized className="object-contain" />
@@ -1914,14 +1874,13 @@ export function EidConfrontoResumoModal({
                   <div className="mb-2.5 space-y-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/45 p-2">
                     <div className="grid grid-cols-2 gap-1.5">
                       {[
-                        ["slim", "Slim"],
+                        ["slim", "Resumido"],
                         ["complete", "Completo"],
                       ].map(([value, label]) => (
                         <button
                           key={value}
                           type="button"
                           onClick={() => {
-                            pulseSharePreviewLive();
                             setShareLayout(value as ResultadoSharePayload["shareLayout"]);
                             setShareOverlayScale(value === "slim" ? 0.92 : 1);
                           }}
@@ -1943,10 +1902,7 @@ export function EidConfrontoResumoModal({
                         max="1.18"
                         step="0.02"
                         value={shareOverlayScale}
-                        onChange={(event) => {
-                          pulseSharePreviewLive();
-                          setShareOverlayScale(Number(event.currentTarget.value));
-                        }}
+                        onChange={(event) => setShareOverlayScale(Number(event.currentTarget.value))}
                         className="mt-1 block w-full accent-[color:var(--eid-action-500)]"
                       />
                     </label>
@@ -1958,10 +1914,7 @@ export function EidConfrontoResumoModal({
                         max="1.7"
                         step="0.05"
                         value={shareBrandLogoScale}
-                        onChange={(event) => {
-                          pulseSharePreviewLive();
-                          setShareBrandLogoScale(Number(event.currentTarget.value));
-                        }}
+                        onChange={(event) => setShareBrandLogoScale(Number(event.currentTarget.value))}
                         className="mt-1 block w-full accent-[color:var(--eid-primary-500)]"
                       />
                     </label>
@@ -1992,7 +1945,6 @@ export function EidConfrontoResumoModal({
                           key={value}
                           type="button"
                           onClick={() => {
-                            pulseSharePreviewLive();
                             setShareCardVariant(value as ResultadoSharePayload["cardVariant"]);
                           }}
                           className={`min-h-[2.15rem] rounded-lg border px-1.5 text-[9px] font-black transition ${
@@ -2004,53 +1956,6 @@ export function EidConfrontoResumoModal({
                           {label}
                         </button>
                       ))}
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {[
-                        ["normal", "Natural"],
-                        ["dim", "Escuro"],
-                        ["blur", "Blur"],
-                      ].map(([value, label]) => (
-                        <button
-                          key={value}
-                          type="button"
-                          onClick={() => {
-                            pulseSharePreviewLive();
-                            setShareBackgroundFilter(value as ResultadoSharePayload["backgroundFilter"]);
-                          }}
-                          className={`min-h-[2.15rem] rounded-lg border px-1.5 text-[9px] font-black transition ${
-                            shareBackgroundFilter === value
-                              ? "border-eid-action-500/45 bg-eid-action-500/16 text-eid-action-100"
-                              : "border-[color:var(--eid-border-subtle)] bg-eid-surface/70 text-eid-text-secondary"
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <label className="flex min-h-[2.25rem] items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-2 text-[10px] font-black text-eid-text-secondary">
-                        Data/local
-                        <input
-                          type="checkbox"
-                          checked={shareShowMeta}
-                          onChange={(event) => {
-                            pulseSharePreviewLive();
-                            setShareShowMeta(event.currentTarget.checked);
-                          }}
-                        />
-                      </label>
-                      <label className="flex min-h-[2.25rem] items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-2 text-[10px] font-black text-eid-text-secondary">
-                        Marca
-                        <input
-                          type="checkbox"
-                          checked={shareShowBrand}
-                          onChange={(event) => {
-                            pulseSharePreviewLive();
-                            setShareShowBrand(event.currentTarget.checked);
-                          }}
-                        />
-                      </label>
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row">
