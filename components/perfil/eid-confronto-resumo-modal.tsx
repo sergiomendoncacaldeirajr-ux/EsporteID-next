@@ -463,11 +463,10 @@ function drawShareSlimResultCard(
   const score = shareScoreSummary(payload);
   const setRows = getShareSetRows(payload);
   const isSets = shareUsesSetLines(score) && setRows.length > 0;
-  const isGoals = shareUsesGoalsScore(payload, score);
   const scale = payload.overlayScale;
   const logoScale = Math.min(1.7, Math.max(0.75, payload.brandLogoScale || 1));
-  const baseWidth = 620;
-  const baseHeight = payload.showMeta ? 440 : 390;
+  const baseWidth = isSets ? 760 : 420;
+  const baseHeight = isSets ? 280 : 230;
   const cardWidth = baseWidth * scale;
   const cardHeight = baseHeight * scale;
   const x = Math.min(1080 - cardWidth - 70, Math.max(70, payload.overlayPosition.x * 1080 - cardWidth / 2));
@@ -495,25 +494,20 @@ function drawShareSlimResultCard(
   ctx.textBaseline = "middle";
   if (payload.showBrand) {
     if (brandLogo) {
-      const logoW = 210 * logoScale * scale;
-      const logoH = 50 * logoScale * scale;
-      ctx.drawImage(brandLogo, center - logoW / 2, y + 28 * scale, logoW, logoH);
+      const logoW = 190 * logoScale * scale;
+      const logoH = 46 * logoScale * scale;
+      ctx.drawImage(brandLogo, center - logoW / 2, y + 22 * scale, logoW, logoH);
     } else {
-      ctx.font = `900 ${28 * logoScale * scale}px Arial, sans-serif`;
+      ctx.font = `900 ${25 * logoScale * scale}px Arial, sans-serif`;
       ctx.fillStyle = text;
-      ctx.fillText("ESPORTE", center - 28 * scale, y + 52 * scale);
+      ctx.fillText("ESPORTE", center - 26 * scale, y + 44 * scale);
       ctx.fillStyle = colors.action;
-      ctx.fillText("ID", center + 86 * scale, y + 52 * scale);
+      ctx.fillText("ID", center + 76 * scale, y + 44 * scale);
     }
   }
 
-  const sportY = y + (payload.showBrand ? 92 : 42) * scale;
-  ctx.fillStyle = colors.primarySoft;
-  ctx.font = `900 ${16 * scale}px Arial, sans-serif`;
-  ctx.fillText(`${sportShareIconText(payload.sportLabel)} ${cleanShareText(payload.sportLabel, "Resultado oficial").toUpperCase()}`, center, sportY);
-
-  const drawAvatar = (img: HTMLImageElement | null | undefined, label: string, cx: number, cy: number) => {
-    const r = 34 * scale;
+  const drawTinyAvatar = (img: HTMLImageElement | null | undefined, label: string, cx: number, cy: number) => {
+    const r = 17 * scale;
     ctx.save();
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
@@ -530,41 +524,34 @@ function drawShareSlimResultCard(
     ctx.restore();
     if (!img) {
       ctx.fillStyle = colors.primarySoft;
-      ctx.font = `900 ${20 * scale}px Arial, sans-serif`;
+      ctx.font = `900 ${11 * scale}px Arial, sans-serif`;
       ctx.fillText(shareInitials(label), cx, cy + 1 * scale);
     }
     ctx.strokeStyle = "rgba(255,255,255,0.40)";
-    ctx.lineWidth = 2 * scale;
+    ctx.lineWidth = 1.5 * scale;
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.stroke();
   };
 
-  const scoreTop = sportY + 36 * scale;
-  const scoreX = center - 210 * scale;
-  const scoreW = 420 * scale;
-  const scoreH = isSets ? 142 * scale : 112 * scale;
-  ctx.fillStyle = isGoals ? "rgba(6, 37, 22, 0.82)" : "rgba(255,255,255,0.08)";
-  ctx.roundRect(scoreX, scoreTop, scoreW, scoreH, 22 * scale);
+  const scoreTop = y + (payload.showBrand ? 82 : 32) * scale;
+  const scoreX = x + 30 * scale;
+  const scoreW = cardWidth - 60 * scale;
+  const scoreH = isSets ? 148 * scale : 92 * scale;
+  ctx.fillStyle = "rgba(8, 15, 24, 0.86)";
+  ctx.roundRect(scoreX, scoreTop, scoreW, scoreH, 16 * scale);
   ctx.fill();
-  ctx.strokeStyle = "rgba(255,255,255,0.16)";
+  ctx.strokeStyle = "rgba(255,255,255,0.12)";
+  ctx.lineWidth = 1.5 * scale;
   ctx.stroke();
 
-  drawAvatar(avatars?.a, payload.ladoA, scoreX - 10 * scale, scoreTop + scoreH / 2);
-  drawAvatar(avatars?.b, payload.ladoB, scoreX + scoreW + 10 * scale, scoreTop + scoreH / 2);
-
-  ctx.fillStyle = text;
-  ctx.font = `900 ${18 * scale}px Arial, sans-serif`;
-  ctx.fillText(shareFirstName(payload.ladoA), scoreX - 10 * scale, scoreTop + scoreH / 2 + 50 * scale);
-  ctx.fillText(shareFirstName(payload.ladoB), scoreX + scoreW + 10 * scale, scoreTop + scoreH / 2 + 50 * scale);
-
   if (isSets) {
-    const nameW = 112 * scale;
-    const headerH = 30 * scale;
-    const rowH = 48 * scale;
+    const nameW = 210 * scale;
+    const headerH = 38 * scale;
+    const rowH = 55 * scale;
     const colW = (scoreW - nameW) / Math.max(1, setRows.length);
-    ctx.fillStyle = "rgba(37,99,235,0.16)";
-    ctx.roundRect(scoreX, scoreTop, scoreW, headerH, 22 * scale);
+    ctx.fillStyle = "rgba(255,255,255,0.035)";
+    ctx.roundRect(scoreX, scoreTop, scoreW, headerH, 16 * scale);
     ctx.fill();
     ctx.fillStyle = muted;
     ctx.font = `900 ${13 * scale}px Arial, sans-serif`;
@@ -573,10 +560,11 @@ function drawShareSlimResultCard(
       const rowY = scoreTop + headerH + rowIdx * rowH;
       ctx.fillStyle = rowIdx === 0 ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.08)";
       ctx.fillRect(scoreX, rowY, scoreW, rowH);
+      drawTinyAvatar(rowIdx === 0 ? avatars?.a : avatars?.b, name, scoreX + 34 * scale, rowY + rowH / 2);
       ctx.textAlign = "left";
       ctx.fillStyle = text;
-      ctx.font = `900 ${15 * scale}px Arial, sans-serif`;
-      ctx.fillText(shareFirstName(name), scoreX + 14 * scale, rowY + rowH / 2 + 1 * scale);
+      ctx.font = `900 ${16 * scale}px Arial, sans-serif`;
+      ctx.fillText(shareFirstName(name), scoreX + 62 * scale, rowY + rowH / 2 + 1 * scale);
       ctx.textAlign = "center";
       setRows.forEach((set, idx) => {
         drawCanvasSetCell(
@@ -586,27 +574,16 @@ function drawShareSlimResultCard(
           set.hasTiebreak,
           scoreX + nameW + colW * idx + colW / 2,
           rowY + rowH / 2 + 2 * scale,
-          23 * scale,
+          24 * scale,
           text,
           colors.primarySoft,
         );
       });
     });
-  } else if (isGoals) {
-    drawShareGoalsTvScore(ctx, payload, scoreX + 40 * scale, scoreTop + 10 * scale, scoreW - 80 * scale, scale * 0.72, colors, text, muted);
   } else {
-    ctx.fillStyle = colors.primarySoft;
-    ctx.font = `900 ${13 * scale}px Arial, sans-serif`;
-    ctx.fillText("PLACAR FINAL", center, scoreTop + 28 * scale);
     ctx.fillStyle = text;
-    ctx.font = `900 ${44 * scale}px Arial, sans-serif`;
-    ctx.fillText(score.headline, center, scoreTop + 72 * scale);
-  }
-
-  if (payload.showMeta) {
-    ctx.fillStyle = muted;
-    ctx.font = `800 ${16 * scale}px Arial, sans-serif`;
-    drawCenteredWrappedText(ctx, shareMetaLine(payload), center, y + cardHeight - 34 * scale, cardWidth * 0.82, 20 * scale, 2);
+    ctx.font = `900 ${48 * scale}px Arial, sans-serif`;
+    ctx.fillText(score.headline.replace(/\s*x\s*/i, " × "), center, scoreTop + scoreH / 2 + 2 * scale);
   }
 }
 
@@ -640,87 +617,6 @@ function drawDefaultSportBackground(ctx: CanvasRenderingContext2D, payload: Resu
   }
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 1080, 1920);
-
-  ctx.save();
-  ctx.globalAlpha = 0.22;
-  ctx.fillStyle = "#ffffff";
-  for (let i = 0; i < 36; i += 1) {
-    const x = (i * 173) % 1080;
-    const y = (i * 307) % 1920;
-    ctx.beginPath();
-    ctx.arc(x, y, 1.8 + (i % 4), 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-
-  ctx.save();
-  ctx.globalAlpha = 0.48;
-  ctx.strokeStyle = theme === "basket" || theme === "sand" ? "rgba(255,255,255,0.62)" : "rgba(255,255,255,0.46)";
-  ctx.lineWidth = 8;
-  if (theme === "field") {
-    for (let x = 90; x < 990; x += 180) {
-      ctx.fillStyle = x % 360 === 90 ? "rgba(255,255,255,0.035)" : "rgba(0,0,0,0.035)";
-      ctx.fillRect(x, 260, 180, 1400);
-    }
-    ctx.strokeRect(90, 300, 900, 1320);
-    ctx.strokeRect(90, 540, 190, 840);
-    ctx.strokeRect(800, 540, 190, 840);
-    ctx.beginPath();
-    ctx.moveTo(90, 960);
-    ctx.lineTo(990, 960);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(540, 960, 150, 0, Math.PI * 2);
-    ctx.stroke();
-  } else if (theme === "court") {
-    ctx.strokeRect(120, 300, 840, 1320);
-    ctx.strokeRect(120, 300, 420, 660);
-    ctx.strokeRect(540, 960, 420, 660);
-    ctx.beginPath();
-    ctx.moveTo(120, 960);
-    ctx.lineTo(960, 960);
-    ctx.moveTo(540, 300);
-    ctx.lineTo(540, 1620);
-    ctx.stroke();
-  } else if (theme === "basket") {
-    ctx.strokeStyle = "rgba(255,255,255,0.52)";
-    ctx.beginPath();
-    ctx.arc(540, 1130, 520, Math.PI * 1.12, Math.PI * 1.88);
-    ctx.stroke();
-    ctx.strokeRect(230, 360, 620, 420);
-    ctx.strokeRect(390, 360, 300, 260);
-    ctx.beginPath();
-    ctx.arc(540, 780, 120, 0, Math.PI * 2);
-    ctx.stroke();
-  } else if (theme === "track") {
-    ctx.strokeStyle = "rgba(255,255,255,0.44)";
-    ctx.lineWidth = 7;
-    for (let i = 0; i < 6; i += 1) {
-      ctx.strokeRect(95 + i * 46, 300 + i * 70, 890 - i * 92, 1320 - i * 140);
-    }
-  } else if (theme === "sand") {
-    ctx.lineWidth = 5;
-    ctx.strokeRect(130, 360, 820, 1200);
-    ctx.beginPath();
-    ctx.moveTo(130, 960);
-    ctx.lineTo(950, 960);
-    ctx.stroke();
-    for (let y = 360; y < 1580; y += 90) {
-      ctx.beginPath();
-      ctx.moveTo(130, y);
-      ctx.bezierCurveTo(320, y - 36, 520, y + 36, 760, y - 16);
-      ctx.bezierCurveTo(850, y - 32, 930, y - 10, 990, y + 12);
-      ctx.stroke();
-    }
-  } else {
-    ctx.beginPath();
-    ctx.arc(780, 420, 310, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(280, 1460, 360, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-  ctx.restore();
 
   const glowA = ctx.createRadialGradient(860, 160, 20, 860, 160, 520);
   glowA.addColorStop(0, colors.primary);
@@ -792,7 +688,7 @@ function drawShareResultCard(
   const firstA = shareFirstName(payload.ladoA);
   const firstB = shareFirstName(payload.ladoB);
   const drawAvatar = (img: HTMLImageElement | null | undefined, label: string, cx: number, cy: number) => {
-    const r = 30 * scale;
+    const r = 42 * scale;
     ctx.save();
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
@@ -809,7 +705,7 @@ function drawShareResultCard(
     ctx.restore();
     if (!img) {
       ctx.fillStyle = colors.primarySoft;
-      ctx.font = `900 ${20 * scale}px Arial, sans-serif`;
+      ctx.font = `900 ${24 * scale}px Arial, sans-serif`;
       ctx.fillText(shareInitials(label), cx, cy + 1 * scale);
     }
     ctx.strokeStyle = "rgba(255,255,255,0.34)";
@@ -847,11 +743,11 @@ function drawShareResultCard(
 
   ctx.fillStyle = text;
   const namesY = y + (payload.cardVariant === "compact" ? 228 : 254) * scale;
-  drawAvatar(avatars?.a, payload.ladoA, center - 190 * scale, namesY);
-  drawAvatar(avatars?.b, payload.ladoB, center + 190 * scale, namesY);
+  drawAvatar(avatars?.a, payload.ladoA, center - 210 * scale, namesY);
+  drawAvatar(avatars?.b, payload.ladoB, center + 210 * scale, namesY);
   ctx.font = `900 ${28 * scale}px Arial, sans-serif`;
-  ctx.fillText(firstA, center - 190 * scale, namesY + 48 * scale);
-  ctx.fillText(firstB, center + 190 * scale, namesY + 48 * scale);
+  ctx.fillText(firstA, center - 210 * scale, namesY + 64 * scale);
+  ctx.fillText(firstB, center + 210 * scale, namesY + 64 * scale);
   ctx.fillStyle = colors.primarySoft;
   ctx.font = `900 ${20 * scale}px Arial, sans-serif`;
   ctx.fillText("VS", center, namesY + 15 * scale);
@@ -1241,6 +1137,7 @@ export function EidConfrontoResumoModal({
   const [shareShowMeta, setShareShowMeta] = useState(true);
   const [shareShowBrand, setShareShowBrand] = useState(true);
   const [sharePanelOpen, setSharePanelOpen] = useState(false);
+  const [sharePreviewDataUrl, setSharePreviewDataUrl] = useState<string | null>(null);
   const sharePreviewRef = useRef<HTMLDivElement | null>(null);
   const shareFileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -1335,6 +1232,24 @@ export function EidConfrontoResumoModal({
   const shareSetRows = useMemo(() => getShareSetRows(sharePayload), [sharePayload]);
   const shareIsSets = shareUsesSetLines(shareScore);
   const shareIsGoals = shareUsesGoalsScore(sharePayload, shareScore);
+
+  useEffect(() => {
+    if (!sharePanelOpen) return;
+    let cancelled = false;
+    const id = window.setTimeout(async () => {
+      try {
+        const file = await createResultadoShareImage(sharePayload);
+        const url = await fileToDataUrl(file);
+        if (!cancelled) setSharePreviewDataUrl(url);
+      } catch {
+        if (!cancelled) setSharePreviewDataUrl(null);
+      }
+    }, 180);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(id);
+    };
+  }, [sharePanelOpen, sharePayload]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1749,6 +1664,15 @@ export function EidConfrontoResumoModal({
                       }}
                     >
                       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_12%,color-mix(in_srgb,var(--eid-primary-500)_40%,transparent),transparent_38%),radial-gradient(circle_at_18%_86%,color-mix(in_srgb,var(--eid-action-500)_30%,transparent),transparent_40%),linear-gradient(180deg,rgba(255,255,255,0.05),transparent_22%,rgba(0,0,0,0.18))]" />
+                      {sharePreviewDataUrl ? (
+                        <NextImage
+                          src={sharePreviewDataUrl}
+                          alt="Prévia da arte de resultado"
+                          fill
+                          unoptimized
+                          className="pointer-events-none absolute inset-0 z-20 object-cover"
+                        />
+                      ) : null}
                       <div
                         className={`absolute -translate-x-1/2 -translate-y-1/2 border text-center shadow-[0_18px_34px_-18px_rgba(0,0,0,0.95)] ${
                           shareLayout === "slim" ? "rounded-xl px-2 py-2" : "rounded-2xl px-3 py-2.5"
@@ -1776,15 +1700,18 @@ export function EidConfrontoResumoModal({
                             <NextImage src={EID_LOGO_WORDMARK_SRC} alt="EsporteID" fill unoptimized className="object-contain" />
                           </span>
                         ) : null}
-                        <p className={`${shareLayout === "slim" ? "mt-1 text-[6px]" : "mt-1.5 text-[7px]"} font-black uppercase tracking-[0.12em] text-eid-primary-200`}>
-                          <span className="inline-flex items-center justify-center gap-1">
-                            <SportGlyphIcon sportName={sportLabel} />
-                            <span>{sportLabel ?? "Resultado oficial"}</span>
-                          </span>
-                        </p>
-                        <div className={`${shareLayout === "slim" ? "mt-1" : "mt-1.5"} grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1`}>
+                        {shareLayout === "complete" ? (
+                          <p className="mt-1.5 text-[7px] font-black uppercase tracking-[0.12em] text-eid-primary-200">
+                            <span className="inline-flex items-center justify-center gap-1">
+                              <SportGlyphIcon sportName={sportLabel} />
+                              <span>{sportLabel ?? "Resultado oficial"}</span>
+                            </span>
+                          </p>
+                        ) : null}
+                        {shareLayout === "complete" ? (
+                        <div className="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1">
                           <div className="min-w-0">
-                            <span className={`relative mx-auto mb-1 block overflow-hidden rounded-full border border-white/25 bg-white/10 ${shareLayout === "slim" ? "h-5 w-5" : "h-7 w-7"}`}>
+                            <span className="relative mx-auto mb-1 block h-7 w-7 overflow-hidden rounded-full border border-white/25 bg-white/10">
                               {ladoAAvatarUrl ? (
                                 <NextImage src={ladoAAvatarUrl} alt="" fill unoptimized className="object-cover" />
                               ) : (
@@ -1793,13 +1720,13 @@ export function EidConfrontoResumoModal({
                                 </span>
                               )}
                             </span>
-                            <p className={`${shareLayout === "slim" ? "text-[7px]" : "text-[9px]"} truncate font-black leading-tight text-eid-fg`}>{shareFirstName(ladoA)}</p>
+                            <p className="truncate text-[9px] font-black leading-tight text-eid-fg">{shareFirstName(ladoA)}</p>
                           </div>
-                          <span className={`${shareLayout === "slim" ? "px-1 py-px text-[6px]" : "px-1.5 py-0.5 text-[7px]"} rounded-full border border-eid-primary-500/30 bg-eid-primary-500/12 font-black text-eid-primary-100`}>
+                          <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/12 px-1.5 py-0.5 text-[7px] font-black text-eid-primary-100">
                             VS
                           </span>
                           <div className="min-w-0">
-                            <span className={`relative mx-auto mb-1 block overflow-hidden rounded-full border border-white/25 bg-white/10 ${shareLayout === "slim" ? "h-5 w-5" : "h-7 w-7"}`}>
+                            <span className="relative mx-auto mb-1 block h-7 w-7 overflow-hidden rounded-full border border-white/25 bg-white/10">
                               {ladoBAvatarUrl ? (
                                 <NextImage src={ladoBAvatarUrl} alt="" fill unoptimized className="object-cover" />
                               ) : (
@@ -1808,9 +1735,10 @@ export function EidConfrontoResumoModal({
                                 </span>
                               )}
                             </span>
-                            <p className={`${shareLayout === "slim" ? "text-[7px]" : "text-[9px]"} truncate font-black leading-tight text-eid-fg`}>{shareFirstName(ladoB)}</p>
+                            <p className="truncate text-[9px] font-black leading-tight text-eid-fg">{shareFirstName(ladoB)}</p>
                           </div>
                         </div>
+                        ) : null}
                         {shareIsSets ? (
                           <div className={`${shareLayout === "slim" ? "mt-1.5 rounded-md" : "mt-2 rounded-lg"} overflow-hidden border border-white/14 bg-white/10 text-eid-fg`}>
                             <div className={`${shareLayout === "slim" ? "text-[5px]" : "text-[6px]"} grid bg-eid-primary-500/15 font-black uppercase text-eid-primary-100`} style={{ gridTemplateColumns: `${shareLayout === "slim" ? "2.35rem" : "2.8rem"} repeat(${Math.max(1, shareSetRows.length)}, minmax(0,1fr))` }}>
@@ -1819,7 +1747,16 @@ export function EidConfrontoResumoModal({
                             </div>
                             {[ladoA, ladoB].map((name, rowIdx) => (
                               <div key={name} className={`${shareLayout === "slim" ? "text-[7px]" : "text-[8px]"} grid border-t border-white/10 font-black`} style={{ gridTemplateColumns: `${shareLayout === "slim" ? "2.35rem" : "2.8rem"} repeat(${Math.max(1, shareSetRows.length)}, minmax(0,1fr))` }}>
-                                <span className="truncate px-1 py-1 text-left">{shareFirstName(name)}</span>
+                                <span className="flex min-w-0 items-center gap-1 truncate px-1 py-1 text-left">
+                                  {shareLayout === "slim" ? (
+                                    <span className="relative inline-block h-3.5 w-3.5 shrink-0 overflow-hidden rounded-full border border-white/20 bg-white/10">
+                                      {(rowIdx === 0 ? ladoAAvatarUrl : ladoBAvatarUrl) ? (
+                                        <NextImage src={(rowIdx === 0 ? ladoAAvatarUrl : ladoBAvatarUrl) ?? ""} alt="" fill unoptimized className="object-cover" />
+                                      ) : null}
+                                    </span>
+                                  ) : null}
+                                  <span className="truncate">{shareFirstName(name)}</span>
+                                </span>
                                 {shareSetRows.map((set, idx) => (
                                   <span key={`${name}-${idx}`} className={`${shareLayout === "slim" ? "py-0.5" : "py-1"} tabular-nums`}>
                                     {rowIdx === 0 ? set.a : set.b}
@@ -1843,7 +1780,7 @@ export function EidConfrontoResumoModal({
                         {shareScore.extra && shareCardVariant !== "compact" ? (
                           <p className="mt-1 text-[7px] font-bold leading-tight text-eid-text-secondary">{shareScore.extra}</p>
                         ) : null}
-                        {shareShowMeta ? (
+                        {shareShowMeta && shareLayout === "complete" ? (
                           <p className="mt-1 line-clamp-2 text-[7px] font-bold leading-tight text-eid-text-secondary">{shareMetaLine(sharePayload)}</p>
                         ) : null}
                       </div>
