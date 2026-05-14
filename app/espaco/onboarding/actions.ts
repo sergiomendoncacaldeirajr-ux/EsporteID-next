@@ -211,9 +211,11 @@ export async function salvarPerfilWizardAction(
     const nomePublico = field(formData, "nome_publico");
     if (nomePublico.length < 2) throw new Error("Informe o nome do espaço.");
     const cidade = field(formData, "cidade");
-    const uf = field(formData, "uf").toUpperCase();
+    const uf = (field(formData, "uf") || field(formData, "estado")).toUpperCase();
     const endereco = field(formData, "endereco");
     const numero = field(formData, "numero");
+    const lat = field(formData, "lat") || null;
+    const lng = field(formData, "lng") || null;
     const espacoIdReivindicado = Number(formData.get("espaco_id_reivindicado") ?? 0) || null;
     const esportesIds = intList(formData, "esportes_ids");
     if (cidade.length < 2 || uf.length < 2) throw new Error("Informe cidade e UF do espaço.");
@@ -247,6 +249,8 @@ export async function salvarPerfilWizardAction(
       slug: slugFinal,
       cidade,
       uf,
+      lat,
+      lng,
       localizacao: [cidade, uf].filter(Boolean).join(" - "),
       esportes_ids: JSON.stringify(esportesIds),
       venue_config_json: JSON.stringify({
@@ -256,6 +260,8 @@ export async function salvarPerfilWizardAction(
         cep: field(formData, "cep") || null,
         cidade,
         estado: uf,
+        lat,
+        lng,
         complemento: field(formData, "complemento") || null,
         origem: "wizard-espaco",
       }),

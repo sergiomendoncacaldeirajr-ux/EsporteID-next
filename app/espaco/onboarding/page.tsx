@@ -65,7 +65,7 @@ export default async function EspacoOnboardingPage() {
     supabase.from("esportes").select("id, nome").order("nome"),
     supabase
       .from("espacos_genericos")
-      .select("id, slug, nome_publico, localizacao, logo_arquivo, cidade, uf, venue_config_json")
+      .select("id, slug, nome_publico, localizacao, logo_arquivo, cidade, uf, lat, lng, venue_config_json")
       .neq("id", selectedSpace.id)
       .order("nome_publico")
       .limit(500),
@@ -126,6 +126,7 @@ export default async function EspacoOnboardingPage() {
       userId: user.id,
       space: selectedSpace,
       }));
+  const selectedSpaceCoords = selectedSpace as typeof selectedSpace & { lat?: string | number | null; lng?: string | number | null };
   const venueConfig = parseJsonRecord(selectedSpace.venue_config_json);
   const reservaConfig = normalizeEspacoReservaConfig(selectedSpace.configuracao_reservas_json);
   const categoriaPlano = selectedSpace.categoria_mensalidade ?? "outro";
@@ -156,6 +157,8 @@ export default async function EspacoOnboardingPage() {
       estado: String(cfg.estado ?? local.uf ?? ""),
       cep: String(cfg.cep ?? ""),
       complemento: String(cfg.complemento ?? ""),
+      lat: local.lat != null ? String(local.lat) : String(cfg.lat ?? ""),
+      lng: local.lng != null ? String(local.lng) : String(cfg.lng ?? ""),
     };
   });
 
@@ -178,6 +181,8 @@ export default async function EspacoOnboardingPage() {
         bairro: String(venueConfig.bairro ?? ""),
         cep: String(venueConfig.cep ?? ""),
         complemento: String(venueConfig.complemento ?? ""),
+        lat: selectedSpaceCoords.lat != null ? String(selectedSpaceCoords.lat) : String(venueConfig.lat ?? ""),
+        lng: selectedSpaceCoords.lng != null ? String(selectedSpaceCoords.lng) : String(venueConfig.lng ?? ""),
         reserva_observacoes: String(reservaConfig.observacoesPublicas ?? reservaConfig.politicaCancelamento ?? ""),
         descricao_curta: selectedSpace.descricao_curta,
         descricao_longa: selectedSpace.descricao_longa,

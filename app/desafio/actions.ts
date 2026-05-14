@@ -136,12 +136,10 @@ async function countRankingPendenciasIndividualUsuario(
     .eq("esporte_id", esporteId)
     .or(`usuario_id.eq.${userId},adversario_id.eq.${userId}`)
     .limit(400);
-  const nMatches = (ms ?? []).filter((m) => matchRankModalidadeFromMatch(m) === "individual").length;
-
   const { data: ps } = await supabase
     .from("partidas")
     .select(
-      "modalidade, time1_id, time2_id, jogador1_id, jogador2_id, usuario_id, desafiante_id, desafiado_id, status"
+      "match_id, modalidade, time1_id, time2_id, jogador1_id, jogador2_id, usuario_id, desafiante_id, desafiado_id, status"
     )
     .eq("esporte_id", esporteId)
     .is("torneio_id", null)
@@ -150,7 +148,15 @@ async function countRankingPendenciasIndividualUsuario(
     )
     .limit(400);
 
-  const nPartidas = (ps ?? []).filter((p) => isIndividualRankPendingPartida(p, userId)).length;
+  const partidasAbertas = (ps ?? []).filter((p) => isIndividualRankPendingPartida(p, userId));
+  const openMatchIds = new Set(
+    partidasAbertas.map((p) => Number((p as { match_id?: number | null }).match_id ?? 0)).filter((id) => Number.isFinite(id) && id > 0),
+  );
+  const nMatches = (ms ?? []).filter((m) => {
+    const id = Number((m as { id?: number | null }).id ?? 0);
+    return matchRankModalidadeFromMatch(m) === "individual" && !openMatchIds.has(id);
+  }).length;
+  const nPartidas = partidasAbertas.length;
   return nMatches + nPartidas;
 }
 
@@ -167,17 +173,23 @@ async function countRankingPendenciasPorTime(
     .eq("esporte_id", esporteId)
     .or(`desafiante_time_id.eq.${timeId},adversario_time_id.eq.${timeId}`)
     .limit(400);
-  const nMatches = (ms ?? []).filter((m) => ["dupla", "time"].includes(matchRankModalidadeFromMatch(m))).length;
-
   const { data: ps } = await supabase
     .from("partidas")
-    .select("modalidade, time1_id, time2_id, status")
+    .select("match_id, modalidade, time1_id, time2_id, status")
     .eq("esporte_id", esporteId)
     .is("torneio_id", null)
     .or(`time1_id.eq.${timeId},time2_id.eq.${timeId}`)
     .limit(400);
 
-  const nPartidas = (ps ?? []).filter((p) => isTeamRankPendingPartida(p, timeId)).length;
+  const partidasAbertas = (ps ?? []).filter((p) => isTeamRankPendingPartida(p, timeId));
+  const openMatchIds = new Set(
+    partidasAbertas.map((p) => Number((p as { match_id?: number | null }).match_id ?? 0)).filter((id) => Number.isFinite(id) && id > 0),
+  );
+  const nMatches = (ms ?? []).filter((m) => {
+    const id = Number((m as { id?: number | null }).id ?? 0);
+    return ["dupla", "time"].includes(matchRankModalidadeFromMatch(m)) && !openMatchIds.has(id);
+  }).length;
+  const nPartidas = partidasAbertas.length;
   return nMatches + nPartidas;
 }
 

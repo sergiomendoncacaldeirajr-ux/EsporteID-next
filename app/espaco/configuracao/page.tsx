@@ -245,6 +245,7 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
     });
 
   const modoReserva = selectedSpace.modo_reserva ?? "mista";
+  const selectedSpaceCoords = selectedSpace as typeof selectedSpace & { lat?: string | number | null; lng?: string | number | null };
   const monetPaaS = selectedSpace.modo_monetizacao === "mensalidade_plataforma";
   const limiteTxt =
     unidadeGate.maxUnidadesPlano != null
@@ -276,6 +277,9 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
               cidade: selectedSpace.cidade ?? null,
               uf: selectedSpace.uf ?? null,
               localizacao: selectedSpace.localizacao ?? null,
+              lat: selectedSpaceCoords.lat ?? null,
+              lng: selectedSpaceCoords.lng ?? null,
+              venue_config_json: selectedSpace.venue_config_json,
               cover_arquivo: selectedSpace.cover_arquivo ?? null,
               whatsapp_contato: selectedSpace.whatsapp_contato ?? null,
               email_contato: selectedSpace.email_contato ?? null,

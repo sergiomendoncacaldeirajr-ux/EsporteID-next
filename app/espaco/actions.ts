@@ -116,6 +116,19 @@ function text(formData: FormData, field: string) {
   return String(formData.get(field) ?? "").trim();
 }
 
+function parseRecord(raw: unknown): Record<string, unknown> {
+  if (!raw) return {};
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+    } catch {
+      return {};
+    }
+  }
+  return typeof raw === "object" && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
+}
+
 function asaasSplitDoEspaco(walletId: string | null | undefined, valorLiquidoCentavos: number) {
   const wallet = String(walletId ?? "").trim();
   const valor = Math.max(0, Math.floor(Number(valorLiquidoCentavos) || 0));
@@ -339,8 +352,15 @@ export async function salvarConfiguracoesEspacoAction(
     const { supabase, user } = await requireEspacoManager(espacoId);
     const nomePublico = text(formData, "nome_publico");
     const cidade = text(formData, "cidade");
-    const uf = text(formData, "uf").toUpperCase();
-    const localizacao = text(formData, "localizacao");
+    const uf = (text(formData, "uf") || text(formData, "estado")).toUpperCase();
+    const localizacao = text(formData, "localizacao") || [cidade, uf].filter(Boolean).join(" - ");
+    const endereco = text(formData, "endereco");
+    const numero = text(formData, "numero");
+    const bairro = text(formData, "bairro") || null;
+    const cep = text(formData, "cep") || null;
+    const complemento = text(formData, "complemento") || null;
+    const lat = text(formData, "lat") || null;
+    const lng = text(formData, "lng") || null;
     const coverArquivo = text(formData, "cover_arquivo") || null;
     const whatsappContato = text(formData, "whatsapp_contato") || null;
     const emailContato = text(formData, "email_contato") || null;
@@ -363,10 +383,10 @@ export async function salvarConfiguracoesEspacoAction(
     );
     const { data: espacoModo } = await supabase
       .from("espacos_genericos")
-      .select("modo_reserva, configuracao_reservas_json")
+      .select("modo_reserva, configuracao_reservas_json, venue_config_json")
       .eq("id", espacoId)
       .maybeSingle();
-    const espacoModoRow = espacoModo as { modo_reserva?: string | null; configuracao_reservas_json?: unknown } | null;
+    const espacoModoRow = espacoModo as { modo_reserva?: string | null; configuracao_reservas_json?: unknown; venue_config_json?: unknown } | null;
     const modoR = espacoModoRow?.modo_reserva;
     const reservasGratisLiberadas = forcarReservasGratisLiberadasFalsas(
       modoR ?? null,
@@ -429,6 +449,9 @@ export async function salvarConfiguracoesEspacoAction(
     if (cidade.length < 2 || uf.length < 2) {
       return { ok: false, message: "Cidade e UF são obrigatórios." };
     }
+    if (endereco.length < 3 || numero.length < 1) {
+      return { ok: false, message: "Informe endereço completo com número." };
+    }
 
     const { data: slugConflict } = await supabase
       .from("espacos_genericos")
@@ -447,7 +470,22 @@ export async function salvarConfiguracoesEspacoAction(
         slug: slugBase,
         cidade,
         uf,
+        lat,
+        lng,
         localizacao,
+        venue_config_json: {
+          ...parseRecord(espacoModoRow?.venue_config_json),
+          endereco,
+          numero,
+          bairro,
+          cep,
+          cidade,
+          estado: uf,
+          lat,
+          lng,
+          complemento,
+          origem: "painel-espaco",
+        },
         cover_arquivo: coverArquivo,
         whatsapp_contato: whatsappContato,
         email_contato: emailContato,

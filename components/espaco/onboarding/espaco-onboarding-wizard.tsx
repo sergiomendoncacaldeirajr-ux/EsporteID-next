@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { EID_PHONE_LABELS } from "@/lib/eid-phone-labels";
 import { EspacoUnidadeLogoControl } from "@/components/espaco/espaco-unidade-logo-control";
+import { EnderecoAssistFields } from "@/components/locais/endereco-assist-fields";
 import { TeamShieldControl } from "@/components/perfil/team-shield-control";
 import {
   descricaoFaixaUnidadesPaaS,
@@ -69,6 +70,8 @@ type Space = {
   bairro: string;
   cep: string;
   complemento: string;
+  lat: string | null;
+  lng: string | null;
   reserva_observacoes: string;
   descricao_curta: string | null;
   descricao_longa: string | null;
@@ -166,6 +169,8 @@ type LocalExistente = {
   estado: string;
   cep: string;
   complemento: string;
+  lat: string | null;
+  lng: string | null;
 };
 
 type WizardProps = {
@@ -187,11 +192,6 @@ type ActionState = { ok: boolean; message: string } | undefined;
 // ── Constantes ─────────────────────────────────────────────────────────────
 
 const DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-
-const UFS = [
-  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",
-  "PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
-];
 
 const CATEGORIAS = [
   { value: "clube", label: "Clube", desc: "Clube esportivo com sócios e mensalidades", Icon: Users },
@@ -265,15 +265,6 @@ function horaCurta(value: string | null | undefined) {
 function agendaConfig(unidade: Unidade) {
   const raw = unidade.configuracao_agenda_json;
   return raw && typeof raw === "object" && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
-}
-
-function onlyDigits(value: string) {
-  return value.replace(/\D/g, "");
-}
-
-function formatCep(value: string) {
-  const digits = onlyDigits(value).slice(0, 8);
-  return digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits;
 }
 
 function slugifyClient(value: string) {
@@ -928,8 +919,8 @@ function StepPerfil({ space, esportes, locaisExistentes, onNext, onBack }: {
   const [cidade, setCidade] = useState(space.cidade ?? "");
   const [uf, setUf] = useState(space.uf ?? "");
   const [complemento, setComplemento] = useState(space.complemento ?? "");
-  const [cepBusy, setCepBusy] = useState(false);
-  const [cepMessage, setCepMessage] = useState<string | null>(null);
+  const [lat, setLat] = useState(space.lat ?? "");
+  const [lng, setLng] = useState(space.lng ?? "");
   const [whatsapp, setWhatsapp] = useState<Value | undefined>((space.whatsapp_contato ?? "") as Value | undefined);
   const [phoneCountry, setPhoneCountry] = useState<Country>("BR");
   const [websiteUrl, setWebsiteUrl] = useState(space.website_url ?? "");
@@ -972,6 +963,8 @@ function StepPerfil({ space, esportes, locaisExistentes, onNext, onBack }: {
     setUf(local.estado ?? "");
     setCep(local.cep ?? "");
     setComplemento(local.complemento ?? "");
+    setLat(local.lat ?? "");
+    setLng(local.lng ?? "");
     setClaimMode(true);
   }
 
@@ -990,41 +983,10 @@ function StepPerfil({ space, esportes, locaisExistentes, onNext, onBack }: {
       setUf(match.estado ?? "");
       setCep(match.cep ?? "");
       setComplemento(match.complemento ?? "");
+      setLat(match.lat ?? "");
+      setLng(match.lng ?? "");
     }
   }
-
-  useEffect(() => {
-    const cepDigits = onlyDigits(cep);
-    if (cepDigits.length !== 8 || exactMatch) return;
-    const timer = window.setTimeout(async () => {
-      setCepBusy(true);
-      setCepMessage(null);
-      try {
-        const res = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`, { cache: "no-store" });
-        const data = await res.json() as {
-          erro?: boolean;
-          logradouro?: string;
-          bairro?: string;
-          localidade?: string;
-          uf?: string;
-        };
-        if (data.erro) {
-          setCepMessage("CEP não encontrado.");
-          return;
-        }
-        if (data.logradouro) setEndereco(data.logradouro);
-        if (data.bairro) setBairro(data.bairro);
-        if (data.localidade) setCidade(data.localidade);
-        if (data.uf) setUf(data.uf.toUpperCase());
-        setCepMessage("Endereço preenchido pelo CEP. Informe apenas o número e confira os dados.");
-      } catch {
-        setCepMessage("Não foi possível consultar o CEP agora.");
-      } finally {
-        setCepBusy(false);
-      }
-    }, 280);
-    return () => window.clearTimeout(timer);
-  }, [cep, exactMatch]);
 
   return (
     <form ref={formRef} action={action} encType="multipart/form-data" className="space-y-4">
@@ -1160,54 +1122,32 @@ function StepPerfil({ space, esportes, locaisExistentes, onNext, onBack }: {
             </p>
           ) : null}
         </div>
-        <div className="space-y-1.5">
-          <Label>CEP</Label>
-          <FieldChrome Icon={MapPin}>
-            <input
-              name="cep"
-              value={cep}
-              onChange={(e) => setCep(formatCep(e.target.value))}
-              placeholder="00000-000"
-              inputMode="numeric"
-              className="min-h-11 w-full min-w-0 bg-transparent py-2.5 text-sm text-eid-fg placeholder:text-eid-text-secondary/50 focus:outline-none"
-            />
-            <span className="self-center text-[10px] font-bold text-eid-text-secondary">
-              {cepBusy ? "Buscando..." : "Auto"}
-            </span>
-          </FieldChrome>
+        <div className="space-y-2 sm:col-span-2">
+          <Label>Endereço completo do espaço</Label>
+          <EnderecoAssistFields
+            endereco={endereco}
+            setEndereco={setEndereco}
+            numero={numero}
+            setNumero={setNumero}
+            bairro={bairro}
+            setBairro={setBairro}
+            cidade={cidade}
+            setCidade={setCidade}
+            estado={uf}
+            setEstado={setUf}
+            cep={cep}
+            setCep={setCep}
+            complemento={complemento}
+            setComplemento={setComplemento}
+            lat={lat}
+            lng={lng}
+            onCoords={(nextLat, nextLng) => {
+              setLat(nextLat);
+              setLng(nextLng);
+            }}
+            localLogoUrl={exactMatch?.logo_arquivo ?? space.logo_arquivo ?? null}
+          />
         </div>
-        <div className="space-y-1.5">
-          <Label>Cidade</Label>
-          <IconInput Icon={MapPin} name="cidade" value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="São Paulo" />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Estado (UF)</Label>
-          <IconSelect Icon={MapPin} name="uf" value={uf} onChange={(e) => setUf(e.target.value)}>
-            <option value="">Selecione</option>
-            {UFS.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
-          </IconSelect>
-        </div>
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label>Endereço</Label>
-          <IconInput Icon={MapPin} name="endereco" value={endereco} onChange={(e) => setEndereco(e.target.value)} placeholder="Rua, avenida ou nome da via" />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Número</Label>
-          <IconInput Icon={Hash} name="numero" value={numero} onChange={(e) => setNumero(e.target.value)} placeholder="123" />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Bairro</Label>
-          <IconInput Icon={MapPin} name="bairro" value={bairro} onChange={(e) => setBairro(e.target.value)} placeholder="Centro" />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Complemento</Label>
-          <IconInput Icon={Building2} name="complemento" value={complemento} onChange={(e) => setComplemento(e.target.value)} placeholder="Bloco, referência..." />
-        </div>
-        {cepMessage ? (
-          <p className="sm:col-span-2 rounded-xl border border-eid-primary-500/20 bg-eid-primary-500/8 px-3 py-2 text-xs font-semibold text-eid-primary-300">
-            {cepMessage}
-          </p>
-        ) : null}
         <div className="space-y-2 sm:col-span-2">
           <Label>Esportes atendidos</Label>
           <div className="flex flex-wrap gap-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-3">

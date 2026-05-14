@@ -1,8 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useActionState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { salvarConfiguracoesEspacoAction } from "@/app/espaco/actions";
+import { EnderecoAssistFields } from "@/components/locais/endereco-assist-fields";
 import { normalizeEspacoAssociacaoConfig } from "@/lib/espacos/associacao-config";
 import { normalizeEspacoReservaConfig } from "@/lib/espacos/config";
 
@@ -15,6 +16,19 @@ const modoReservaLabels: Record<string, string> = {
 };
 
 const inputClass = "eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2.5 text-sm";
+
+function parseConfigRecord(raw: unknown): Record<string, unknown> {
+  if (!raw) return {};
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+    } catch {
+      return {};
+    }
+  }
+  return typeof raw === "object" && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
+}
 
 function ConfigCard({
   title,
@@ -78,6 +92,9 @@ export function EspacoConfigForm({
     cidade: string | null;
     uf: string | null;
     localizacao: string | null;
+    lat?: string | number | null;
+    lng?: string | number | null;
+    venue_config_json?: unknown;
     cover_arquivo: string | null;
     whatsapp_contato: string | null;
     email_contato: string | null;
@@ -96,6 +113,17 @@ export function EspacoConfigForm({
   const associacao = normalizeEspacoAssociacaoConfig(espaco.associacao_regra_json);
   const modo = (modoReserva ?? "mista").toLowerCase();
   const bloqueiaGratis = modo === "paga";
+  const venueConfig = useMemo(() => parseConfigRecord(espaco.venue_config_json), [espaco.venue_config_json]);
+  const [endereco, setEndereco] = useState(String(venueConfig.endereco ?? ""));
+  const [numero, setNumero] = useState(String(venueConfig.numero ?? ""));
+  const [bairro, setBairro] = useState(String(venueConfig.bairro ?? ""));
+  const [cidade, setCidade] = useState(String(venueConfig.cidade ?? espaco.cidade ?? ""));
+  const [uf, setUf] = useState(String(venueConfig.estado ?? venueConfig.uf ?? espaco.uf ?? ""));
+  const [cep, setCep] = useState(String(venueConfig.cep ?? ""));
+  const [complemento, setComplemento] = useState(String(venueConfig.complemento ?? ""));
+  const [lat, setLat] = useState(espaco.lat != null ? String(espaco.lat) : String(venueConfig.lat ?? ""));
+  const [lng, setLng] = useState(espaco.lng != null ? String(espaco.lng) : String(venueConfig.lng ?? ""));
+  const localizacaoAtual = [cidade, uf].filter(Boolean).join(" - ") || espaco.localizacao || "";
 
   return (
     <form action={formAction} className="space-y-3">
@@ -115,15 +143,33 @@ export function EspacoConfigForm({
           <Field label="Slug público">
             <input name="slug" defaultValue={espaco.slug ?? ""} className={inputClass} />
           </Field>
-          <Field label="Localização">
-            <input name="localizacao" defaultValue={espaco.localizacao ?? ""} className={inputClass} />
-          </Field>
-          <Field label="Cidade">
-            <input name="cidade" defaultValue={espaco.cidade ?? ""} className={inputClass} />
-          </Field>
-          <Field label="UF">
-            <input name="uf" defaultValue={espaco.uf ?? ""} maxLength={2} className={`${inputClass} uppercase`} />
-          </Field>
+          <input type="hidden" name="localizacao" value={localizacaoAtual} />
+          <input type="hidden" name="uf" value={uf} />
+          <div className="space-y-2 sm:col-span-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-eid-text-secondary">Endereço e mapa</p>
+            <EnderecoAssistFields
+              endereco={endereco}
+              setEndereco={setEndereco}
+              numero={numero}
+              setNumero={setNumero}
+              bairro={bairro}
+              setBairro={setBairro}
+              cidade={cidade}
+              setCidade={setCidade}
+              estado={uf}
+              setEstado={setUf}
+              cep={cep}
+              setCep={setCep}
+              complemento={complemento}
+              setComplemento={setComplemento}
+              lat={lat}
+              lng={lng}
+              onCoords={(nextLat, nextLng) => {
+                setLat(nextLat);
+                setLng(nextLng);
+              }}
+            />
+          </div>
           <Field label="Descrição curta" wide>
             <input name="descricao_curta" defaultValue={espaco.descricao_curta ?? ""} className={inputClass} />
           </Field>
