@@ -7,6 +7,7 @@ import { Calendar, Download, ImageIcon, Loader2, MapPin, RotateCcw, Share2, X } 
 import Link from "next/link";
 import { GoalsScoreboardSummary } from "@/components/placar/goals-scoreboard-summary";
 import { EID_LOGO_WORDMARK_SRC } from "@/lib/branding";
+import { SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import {
   goalsPayloadHasAny,
   goalsTotalsBeforePenaltiesDisplay,
@@ -105,6 +106,36 @@ function cleanShareText(value: string | null | undefined, fallback = "EsporteID"
   return clean || fallback;
 }
 
+function shareFirstName(name: string) {
+  return primeiroNome(cleanShareText(name, "Atleta"));
+}
+
+function shareInitials(name: string) {
+  const parts = cleanShareText(name, "Atleta").split(/\s+/u).filter(Boolean);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase();
+}
+
+function sportShareIconText(sportLabel: string | null | undefined) {
+  const label = cleanShareText(sportLabel, "").toLowerCase();
+  if (/fut|soccer|campo|society|futsal/u.test(label)) return "●";
+  if (/tenis|tênis|padel|pickle/u.test(label)) return "◐";
+  if (/basquete|basket/u.test(label)) return "◍";
+  if (/volei|vôlei|volley|beach/u.test(label)) return "◉";
+  if (/corrida|run|cicl|bike|triathlon/u.test(label)) return "◇";
+  return "◆";
+}
+
+function shareUsesSetLines(score: ReturnType<typeof shareScoreSummary>) {
+  return score.detail === "Placar por sets" && score.lines.length > 0;
+}
+
+function shareUsesGoalsScore(payload: Pick<ResultadoSharePayload, "sportLabel" | "mensagem">, score: ReturnType<typeof shareScoreSummary>) {
+  const parsed = parseScorePayloadFromPartidaMensagem(payload.mensagem);
+  if (parsed?.type === "gols") return true;
+  return /fut|soccer|campo|society|futsal/u.test(cleanShareText(payload.sportLabel, "").toLowerCase()) && !shareUsesSetLines(score);
+}
+
 function LocalLogoThumb({ src }: { src?: string | null }) {
   if (!src?.trim()) return null;
   return (
@@ -177,6 +208,7 @@ function canvasColorVar(styles: CSSStyleDeclaration, name: string, fallback: str
 function loadCanvasImage(src: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
+    img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
     img.onerror = () => reject(new Error("Não foi possível carregar a imagem de fundo."));
     img.src = src;
@@ -394,6 +426,7 @@ function drawShareResultCard(
   payload: ResultadoSharePayload,
   colors: { primarySoft: string; action: string; fg: string; muted: string; ink: string },
   brandLogo?: HTMLImageElement | null,
+  avatars?: { a?: HTMLImageElement | null; b?: HTMLImageElement | null },
 ) {
   const baseWidth = payload.cardVariant === "compact" ? 690 : 840;
   const baseHeight = payload.cardVariant === "compact" ? 500 : 650;
@@ -424,6 +457,38 @@ function drawShareResultCard(
   const scale = payload.overlayScale;
   const center = x + cardWidth / 2;
   const score = shareScoreSummary(payload);
+  const isSets = shareUsesSetLines(score);
+  const isGoals = shareUsesGoalsScore(payload, score);
+  const firstA = shareFirstName(payload.ladoA);
+  const firstB = shareFirstName(payload.ladoB);
+  const drawAvatar = (img: HTMLImageElement | null | undefined, label: string, cx: number, cy: number) => {
+    const r = 30 * scale;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.fillStyle = "rgba(255,255,255,0.10)";
+    ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+    if (img) {
+      const size = r * 2;
+      const coverScale = Math.max(size / img.naturalWidth, size / img.naturalHeight);
+      const sw = size / coverScale;
+      const sh = size / coverScale;
+      ctx.drawImage(img, (img.naturalWidth - sw) / 2, (img.naturalHeight - sh) / 2, sw, sh, cx - r, cy - r, size, size);
+    }
+    ctx.restore();
+    if (!img) {
+      ctx.fillStyle = colors.primarySoft;
+      ctx.font = `900 ${20 * scale}px Arial, sans-serif`;
+      ctx.fillText(shareInitials(label), cx, cy + 1 * scale);
+    }
+    ctx.strokeStyle = "rgba(255,255,255,0.34)";
+    ctx.lineWidth = 2 * scale;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.stroke();
+  };
+
   if (payload.showBrand) {
     if (brandLogo) {
       const logoW = 220 * scale;
@@ -438,46 +503,58 @@ function drawShareResultCard(
     }
   }
 
-  ctx.fillStyle = "rgba(37, 99, 235, 0.24)";
-  ctx.roundRect(center - 210 * scale, y + (payload.showBrand ? 104 : 52) * scale, 420 * scale, 52 * scale, 26 * scale);
+  ctx.fillStyle = "rgba(37, 99, 235, 0.20)";
+  ctx.roundRect(center - 225 * scale, y + (payload.showBrand ? 104 : 52) * scale, 450 * scale, 52 * scale, 26 * scale);
   ctx.fill();
   ctx.fillStyle = colors.primarySoft;
   ctx.font = `900 ${22 * scale}px Arial, sans-serif`;
-  ctx.fillText(cleanShareText(payload.sportLabel, "Resultado oficial").toUpperCase(), center, y + (payload.showBrand ? 131 : 79) * scale);
+  ctx.fillText(
+    `${sportShareIconText(payload.sportLabel)} ${cleanShareText(payload.sportLabel, "Resultado oficial").toUpperCase()}`,
+    center,
+    y + (payload.showBrand ? 131 : 79) * scale,
+  );
 
   ctx.fillStyle = text;
-  ctx.font = `900 ${36 * scale}px Arial, sans-serif`;
-  const namesY = y + (payload.cardVariant === "compact" ? 170 : 218) * scale;
-  drawCenteredWrappedText(ctx, payload.ladoA, center, namesY, cardWidth * 0.84, 42 * scale, 2);
-
+  const namesY = y + (payload.cardVariant === "compact" ? 188 : 224) * scale;
+  drawAvatar(avatars?.a, payload.ladoA, center - 190 * scale, namesY);
+  drawAvatar(avatars?.b, payload.ladoB, center + 190 * scale, namesY);
+  ctx.font = `900 ${28 * scale}px Arial, sans-serif`;
+  ctx.fillText(firstA, center - 190 * scale, namesY + 48 * scale);
+  ctx.fillText(firstB, center + 190 * scale, namesY + 48 * scale);
   ctx.fillStyle = colors.primarySoft;
-  ctx.font = `900 ${22 * scale}px Arial, sans-serif`;
-  ctx.fillText("VS", center, y + (payload.cardVariant === "compact" ? 244 : 316) * scale);
+  ctx.font = `900 ${20 * scale}px Arial, sans-serif`;
+  ctx.fillText("VS", center, namesY + 15 * scale);
 
-  ctx.fillStyle = text;
-  ctx.font = `900 ${36 * scale}px Arial, sans-serif`;
-  drawCenteredWrappedText(ctx, payload.ladoB, center, y + (payload.cardVariant === "compact" ? 300 : 386) * scale, cardWidth * 0.84, 42 * scale, 2);
-
-  const scoreY = y + (payload.cardVariant === "compact" ? 374 : 474) * scale;
+  const scoreY = y + (payload.cardVariant === "compact" ? 360 : 430) * scale;
   ctx.fillStyle = "rgba(249, 115, 22, 0.16)";
-  ctx.roundRect(center - 260 * scale, scoreY - 64 * scale, 520 * scale, 154 * scale, 38 * scale);
+  ctx.roundRect(center - 260 * scale, scoreY - 58 * scale, 520 * scale, isSets ? 194 * scale : 154 * scale, 38 * scale);
   ctx.fill();
   ctx.strokeStyle = colors.action;
   ctx.lineWidth = 3;
   ctx.stroke();
 
   ctx.fillStyle = text;
-  ctx.font = `900 ${88 * scale}px Arial, sans-serif`;
+  ctx.font = `900 ${(isGoals ? 92 : isSets ? 62 : 78) * scale}px Arial, sans-serif`;
   ctx.fillText(score.headline, center, scoreY);
   if (score.detail) {
     ctx.fillStyle = colors.primarySoft;
-    ctx.font = `900 ${21 * scale}px Arial, sans-serif`;
-    drawCenteredWrappedText(ctx, score.detail, center, scoreY + 56 * scale, cardWidth * 0.72, 25 * scale, 1);
+    ctx.font = `900 ${(isSets ? 20 : 21) * scale}px Arial, sans-serif`;
+    drawCenteredWrappedText(ctx, score.detail, center, scoreY + (isSets ? 48 : 56) * scale, cardWidth * 0.72, 25 * scale, 1);
   }
   if (score.lines.length) {
     ctx.fillStyle = text;
-    ctx.font = `900 ${23 * scale}px Arial, sans-serif`;
-    drawCenteredWrappedText(ctx, score.lines.join("  ·  "), center, scoreY + 86 * scale, cardWidth * 0.78, 27 * scale, 2);
+    ctx.font = `900 ${28 * scale}px Arial, sans-serif`;
+    const chipY = scoreY + 86 * scale;
+    const chipW = Math.min(132 * scale, 420 * scale / Math.max(1, score.lines.length));
+    score.lines.slice(0, 5).forEach((line, idx, list) => {
+      const totalW = list.length * chipW + (list.length - 1) * 12 * scale;
+      const chipX = center - totalW / 2 + idx * (chipW + 12 * scale);
+      ctx.fillStyle = "rgba(255,255,255,0.10)";
+      ctx.roundRect(chipX, chipY - 22 * scale, chipW, 44 * scale, 16 * scale);
+      ctx.fill();
+      ctx.fillStyle = text;
+      ctx.fillText(line, chipX + chipW / 2, chipY);
+    });
   }
   if (score.extra && payload.cardVariant !== "compact") {
     ctx.fillStyle = muted;
@@ -521,6 +598,8 @@ async function createResultadoShareImage(payload: ResultadoSharePayload) {
   }
 
   let brandLogo: HTMLImageElement | null = null;
+  let avatarA: HTMLImageElement | null = null;
+  let avatarB: HTMLImageElement | null = null;
   if (payload.showBrand) {
     try {
       brandLogo = await loadCanvasImage(EID_LOGO_WORDMARK_SRC);
@@ -528,8 +607,18 @@ async function createResultadoShareImage(payload: ResultadoSharePayload) {
       brandLogo = null;
     }
   }
+  try {
+    avatarA = payload.ladoAAvatarUrl ? await loadCanvasImage(payload.ladoAAvatarUrl) : null;
+  } catch {
+    avatarA = null;
+  }
+  try {
+    avatarB = payload.ladoBAvatarUrl ? await loadCanvasImage(payload.ladoBAvatarUrl) : null;
+  } catch {
+    avatarB = null;
+  }
 
-  drawShareResultCard(ctx, payload, { primarySoft, action, fg, muted, ink }, brandLogo);
+  drawShareResultCard(ctx, payload, { primarySoft, action, fg, muted, ink }, brandLogo, { a: avatarA, b: avatarB });
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -916,6 +1005,8 @@ export function EidConfrontoResumoModal({
     ],
   );
   const shareScore = useMemo(() => shareScoreSummary(sharePayload), [sharePayload]);
+  const shareIsSets = shareUsesSetLines(shareScore);
+  const shareIsGoals = shareUsesGoalsScore(sharePayload, shareScore);
 
   useEffect(() => {
     let cancelled = false;
@@ -1344,16 +1435,45 @@ export function EidConfrontoResumoModal({
                           </span>
                         ) : null}
                         <p className="mt-1.5 text-[7px] font-black uppercase tracking-[0.12em] text-eid-primary-200">
-                          {sportLabel ?? "Resultado oficial"}
+                          <span className="inline-flex items-center justify-center gap-1">
+                            <SportGlyphIcon sportName={sportLabel} />
+                            <span>{sportLabel ?? "Resultado oficial"}</span>
+                          </span>
                         </p>
                         <div className="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1">
-                          <p className="line-clamp-2 text-[9px] font-black leading-tight text-eid-fg">{ladoA}</p>
+                          <div className="min-w-0">
+                            <span className="relative mx-auto mb-1 block h-7 w-7 overflow-hidden rounded-full border border-white/25 bg-white/10">
+                              {ladoAAvatarUrl ? (
+                                <NextImage src={ladoAAvatarUrl} alt="" fill unoptimized className="object-cover" />
+                              ) : (
+                                <span className="flex h-full w-full items-center justify-center text-[9px] font-black text-eid-primary-100">
+                                  {shareInitials(ladoA)}
+                                </span>
+                              )}
+                            </span>
+                            <p className="truncate text-[9px] font-black leading-tight text-eid-fg">{shareFirstName(ladoA)}</p>
+                          </div>
                           <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/12 px-1.5 py-0.5 text-[7px] font-black text-eid-primary-100">
                             VS
                           </span>
-                          <p className="line-clamp-2 text-[9px] font-black leading-tight text-eid-fg">{ladoB}</p>
+                          <div className="min-w-0">
+                            <span className="relative mx-auto mb-1 block h-7 w-7 overflow-hidden rounded-full border border-white/25 bg-white/10">
+                              {ladoBAvatarUrl ? (
+                                <NextImage src={ladoBAvatarUrl} alt="" fill unoptimized className="object-cover" />
+                              ) : (
+                                <span className="flex h-full w-full items-center justify-center text-[9px] font-black text-eid-primary-100">
+                                  {shareInitials(ladoB)}
+                                </span>
+                              )}
+                            </span>
+                            <p className="truncate text-[9px] font-black leading-tight text-eid-fg">{shareFirstName(ladoB)}</p>
+                          </div>
                         </div>
-                        <p className="mt-2 rounded-xl border border-eid-action-500/45 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-500)_24%,transparent),color-mix(in_srgb,var(--eid-primary-500)_14%,transparent))] px-2 py-1.5 text-[22px] font-black leading-none tabular-nums text-eid-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
+                        <p
+                          className={`mt-2 rounded-xl border border-eid-action-500/45 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-500)_24%,transparent),color-mix(in_srgb,var(--eid-primary-500)_14%,transparent))] px-2 py-1.5 font-black leading-none tabular-nums text-eid-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] ${
+                            shareIsGoals ? "text-[24px]" : shareIsSets ? "text-[18px]" : "text-[20px]"
+                          }`}
+                        >
                           {shareScore.headline}
                         </p>
                         {shareScore.detail ? (
@@ -1366,7 +1486,7 @@ export function EidConfrontoResumoModal({
                             {shareScore.lines.slice(0, 5).map((line) => (
                               <span
                                 key={line}
-                                className="rounded-md border border-white/12 bg-white/8 px-1.5 py-0.5 text-[7px] font-black leading-none text-eid-fg"
+                                className="rounded-md border border-white/12 bg-white/10 px-1.5 py-0.5 text-[8px] font-black leading-none text-eid-fg"
                               >
                                 {line}
                               </span>
