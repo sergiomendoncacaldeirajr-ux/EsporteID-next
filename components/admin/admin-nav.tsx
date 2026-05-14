@@ -11,6 +11,7 @@ import {
   ExternalLink,
   Flag,
   GraduationCap,
+  BarChart3,
   Headset,
   LayoutDashboard,
   MapPin,
@@ -52,6 +53,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Usuários",
     items: [
       { href: "/admin/usuarios", label: "Perfis", Icon: Users },
+      { href: "/admin/estatisticas", label: "Estatísticas", Icon: BarChart3 },
       { href: "/admin/admins", label: "Admins & Testers", Icon: ShieldCheck },
     ],
   },

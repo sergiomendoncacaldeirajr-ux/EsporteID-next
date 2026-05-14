@@ -6,6 +6,7 @@ import NextImage from "next/image";
 import { Calendar, Download, ImageIcon, Loader2, MapPin, RotateCcw, Share2, X } from "lucide-react";
 import Link from "next/link";
 import { GoalsScoreboardSummary } from "@/components/placar/goals-scoreboard-summary";
+import { EID_LOGO_WORDMARK_SRC } from "@/lib/branding";
 import {
   goalsPayloadHasAny,
   goalsTotalsBeforePenaltiesDisplay,
@@ -217,11 +218,12 @@ function shareScoreSummary(payload: Pick<ResultadoSharePayload, "placar" | "mens
       if (a > b) winsA += 1;
       if (b > a) winsB += 1;
       const tie = set.tiebreakA || set.tiebreakB ? ` (${set.tiebreakA ?? 0}-${set.tiebreakB ?? 0})` : "";
-      return `${a}/${b}${tie}`;
+      return `${a}-${b}${tie}`;
     });
     return {
       headline: `${winsA} x ${winsB}`,
-      detail: `Sets: ${sets.join("  ")}`,
+      detail: "Placar por sets",
+      lines: sets,
       extra: null as string | null,
     };
   }
@@ -233,8 +235,9 @@ function shareScoreSummary(payload: Pick<ResultadoSharePayload, "placar" | "mens
     const overtimeB = Number(score.goals.overtimeB ?? 0) || 0;
     return {
       headline: `${base.a} x ${base.b}`,
-      detail: penaltyA || penaltyB ? `Pênaltis: ${penaltyA} x ${penaltyB}` : null,
-      extra: overtimeA || overtimeB ? `Prorrogação: ${overtimeA} x ${overtimeB}` : null,
+      detail: penaltyA || penaltyB ? "Decidido nos pênaltis" : null,
+      lines: penaltyA || penaltyB ? [`Pênaltis ${penaltyA} x ${penaltyB}`] : [],
+      extra: overtimeA || overtimeB ? `Prorrogação ${overtimeA} x ${overtimeB}` : null,
     };
   }
   if (score?.type === "pontos" && score.points) {
@@ -244,6 +247,7 @@ function shareScoreSummary(payload: Pick<ResultadoSharePayload, "placar" | "mens
     return {
       headline: `${totals.a} x ${totals.b}`,
       detail: overtimeA || overtimeB ? `Prorrogação: ${overtimeA} x ${overtimeB}` : null,
+      lines: [],
       extra: null as string | null,
     };
   }
@@ -253,10 +257,11 @@ function shareScoreSummary(payload: Pick<ResultadoSharePayload, "placar" | "mens
     return {
       headline: fallback,
       detail: `${winner} por ${method}`,
+      lines: [],
       extra: `${score.rounds.items.length} round${score.rounds.items.length === 1 ? "" : "s"}`,
     };
   }
-  return { headline: fallback, detail: null as string | null, extra: null as string | null };
+  return { headline: fallback, detail: null as string | null, lines: [] as string[], extra: null as string | null };
 }
 
 function drawDefaultSportBackground(ctx: CanvasRenderingContext2D, payload: ResultadoSharePayload, colors: { ink: string; surface: string; primary: string; action: string }) {
@@ -388,6 +393,7 @@ function drawShareResultCard(
   ctx: CanvasRenderingContext2D,
   payload: ResultadoSharePayload,
   colors: { primarySoft: string; action: string; fg: string; muted: string; ink: string },
+  brandLogo?: HTMLImageElement | null,
 ) {
   const baseWidth = payload.cardVariant === "compact" ? 690 : 840;
   const baseHeight = payload.cardVariant === "compact" ? 500 : 650;
@@ -419,11 +425,17 @@ function drawShareResultCard(
   const center = x + cardWidth / 2;
   const score = shareScoreSummary(payload);
   if (payload.showBrand) {
-    ctx.font = `900 ${34 * scale}px Arial, sans-serif`;
-    ctx.fillStyle = text;
-    ctx.fillText("ESPORTE", center - 36 * scale, y + 70 * scale);
-    ctx.fillStyle = colors.action;
-    ctx.fillText("ID", center + 112 * scale, y + 70 * scale);
+    if (brandLogo) {
+      const logoW = 220 * scale;
+      const logoH = 52 * scale;
+      ctx.drawImage(brandLogo, center - logoW / 2, y + 42 * scale, logoW, logoH);
+    } else {
+      ctx.font = `900 ${34 * scale}px Arial, sans-serif`;
+      ctx.fillStyle = text;
+      ctx.fillText("ESPORTE", center - 36 * scale, y + 70 * scale);
+      ctx.fillStyle = colors.action;
+      ctx.fillText("ID", center + 112 * scale, y + 70 * scale);
+    }
   }
 
   ctx.fillStyle = "rgba(37, 99, 235, 0.24)";
@@ -447,25 +459,30 @@ function drawShareResultCard(
   drawCenteredWrappedText(ctx, payload.ladoB, center, y + (payload.cardVariant === "compact" ? 300 : 386) * scale, cardWidth * 0.84, 42 * scale, 2);
 
   const scoreY = y + (payload.cardVariant === "compact" ? 374 : 474) * scale;
-  ctx.fillStyle = "rgba(249, 115, 22, 0.20)";
-  ctx.roundRect(center - 245 * scale, scoreY - 54 * scale, 490 * scale, 132 * scale, 34 * scale);
+  ctx.fillStyle = "rgba(249, 115, 22, 0.16)";
+  ctx.roundRect(center - 260 * scale, scoreY - 64 * scale, 520 * scale, 154 * scale, 38 * scale);
   ctx.fill();
   ctx.strokeStyle = colors.action;
   ctx.lineWidth = 3;
   ctx.stroke();
 
   ctx.fillStyle = text;
-  ctx.font = `900 ${76 * scale}px Arial, sans-serif`;
+  ctx.font = `900 ${88 * scale}px Arial, sans-serif`;
   ctx.fillText(score.headline, center, scoreY);
   if (score.detail) {
     ctx.fillStyle = colors.primarySoft;
     ctx.font = `900 ${21 * scale}px Arial, sans-serif`;
-    drawCenteredWrappedText(ctx, score.detail, center, scoreY + 54 * scale, cardWidth * 0.72, 25 * scale, 1);
+    drawCenteredWrappedText(ctx, score.detail, center, scoreY + 56 * scale, cardWidth * 0.72, 25 * scale, 1);
+  }
+  if (score.lines.length) {
+    ctx.fillStyle = text;
+    ctx.font = `900 ${23 * scale}px Arial, sans-serif`;
+    drawCenteredWrappedText(ctx, score.lines.join("  ·  "), center, scoreY + 86 * scale, cardWidth * 0.78, 27 * scale, 2);
   }
   if (score.extra && payload.cardVariant !== "compact") {
     ctx.fillStyle = muted;
     ctx.font = `800 ${19 * scale}px Arial, sans-serif`;
-    drawCenteredWrappedText(ctx, score.extra, center, scoreY + 86 * scale, cardWidth * 0.72, 23 * scale, 1);
+    drawCenteredWrappedText(ctx, score.extra, center, scoreY + (score.lines.length ? 120 : 86) * scale, cardWidth * 0.72, 23 * scale, 1);
   }
 
   if (payload.showMeta && payload.cardVariant !== "compact") {
@@ -503,7 +520,16 @@ async function createResultadoShareImage(payload: ResultadoSharePayload) {
     drawDefaultSportBackground(ctx, payload, { ink, surface, primary, action });
   }
 
-  drawShareResultCard(ctx, payload, { primarySoft, action, fg, muted, ink });
+  let brandLogo: HTMLImageElement | null = null;
+  if (payload.showBrand) {
+    try {
+      brandLogo = await loadCanvasImage(EID_LOGO_WORDMARK_SRC);
+    } catch {
+      brandLogo = null;
+    }
+  }
+
+  drawShareResultCard(ctx, payload, { primarySoft, action, fg, muted, ink }, brandLogo);
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -963,6 +989,10 @@ export function EidConfrontoResumoModal({
     setShareBackgroundLabel("Fundo padrão");
     setShareOverlayPosition({ x: 0.5, y: 0.58 });
     setShareOverlayScale(1);
+    setShareCardVariant("dark");
+    setShareBackgroundFilter("dim");
+    setShareShowMeta(true);
+    setShareShowBrand(true);
   }, []);
 
   const shareCaption = useMemo(
@@ -1293,14 +1323,14 @@ export function EidConfrontoResumoModal({
                         updateShareOverlayFromPointer(event.clientX, event.clientY);
                       }}
                     >
-                      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_12%,color-mix(in_srgb,var(--eid-primary-500)_34%,transparent),transparent_42%),radial-gradient(circle_at_16%_88%,color-mix(in_srgb,var(--eid-action-500)_26%,transparent),transparent_42%)]" />
+                      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_12%,color-mix(in_srgb,var(--eid-primary-500)_40%,transparent),transparent_38%),radial-gradient(circle_at_18%_86%,color-mix(in_srgb,var(--eid-action-500)_30%,transparent),transparent_40%),linear-gradient(180deg,rgba(255,255,255,0.05),transparent_22%,rgba(0,0,0,0.18))]" />
                       <div
-                        className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-xl border px-2.5 py-2 text-center shadow-[0_10px_24px_-14px_rgba(0,0,0,0.85)] ${
+                        className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-2xl border px-3 py-2.5 text-center shadow-[0_18px_34px_-18px_rgba(0,0,0,0.95)] ${
                           shareCardVariant === "light"
-                            ? "border-white/50 bg-white/85 text-eid-brand-ink"
+                            ? "border-white/60 bg-white/90 text-eid-brand-ink"
                             : shareCardVariant === "glass"
-                              ? "border-white/25 bg-eid-brand-ink/55 text-eid-fg backdrop-blur-sm"
-                              : "border-white/20 bg-[rgba(11,29,46,0.82)] text-eid-fg"
+                              ? "border-white/30 bg-eid-brand-ink/60 text-eid-fg backdrop-blur-sm"
+                              : "border-white/20 bg-[linear-gradient(155deg,rgba(11,29,46,0.92),rgba(12,42,78,0.86))] text-eid-fg"
                         }`}
                         style={{
                           left: `${shareOverlayPosition.x * 100}%`,
@@ -1309,24 +1339,42 @@ export function EidConfrontoResumoModal({
                         }}
                       >
                         {shareShowBrand ? (
-                          <p className="text-[8px] font-black uppercase tracking-[0.12em]">
-                            <span className="text-eid-fg">ESPORTE</span>
-                            <span className="text-eid-action-400">ID</span>
-                          </p>
+                          <span className="relative mx-auto block h-4 w-[4.6rem]">
+                            <NextImage src={EID_LOGO_WORDMARK_SRC} alt="EsporteID" fill unoptimized className="object-contain" />
+                          </span>
                         ) : null}
-                        <p className="mt-1 text-[7px] font-black uppercase tracking-[0.1em] text-eid-primary-200">
+                        <p className="mt-1.5 text-[7px] font-black uppercase tracking-[0.12em] text-eid-primary-200">
                           {sportLabel ?? "Resultado oficial"}
                         </p>
-                        <p className="mt-1 line-clamp-1 text-[10px] font-black leading-tight text-eid-fg">{ladoA}</p>
-                        <p className="text-[8px] font-black text-eid-primary-200">vs</p>
-                        <p className="line-clamp-1 text-[10px] font-black leading-tight text-eid-fg">{ladoB}</p>
-                        <p className="mt-1 rounded-lg border border-eid-action-500/40 bg-eid-action-500/15 py-1 text-base font-black tabular-nums text-eid-fg">
+                        <div className="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1">
+                          <p className="line-clamp-2 text-[9px] font-black leading-tight text-eid-fg">{ladoA}</p>
+                          <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/12 px-1.5 py-0.5 text-[7px] font-black text-eid-primary-100">
+                            VS
+                          </span>
+                          <p className="line-clamp-2 text-[9px] font-black leading-tight text-eid-fg">{ladoB}</p>
+                        </div>
+                        <p className="mt-2 rounded-xl border border-eid-action-500/45 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-500)_24%,transparent),color-mix(in_srgb,var(--eid-primary-500)_14%,transparent))] px-2 py-1.5 text-[22px] font-black leading-none tabular-nums text-eid-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
                           {shareScore.headline}
                         </p>
                         {shareScore.detail ? (
-                          <p className="mt-1 line-clamp-2 text-[7px] font-black leading-tight text-eid-primary-100">
+                          <p className="mt-1 text-[7px] font-black uppercase tracking-[0.08em] leading-tight text-eid-primary-100">
                             {shareScore.detail}
                           </p>
+                        ) : null}
+                        {shareScore.lines.length ? (
+                          <div className="mt-1 flex flex-wrap justify-center gap-1">
+                            {shareScore.lines.slice(0, 5).map((line) => (
+                              <span
+                                key={line}
+                                className="rounded-md border border-white/12 bg-white/8 px-1.5 py-0.5 text-[7px] font-black leading-none text-eid-fg"
+                              >
+                                {line}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                        {shareScore.extra && shareCardVariant !== "compact" ? (
+                          <p className="mt-1 text-[7px] font-bold leading-tight text-eid-text-secondary">{shareScore.extra}</p>
                         ) : null}
                         {shareShowMeta && shareCardVariant !== "compact" ? (
                           <p className="mt-1 line-clamp-1 text-[7px] font-bold text-eid-text-secondary">{origem}</p>
@@ -1340,7 +1388,11 @@ export function EidConfrontoResumoModal({
                         <button
                           type="button"
                           onClick={() => shareFileInputRef.current?.click()}
-                          className="inline-flex min-h-[2.45rem] items-center justify-center gap-1.5 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 text-[10px] font-black text-eid-primary-100 transition hover:bg-eid-primary-500/18"
+                          className={`inline-flex min-h-[2.45rem] items-center justify-center gap-1.5 rounded-xl border px-2 text-[10px] font-black transition ${
+                            shareBackgroundDataUrl
+                              ? "border-eid-primary-500/45 bg-eid-primary-500/16 text-eid-primary-100"
+                              : "border-eid-primary-500/28 bg-eid-primary-500/8 text-eid-primary-200 hover:bg-eid-primary-500/14"
+                          }`}
                         >
                           <ImageIcon className="h-3.5 w-3.5" aria-hidden />
                           Foto
@@ -1348,7 +1400,12 @@ export function EidConfrontoResumoModal({
                         <button
                           type="button"
                           onClick={resetSharePhoto}
-                          className="inline-flex min-h-[2.45rem] items-center justify-center gap-1.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-2 text-[10px] font-black text-eid-text-secondary transition hover:text-eid-fg"
+                          aria-pressed={!shareBackgroundDataUrl}
+                          className={`inline-flex min-h-[2.45rem] items-center justify-center gap-1.5 rounded-xl border px-2 text-[10px] font-black transition ${
+                            !shareBackgroundDataUrl
+                              ? "border-eid-action-500/45 bg-eid-action-500/16 text-eid-action-100"
+                              : "border-[color:var(--eid-border-subtle)] bg-eid-surface/70 text-eid-text-secondary hover:text-eid-fg"
+                          }`}
                         >
                           <RotateCcw className="h-3.5 w-3.5" aria-hidden />
                           Padrão

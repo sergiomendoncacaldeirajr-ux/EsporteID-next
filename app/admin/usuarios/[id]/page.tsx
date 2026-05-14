@@ -105,6 +105,23 @@ type AdminDesafioQuota = {
   teamId?: number;
 };
 
+type AdminUserActivityRow = {
+  last_seen_at: string | null;
+  last_path: string | null;
+  last_title: string | null;
+  localizacao: string | null;
+  total_active_seconds: number | null;
+  heartbeat_count: number | null;
+};
+
+type AdminUserPageActivityRow = {
+  path: string;
+  title: string | null;
+  last_seen_at: string | null;
+  total_active_seconds: number | null;
+  view_count: number | null;
+};
+
 function normStatus(value: unknown) {
   return String(value ?? "").trim().toLowerCase();
 }
@@ -137,6 +154,24 @@ function isPartidaRankingValidaNoMes(row: {
 
 function isPartidaAberta(row: { status?: string | null }) {
   return ["agendada", "aguardando_confirmacao"].includes(normStatus(row.status));
+}
+
+function adminSecondsLabel(value: number | null | undefined) {
+  const total = Math.max(0, Math.round(Number(value ?? 0)));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  if (h > 0) return `${h}h ${m}min`;
+  if (m > 0) return `${m}min`;
+  return `${total}s`;
+}
+
+function adminDateTimeLabel(value: string | null | undefined) {
+  if (!value) return "Sem registro";
+  try {
+    return new Date(value).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  } catch {
+    return "Sem registro";
+  }
 }
 
 async function getPendingLimit(db: ReturnType<typeof createServiceRoleClient>) {
@@ -327,6 +362,17 @@ export default async function AdminUsuarioDetalhePage({ params, searchParams }: 
     .order("esporte_id", { ascending: true });
   const eidRowsTyped = (eidRows ?? []) as AdminUsuarioEidRow[];
   const desafioQuota = await loadAdminDesafioQuotas(db, id, eidRowsTyped);
+  const [{ data: activityRow }, { data: pageActivityRows }] = await Promise.all([
+    db.from("admin_user_activity").select("*").eq("user_id", id).maybeSingle(),
+    db
+      .from("admin_user_page_activity")
+      .select("path, title, last_seen_at, total_active_seconds, view_count")
+      .eq("user_id", id)
+      .order("last_seen_at", { ascending: false })
+      .limit(30),
+  ]);
+  const activity = activityRow as AdminUserActivityRow | null;
+  const pageActivity = (pageActivityRows ?? []) as AdminUserPageActivityRow[];
 
   const { data: authU } = await db.auth.admin.getUserById(id);
   const email = authU.user?.email ?? "—";
@@ -378,6 +424,71 @@ export default async function AdminUsuarioDetalhePage({ params, searchParams }: 
         {p.id} · e-mail: {email}
         {isBanned ? <span className="ml-2 text-red-300">· conta bloqueada (auth)</span> : null}
       </p>
+
+      <section className="mt-6 rounded-xl border border-eid-primary-500/20 bg-eid-primary-500/5 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-bold text-eid-fg">Atividade e acessos</h3>
+            <p className="mt-1 text-xs text-eid-text-secondary">Último acesso, tempo ativo estimado e páginas acessadas por este usuário.</p>
+          </div>
+          <Link href="/admin/estatisticas" className="rounded-lg border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1.5 text-xs font-bold text-eid-primary-300 hover:bg-eid-primary-500/15">
+            Ver estatísticas
+          </Link>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-4">
+          <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3">
+            <p className="text-[10px] font-black uppercase tracking-wide text-eid-text-secondary">Último acesso</p>
+            <p className="mt-1 text-sm font-black text-eid-fg">{adminDateTimeLabel(activity?.last_seen_at)}</p>
+          </div>
+          <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3">
+            <p className="text-[10px] font-black uppercase tracking-wide text-eid-text-secondary">Tempo ativo</p>
+            <p className="mt-1 text-sm font-black text-eid-fg">{adminSecondsLabel(activity?.total_active_seconds)}</p>
+          </div>
+          <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3">
+            <p className="text-[10px] font-black uppercase tracking-wide text-eid-text-secondary">Batimentos</p>
+            <p className="mt-1 text-sm font-black text-eid-fg">{Number(activity?.heartbeat_count ?? 0)}</p>
+          </div>
+          <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3">
+            <p className="text-[10px] font-black uppercase tracking-wide text-eid-text-secondary">Localização</p>
+            <p className="mt-1 truncate text-sm font-black text-eid-fg">{activity?.localizacao || p.localizacao || "Não informado"}</p>
+          </div>
+        </div>
+        <div className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-3">
+          <p className="text-[10px] font-black uppercase tracking-wide text-eid-text-secondary">Última página</p>
+          <p className="mt-1 break-all text-xs font-semibold text-eid-fg">{activity?.last_path ?? "Sem registro"}</p>
+        </div>
+        {pageActivity.length > 0 ? (
+          <div className="mt-3 overflow-x-auto rounded-xl border border-[color:var(--eid-border-subtle)]">
+            <table className="w-full min-w-[680px] text-left text-xs">
+              <thead className="bg-eid-card text-[10px] font-black uppercase tracking-wide text-eid-text-secondary">
+                <tr>
+                  <th className="px-3 py-2">Página</th>
+                  <th className="px-3 py-2">Acessos</th>
+                  <th className="px-3 py-2">Tempo</th>
+                  <th className="px-3 py-2">Último acesso</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pageActivity.map((row) => (
+                  <tr key={row.path} className="border-t border-[color:var(--eid-border-subtle)]/70">
+                    <td className="px-3 py-2">
+                      <p className="break-all font-bold text-eid-fg">{row.path}</p>
+                      {row.title ? <p className="mt-0.5 truncate text-[10px] text-eid-text-secondary">{row.title}</p> : null}
+                    </td>
+                    <td className="px-3 py-2 font-black text-eid-primary-300">{Number(row.view_count ?? 0)}</td>
+                    <td className="px-3 py-2 font-bold text-eid-fg">{adminSecondsLabel(row.total_active_seconds)}</td>
+                    <td className="px-3 py-2 text-eid-text-secondary">{adminDateTimeLabel(row.last_seen_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="mt-3 rounded-xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/25 px-3 py-2 text-xs text-eid-text-secondary">
+            Sem páginas registradas ainda. Os dados começam a aparecer após o próximo acesso do usuário.
+          </p>
+        )}
+      </section>
 
       <section className="mt-6 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/50 p-4">
         <h3 className="text-sm font-bold text-eid-fg">Editar perfil (dados públicos)</h3>

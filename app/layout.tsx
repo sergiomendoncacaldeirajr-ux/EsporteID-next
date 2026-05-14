@@ -25,6 +25,7 @@ import {
 import { EID_APP_CHROME_THEME_COLOR, EID_LOGO_AUTH_MARK_SRC } from "@/lib/branding";
 import { EID_HIDE_APP_SHELL_HEADER, EID_SHOW_ONBOARDING_CHROME_HEADER } from "@/lib/eid-app-shell";
 import { SupportCenterFloat } from "@/components/support/support-center-float";
+import { UserActivityTracker } from "@/components/admin/user-activity-tracker";
 import {
   ALL_SYSTEM_FEATURE_KEYS,
   getSystemFeatureConfig,
@@ -244,6 +245,9 @@ export default async function RootLayout({
         <NativeAppRuntime userId={user?.id ?? null} activeContext={activeContext} />
         <PwaBootstrap />
         <ThemeColorSync />
+        <Suspense fallback={null}>
+          <UserActivityTracker userId={user?.id ?? null} />
+        </Suspense>
         <InstallAppOfferDynamic />
         <GlobalScrollReset />
         <HashTargetHighlight />
