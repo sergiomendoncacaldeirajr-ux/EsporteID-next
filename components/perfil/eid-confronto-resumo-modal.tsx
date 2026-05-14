@@ -7,7 +7,6 @@ import { Calendar, Download, ImageIcon, Loader2, MapPin, RotateCcw, Share2, X } 
 import Link from "next/link";
 import { GoalsScoreboardSummary } from "@/components/placar/goals-scoreboard-summary";
 import { EID_LOGO_WORDMARK_SRC } from "@/lib/branding";
-import { SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import {
   goalsPayloadHasAny,
   goalsTotalsBeforePenaltiesDisplay,
@@ -379,15 +378,16 @@ function drawShareSetsTable(
   const headH = 36 * scale;
   const tableH = headH + rowH * 2;
   const colW = (width - nameW) / cols;
+  const isLight = text === colors.ink;
 
-  ctx.fillStyle = "rgba(255,255,255,0.08)";
+  ctx.fillStyle = isLight ? "rgba(11,29,46,0.10)" : "rgba(255,255,255,0.08)";
   ctx.roundRect(x, y, width, tableH, 22 * scale);
   ctx.fill();
-  ctx.strokeStyle = "rgba(255,255,255,0.15)";
+  ctx.strokeStyle = isLight ? "rgba(37,99,235,0.18)" : "rgba(255,255,255,0.15)";
   ctx.lineWidth = 1.5 * scale;
   ctx.stroke();
 
-  ctx.fillStyle = "rgba(37, 99, 235, 0.18)";
+  ctx.fillStyle = isLight ? "rgba(37, 99, 235, 0.14)" : "rgba(37, 99, 235, 0.18)";
   ctx.roundRect(x, y, width, headH, 22 * scale);
   ctx.fill();
 
@@ -400,7 +400,14 @@ function drawShareSetsTable(
   const names = [shareFirstName(payload.ladoA), shareFirstName(payload.ladoB)];
   names.forEach((name, rowIdx) => {
     const rowY = y + headH + rowIdx * rowH;
-    ctx.fillStyle = rowIdx === 0 ? "rgba(255,255,255,0.045)" : "rgba(0,0,0,0.08)";
+    ctx.fillStyle =
+      isLight
+        ? rowIdx === 0
+          ? "rgba(255,255,255,0.18)"
+          : "rgba(37,99,235,0.07)"
+        : rowIdx === 0
+          ? "rgba(255,255,255,0.045)"
+          : "rgba(0,0,0,0.08)";
     ctx.fillRect(x, rowY, width, rowH);
     ctx.textAlign = "left";
     ctx.fillStyle = text;
@@ -411,7 +418,7 @@ function drawShareSetsTable(
   ctx.textAlign = "center";
   sets.forEach((set, idx) => {
     const cx = x + nameW + colW * idx + colW / 2;
-    ctx.strokeStyle = "rgba(255,255,255,0.10)";
+    ctx.strokeStyle = isLight ? "rgba(11,29,46,0.12)" : "rgba(255,255,255,0.10)";
     ctx.beginPath();
     ctx.moveTo(x + nameW + colW * idx, y);
     ctx.lineTo(x + nameW + colW * idx, y + tableH);
@@ -500,13 +507,13 @@ function drawShareSlimResultCard(
   ctx.fill();
   ctx.fillStyle =
     payload.cardVariant === "light"
-      ? "rgba(255, 255, 255, 0.90)"
+      ? "rgba(226, 239, 255, 0.82)"
       : payload.cardVariant === "glass"
         ? "rgba(11, 29, 46, 0.54)"
         : "rgba(11, 29, 46, 0.86)";
   ctx.roundRect(x, y, cardWidth, cardHeight, 40 * scale);
   ctx.fill();
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.18)";
+  ctx.strokeStyle = payload.cardVariant === "light" ? "rgba(37, 99, 235, 0.26)" : "rgba(255, 255, 255, 0.18)";
   ctx.lineWidth = 2 * scale;
   ctx.stroke();
 
@@ -544,10 +551,10 @@ function drawShareSlimResultCard(
   const scoreX = x + 30 * scale;
   const scoreW = cardWidth - 60 * scale;
   const scoreH = isSets ? 148 * scale : 92 * scale;
-  ctx.fillStyle = "rgba(8, 15, 24, 0.86)";
+  ctx.fillStyle = payload.cardVariant === "light" ? "rgba(11, 29, 46, 0.12)" : "rgba(8, 15, 24, 0.86)";
   ctx.roundRect(scoreX, scoreTop, scoreW, scoreH, 16 * scale);
   ctx.fill();
-  ctx.strokeStyle = "rgba(255,255,255,0.12)";
+  ctx.strokeStyle = payload.cardVariant === "light" ? "rgba(37,99,235,0.18)" : "rgba(255,255,255,0.12)";
   ctx.lineWidth = 1.5 * scale;
   ctx.stroke();
 
@@ -556,7 +563,7 @@ function drawShareSlimResultCard(
     const headerH = 38 * scale;
     const rowH = 55 * scale;
     const colW = (scoreW - nameW) / Math.max(1, setRows.length);
-    ctx.fillStyle = "rgba(255,255,255,0.035)";
+    ctx.fillStyle = payload.cardVariant === "light" ? "rgba(37,99,235,0.10)" : "rgba(255,255,255,0.035)";
     ctx.roundRect(scoreX, scoreTop, scoreW, headerH, 16 * scale);
     ctx.fill();
     ctx.fillStyle = muted;
@@ -564,7 +571,14 @@ function drawShareSlimResultCard(
     setRows.forEach((_, idx) => ctx.fillText(`S${idx + 1}`, scoreX + nameW + colW * idx + colW / 2, scoreTop + headerH / 2));
     [payload.ladoA, payload.ladoB].forEach((name, rowIdx) => {
       const rowY = scoreTop + headerH + rowIdx * rowH;
-      ctx.fillStyle = rowIdx === 0 ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.08)";
+      ctx.fillStyle =
+        payload.cardVariant === "light"
+          ? rowIdx === 0
+            ? "rgba(255,255,255,0.20)"
+            : "rgba(37,99,235,0.08)"
+          : rowIdx === 0
+            ? "rgba(255,255,255,0.04)"
+            : "rgba(0,0,0,0.08)";
       ctx.fillRect(scoreX, rowY, scoreW, rowH);
       drawTinyAvatar(rowIdx === 0 ? avatars?.a : avatars?.b, name, scoreX + 42 * scale, rowY + rowH / 2);
       ctx.textAlign = "left";
@@ -700,13 +714,13 @@ function drawShareResultCard(
   ctx.fill();
   ctx.fillStyle =
     payload.cardVariant === "light"
-      ? "rgba(255, 255, 255, 0.86)"
+      ? "rgba(226, 239, 255, 0.80)"
       : payload.cardVariant === "glass"
         ? "rgba(11, 29, 46, 0.48)"
         : "rgba(11, 29, 46, 0.82)";
   ctx.roundRect(x, y, cardWidth, cardHeight, 54);
   ctx.fill();
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.18)";
+  ctx.strokeStyle = payload.cardVariant === "light" ? "rgba(37, 99, 235, 0.28)" : "rgba(255, 255, 255, 0.18)";
   ctx.lineWidth = 2;
   ctx.stroke();
 
@@ -759,7 +773,7 @@ function drawShareResultCard(
     }
   }
 
-  ctx.fillStyle = "rgba(37, 99, 235, 0.20)";
+  ctx.fillStyle = payload.cardVariant === "light" ? "rgba(37, 99, 235, 0.12)" : "rgba(37, 99, 235, 0.20)";
   ctx.roundRect(center - 225 * scale, y + (payload.showBrand ? 126 : 52) * scale, 450 * scale, 52 * scale, 26 * scale);
   ctx.fill();
   ctx.fillStyle = colors.primarySoft;
@@ -790,7 +804,7 @@ function drawShareResultCard(
   } else if (isGoals) {
     drawShareGoalsTvScore(ctx, payload, center - 300 * scale, scoreY - 70 * scale, 600 * scale, scale, colors, text, muted);
   } else {
-    ctx.fillStyle = "rgba(249, 115, 22, 0.14)";
+    ctx.fillStyle = payload.cardVariant === "light" ? "rgba(249, 115, 22, 0.11)" : "rgba(249, 115, 22, 0.14)";
     ctx.roundRect(center - 230 * scale, scoreY - 50 * scale, 460 * scale, 122 * scale, 34 * scale);
     ctx.fill();
     ctx.strokeStyle = colors.action;
@@ -1175,6 +1189,9 @@ export function EidConfrontoResumoModal({
   const [shareShowBrand, setShareShowBrand] = useState(true);
   const [sharePanelOpen, setSharePanelOpen] = useState(false);
   const sharePreviewRef = useRef<HTMLDivElement | null>(null);
+  const sharePreviewCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const sharePreviewRenderFrameRef = useRef<number | null>(null);
+  const sharePreviewRenderSeqRef = useRef(0);
   const shareOverlayPointerFrameRef = useRef<number | null>(null);
   const shareOverlayPointerPositionRef = useRef<{ x: number; y: number } | null>(null);
   const shareFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -1267,10 +1284,39 @@ export function EidConfrontoResumoModal({
       sportLabel,
     ],
   );
-  const shareScore = useMemo(() => shareScoreSummary(sharePayload), [sharePayload]);
-  const shareSetRows = useMemo(() => getShareSetRows(sharePayload), [sharePayload]);
-  const shareIsSets = shareUsesSetLines(shareScore);
-  const shareIsGoals = shareUsesGoalsScore(sharePayload, shareScore);
+  useEffect(() => {
+    if (!sharePanelOpen) return;
+    const canvas = sharePreviewCanvasRef.current;
+    if (!canvas) return;
+    const renderSeq = ++sharePreviewRenderSeqRef.current;
+    if (sharePreviewRenderFrameRef.current != null) {
+      window.cancelAnimationFrame(sharePreviewRenderFrameRef.current);
+    }
+    sharePreviewRenderFrameRef.current = window.requestAnimationFrame(() => {
+      sharePreviewRenderFrameRef.current = null;
+      void renderResultadoShareCanvas(sharePayload, 0.22)
+        .then((renderedCanvas) => {
+          if (sharePreviewRenderSeqRef.current !== renderSeq) return;
+          canvas.width = renderedCanvas.width;
+          canvas.height = renderedCanvas.height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(renderedCanvas, 0, 0);
+        })
+        .catch(() => {
+          if (sharePreviewRenderSeqRef.current !== renderSeq) return;
+          const ctx = canvas.getContext("2d");
+          if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+    });
+    return () => {
+      if (sharePreviewRenderFrameRef.current != null) {
+        window.cancelAnimationFrame(sharePreviewRenderFrameRef.current);
+        sharePreviewRenderFrameRef.current = null;
+      }
+    };
+  }, [sharePanelOpen, sharePayload]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1677,18 +1723,6 @@ export function EidConfrontoResumoModal({
                       ref={sharePreviewRef}
                       data-eid-result-share-preview
                       className="relative mx-auto aspect-[9/16] w-full max-w-[11rem] touch-none overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_22%,var(--eid-border-subtle)_78%)] bg-[linear-gradient(155deg,var(--eid-brand-ink),color-mix(in_srgb,var(--eid-primary-500)_34%,var(--eid-surface)),var(--eid-brand-ink))] shadow-[0_12px_28px_-22px_rgba(0,0,0,0.8)]"
-                      style={
-                        shareBackgroundDataUrl
-                          ? {
-                              backgroundImage: `linear-gradient(rgba(0,0,0,${
-                                shareBackgroundFilter === "normal" ? "0.12" : "0.34"
-                              }),rgba(0,0,0,${shareBackgroundFilter === "normal" ? "0.12" : "0.34"})), url(${shareBackgroundDataUrl})`,
-                              backgroundSize: "cover",
-                              backgroundPosition: "center",
-                              filter: shareBackgroundFilter === "blur" ? "saturate(1.05)" : undefined,
-                            }
-                          : undefined
-                      }
                       onPointerDown={(event) => {
                         event.currentTarget.setPointerCapture(event.pointerId);
                         updateShareOverlayFromPointer(event.clientX, event.clientY);
@@ -1698,129 +1732,11 @@ export function EidConfrontoResumoModal({
                         updateShareOverlayFromPointer(event.clientX, event.clientY);
                       }}
                     >
-                      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_12%,color-mix(in_srgb,var(--eid-primary-500)_40%,transparent),transparent_38%),radial-gradient(circle_at_18%_86%,color-mix(in_srgb,var(--eid-action-500)_30%,transparent),transparent_40%),linear-gradient(180deg,rgba(255,255,255,0.05),transparent_22%,rgba(0,0,0,0.18))]" />
-                      {shareLayout === "slim" ? (
-                        <span
-                          className="pointer-events-none absolute left-1/2 top-[8%] block -translate-x-1/2"
-                          style={{
-                            width: `${6.2 * shareBrandLogoScale}rem`,
-                            height: `${1.34 * shareBrandLogoScale}rem`,
-                          }}
-                        >
-                          <NextImage src={EID_LOGO_WORDMARK_SRC} alt="EsporteID" fill unoptimized className="object-contain" />
-                        </span>
-                      ) : null}
-                      <div
-                        className={`absolute -translate-x-1/2 -translate-y-1/2 border text-center shadow-[0_18px_34px_-18px_rgba(0,0,0,0.95)] ${
-                          shareLayout === "slim" ? "rounded-xl px-2 py-2" : "rounded-2xl px-3 py-2.5"
-                        } ${
-                          shareCardVariant === "light"
-                            ? "border-white/60 bg-white/90 text-eid-brand-ink"
-                            : shareCardVariant === "glass"
-                              ? "border-white/30 bg-eid-brand-ink/60 text-eid-fg backdrop-blur-sm"
-                              : "border-white/20 bg-[linear-gradient(155deg,rgba(11,29,46,0.92),rgba(12,42,78,0.86))] text-eid-fg"
-                        }`}
-                        style={{
-                          left: `${shareOverlayPosition.x * 100}%`,
-                          top: `${shareOverlayPosition.y * 100}%`,
-                          width: `${(shareLayout === "slim" ? 70 : shareCardVariant === "compact" ? 64 : 78) * shareOverlayScale}%`,
-                        }}
-                      >
-                        {shareShowBrand && shareLayout === "complete" ? (
-                          <span
-                            className="relative mx-auto block h-4 w-[4.6rem]"
-                            style={{
-                              width: `${4.6 * shareBrandLogoScale}rem`,
-                              height: `${1 * shareBrandLogoScale}rem`,
-                            }}
-                          >
-                            <NextImage src={EID_LOGO_WORDMARK_SRC} alt="EsporteID" fill unoptimized className="object-contain" />
-                          </span>
-                        ) : null}
-                        {shareLayout === "complete" ? (
-                          <p className="mt-1.5 text-[7px] font-black uppercase tracking-[0.12em] text-eid-primary-200">
-                            <span className="inline-flex items-center justify-center gap-1">
-                              <SportGlyphIcon sportName={sportLabel} />
-                              <span>{sportLabel ?? "Resultado oficial"}</span>
-                            </span>
-                          </p>
-                        ) : null}
-                        {shareLayout === "complete" ? (
-                        <div className="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1">
-                          <div className="min-w-0">
-                            <span className="relative mx-auto mb-1 block h-7 w-7 overflow-hidden rounded-full border border-white/25 bg-white/10">
-                              {ladoAAvatarUrl ? (
-                                <NextImage src={ladoAAvatarUrl} alt="" fill unoptimized className="object-cover" />
-                              ) : (
-                                <span className="flex h-full w-full items-center justify-center text-[9px] font-black text-eid-primary-100">
-                                  {shareInitials(ladoA)}
-                                </span>
-                              )}
-                            </span>
-                            <p className="truncate text-[9px] font-black leading-tight text-eid-fg">{shareFirstName(ladoA)}</p>
-                          </div>
-                          <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/12 px-1.5 py-0.5 text-[7px] font-black text-eid-primary-100">
-                            VS
-                          </span>
-                          <div className="min-w-0">
-                            <span className="relative mx-auto mb-1 block h-7 w-7 overflow-hidden rounded-full border border-white/25 bg-white/10">
-                              {ladoBAvatarUrl ? (
-                                <NextImage src={ladoBAvatarUrl} alt="" fill unoptimized className="object-cover" />
-                              ) : (
-                                <span className="flex h-full w-full items-center justify-center text-[9px] font-black text-eid-primary-100">
-                                  {shareInitials(ladoB)}
-                                </span>
-                              )}
-                            </span>
-                            <p className="truncate text-[9px] font-black leading-tight text-eid-fg">{shareFirstName(ladoB)}</p>
-                          </div>
-                        </div>
-                        ) : null}
-                        {shareIsSets ? (
-                          <div className={`${shareLayout === "slim" ? "mt-1.5 rounded-md" : "mt-2 rounded-lg"} overflow-hidden border border-white/14 bg-white/10 text-eid-fg`}>
-                            <div className={`${shareLayout === "slim" ? "text-[5px]" : "text-[6px]"} grid bg-eid-primary-500/15 font-black uppercase text-eid-primary-100`} style={{ gridTemplateColumns: `${shareLayout === "slim" ? "2.35rem" : "2.8rem"} repeat(${Math.max(1, shareSetRows.length)}, minmax(0,1fr))` }}>
-                              <span />
-                              {shareSetRows.map((_, idx) => <span key={`set-head-${idx}`} className="py-0.5">S{idx + 1}</span>)}
-                            </div>
-                            {[ladoA, ladoB].map((name, rowIdx) => (
-                              <div key={name} className={`${shareLayout === "slim" ? "text-[7px]" : "text-[8px]"} grid border-t border-white/10 font-black`} style={{ gridTemplateColumns: `${shareLayout === "slim" ? "2.35rem" : "2.8rem"} repeat(${Math.max(1, shareSetRows.length)}, minmax(0,1fr))` }}>
-                                <span className="flex min-w-0 items-center gap-1 truncate px-1 py-1 text-left">
-                                  {shareLayout === "slim" ? (
-                                    <span className="relative inline-block h-5 w-5 shrink-0 overflow-hidden rounded-full border border-white/20 bg-white/10">
-                                      {(rowIdx === 0 ? ladoAAvatarUrl : ladoBAvatarUrl) ? (
-                                        <NextImage src={(rowIdx === 0 ? ladoAAvatarUrl : ladoBAvatarUrl) ?? ""} alt="" fill unoptimized className="object-cover" />
-                                      ) : null}
-                                    </span>
-                                  ) : null}
-                                  <span className="truncate">{shareFirstName(name)}</span>
-                                </span>
-                                {shareSetRows.map((set, idx) => (
-                                  <span key={`${name}-${idx}`} className={`${shareLayout === "slim" ? "py-0.5" : "py-1"} tabular-nums`}>
-                                    {rowIdx === 0 ? set.a : set.b}
-                                    {set.hasTiebreak ? <sup className="ml-px text-[0.55em] text-eid-primary-100">{rowIdx === 0 ? set.tiebreakA : set.tiebreakB}</sup> : null}
-                                  </span>
-                                ))}
-                              </div>
-                            ))}
-                          </div>
-                        ) : shareIsGoals ? (
-                          <div className={`${shareLayout === "slim" ? "mt-1.5 rounded-lg py-1" : "mt-2 rounded-xl py-1.5"} border border-white/15 bg-emerald-950/70 px-2 text-eid-fg`}>
-                            <p className="text-[6px] font-black uppercase tracking-[0.12em] text-white/70">Placar final</p>
-                            <p className={`mt-0.5 ${shareLayout === "slim" ? "text-[15px]" : "text-[18px]"} font-black leading-none tabular-nums`}>{shareScore.headline}</p>
-                            {shareScore.lines[0] ? <p className="mt-1 text-[7px] font-black uppercase text-eid-action-300">{shareScore.lines[0]}</p> : null}
-                          </div>
-                        ) : (
-                          <p className={`${shareLayout === "slim" ? "mt-1.5 rounded-lg py-1 text-[15px]" : "mt-2 rounded-xl py-1.5 text-[18px]"} border border-eid-action-500/45 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-500)_24%,transparent),color-mix(in_srgb,var(--eid-primary-500)_14%,transparent))] px-2 font-black leading-none tabular-nums text-eid-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]`}>
-                            {shareScore.headline}
-                          </p>
-                        )}
-                        {shareScore.extra && shareCardVariant !== "compact" ? (
-                          <p className="mt-1 text-[7px] font-bold leading-tight text-eid-text-secondary">{shareScore.extra}</p>
-                        ) : null}
-                        {shareShowMeta && shareLayout === "complete" ? (
-                          <p className="mt-1 line-clamp-2 text-[7px] font-bold leading-tight text-eid-text-secondary">{shareMetaLine(sharePayload)}</p>
-                        ) : null}
-                      </div>
+                      <canvas
+                        ref={sharePreviewCanvasRef}
+                        className="pointer-events-none h-full w-full object-cover"
+                        aria-label="Prévia da arte de resultado"
+                      />
                     </div>
                     <div className="flex min-w-0 flex-col justify-center gap-2">
                       <p className="text-[10px] font-black uppercase tracking-[0.12em] text-eid-primary-300">Arte para Stories</p>
