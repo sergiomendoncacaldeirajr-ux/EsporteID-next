@@ -414,7 +414,11 @@ export async function loadAceitosCancelaveisItems(
       status === "ReagendamentoPendente" && rescheduleKind === "direto"
         ? rescheduleRequestedBy === userId
         : String(m.cancel_requested_by ?? "") === userId;
-    const tidOpp = resolveOponenteTimeIdAceitos(matchParaTimes);
+    const isTeamMatch =
+      String((m as { modalidade_confronto?: string | null }).modalidade_confronto ?? "")
+        .trim()
+        .toLowerCase() !== "individual";
+    const tidOpp = isTeamMatch ? resolveOponenteTimeIdAceitos(matchParaTimes) : null;
     const timeRow = tidOpp != null ? aceitosTimesById.get(tidOpp) : undefined;
     const nomePerfilOpp = (opp ? oponenteMapAceitos.get(opp)?.nome : null) ?? "Oponente";
     const avatarPerfilOpp = (opp ? oponenteMapAceitos.get(opp)?.avatarUrl : null) ?? null;
@@ -427,11 +431,6 @@ export async function loadAceitosCancelaveisItems(
     // Team member → own team leader's WhatsApp (never opponent's)
     let whatsappContato: string | null = null;
     let whatsappContatoNome: string | null = null;
-    const isTeamMatch =
-      String((m as { modalidade_confronto?: string | null }).modalidade_confronto ?? "")
-        .trim()
-        .toLowerCase() !== "individual";
-
     if (!isTeamMatch) {
       // Individual: show opponent's WhatsApp
       const oppWa = opp ? (oponenteMapAceitos.get(opp)?.whatsapp ?? null) : null;
