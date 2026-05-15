@@ -33,6 +33,7 @@ type LocalCard = {
   tipo_quadra: string | null;
   lat: string | number | null;
   lng: string | number | null;
+  venue_config_json: unknown;
 };
 
 function localHref(l: LocalCard) {
@@ -94,6 +95,14 @@ function LocalRow({ l, dist }: { l: LocalCard; dist?: number }) {
   );
 }
 
+function coordFromLocal(l: LocalCard, key: "lat" | "lng") {
+  const direct = Number(l[key] ?? NaN);
+  if (Number.isFinite(direct)) return direct;
+  const cfg = (l.venue_config_json ?? null) as Record<string, unknown> | null;
+  const fallback = Number(cfg?.[key] ?? NaN);
+  return Number.isFinite(fallback) ? fallback : NaN;
+}
+
 export default async function LocaisPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const q = (sp.q ?? "").trim().toLowerCase();
@@ -115,7 +124,7 @@ export default async function LocaisPage({ searchParams }: Props) {
 
   const { data: locaisRaw } = await supabase
     .from("espacos_genericos")
-    .select("id, slug, nome_publico, localizacao, status, ownership_status, logo_arquivo, aceita_reserva, tipo_quadra, lat, lng")
+    .select("id, slug, nome_publico, localizacao, status, ownership_status, logo_arquivo, aceita_reserva, tipo_quadra, lat, lng, venue_config_json")
     .eq("ativo_listagem", true)
     .eq("admin_suspenso", false)
     .order("id", { ascending: false });
@@ -127,8 +136,8 @@ export default async function LocaisPage({ searchParams }: Props) {
 
   const locais = (locaisRaw ?? []) as LocalCard[];
   const locaisComDist = locais.map((l) => {
-    const lat = Number(l.lat ?? NaN);
-    const lng = Number(l.lng ?? NaN);
+    const lat = coordFromLocal(l, "lat");
+    const lng = coordFromLocal(l, "lng");
     const dist = hasCoords ? distanciaKm(myLat, myLng, lat, lng) : 99999;
     return { l, dist };
   });

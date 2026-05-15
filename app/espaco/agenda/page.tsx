@@ -12,6 +12,7 @@ import {
   atualizarOperacaoFeriadoEspacoAction,
   sincronizarFeriadosEspacoAction,
 } from "@/app/espaco/actions";
+import type { ReactNode } from "react";
 import { ReservaDetalhesModal } from "@/components/espaco/reserva-detalhes-modal";
 import Image from "next/image";
 import Link from "next/link";
@@ -33,6 +34,45 @@ type ParticipanteReserva = {
 type Props = {
   searchParams?: Promise<{ espaco?: string }>;
 };
+
+function AgendaCard({
+  title,
+  description,
+  meta,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  description: string;
+  meta?: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <details
+      open={defaultOpen}
+      className="group eid-mobile-section overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90"
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 marker:hidden sm:p-5">
+        <span className="min-w-0">
+          <span className="block text-base font-black text-eid-fg sm:text-lg">{title}</span>
+          <span className="mt-1 block text-xs leading-relaxed text-eid-text-secondary sm:text-sm">{description}</span>
+        </span>
+        <span className="flex shrink-0 items-center gap-2">
+          {meta ? (
+            <span className="hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-2.5 py-1 text-[11px] font-bold text-eid-text-secondary sm:inline-flex">
+              {meta}
+            </span>
+          ) : null}
+          <span className="grid h-9 w-9 place-items-center rounded-full border border-eid-primary-500/25 bg-eid-primary-500/10 text-lg font-black text-eid-primary-300 transition group-open:rotate-45">
+            +
+          </span>
+        </span>
+      </summary>
+      <div className="border-t border-[color:var(--eid-border-subtle)] p-4 pt-4 sm:p-5">{children}</div>
+    </details>
+  );
+}
 
 export default async function EspacoAgendaPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
@@ -205,13 +245,30 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
   }
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
+    <div className="space-y-4">
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          ["Hoje", hojeResumo.aberto ? "Aberto" : "Fechado", hojeResumo.motivo],
+          ["Grade", String((grade ?? []).length), "horários cadastrados"],
+          ["Reservas", String((reservas ?? []).length), "lançamentos na agenda"],
+          ["Bloqueios", String((bloqueios ?? []).length), "pausas e indisponibilidades"],
+        ].map(([label, value, hint]) => (
+          <div key={label} className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-eid-text-secondary">{label}</p>
+            <p className="mt-2 truncate text-2xl font-black text-eid-fg">{value}</p>
+            <p className="mt-1 line-clamp-2 text-xs text-eid-text-secondary">{hint}</p>
+          </div>
+        ))}
+      </section>
+
+      <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
       <section className="space-y-4">
-        <div className="eid-mobile-section rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
-          <h2 className="text-lg font-bold text-eid-fg">Grade semanal</h2>
-          <p className="mt-2 text-sm text-eid-text-secondary">
-            Hoje: {hojeResumo.aberto ? "aberto" : "fechado"} · {hojeResumo.motivo}
-          </p>
+        <AgendaCard
+          title="Grade semanal"
+          description={`Hoje: ${hojeResumo.aberto ? "aberto" : "fechado"} · ${hojeResumo.motivo}`}
+          meta={`${(grade ?? []).length} horários`}
+          defaultOpen
+        >
           <div className="eid-mobile-subsection mt-4 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/5 p-3">
             <h3 className="text-sm font-bold text-eid-fg">Assistente automático de horários</h3>
             <p className="mt-1 text-xs text-eid-text-secondary">
@@ -490,10 +547,13 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
               </p>
             )}
           </div>
-        </div>
+        </AgendaCard>
 
-        <div className="eid-mobile-section rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
-          <h2 className="text-lg font-bold text-eid-fg">Bloqueios</h2>
+        <AgendaCard
+          title="Bloqueios"
+          description="Fechamentos, manutenção e sobreposições de feriado."
+          meta={`${(bloqueios ?? []).length} bloqueios`}
+        >
           <div className="eid-mobile-subsection mt-3 rounded-xl border border-amber-500/25 bg-amber-500/10 p-3">
             <h3 className="text-sm font-bold text-eid-fg">Sobreposição de feriado na grade</h3>
             <p className="mt-1 text-xs text-eid-text-secondary">
@@ -582,15 +642,15 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
               <p className="text-sm text-eid-text-secondary">Nenhum bloqueio cadastrado.</p>
             )}
           </div>
-        </div>
+        </AgendaCard>
       </section>
 
       <section className="space-y-4">
-        <div className="eid-mobile-section rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
-          <h2 className="text-lg font-bold text-eid-fg">Punições de marcação (membros)</h2>
-          <p className="mt-2 text-sm text-eid-text-secondary">
-            Use quando uma denúncia for aprovada. Você pode aplicar por 1 semana, 1 mês ou sem prazo, e depois editar/suspender.
-          </p>
+        <AgendaCard
+          title="Punições de marcação"
+          description="Suspensões de membros por no-show ou denúncia aprovada."
+          meta={`${(punicoes ?? []).length} registros`}
+        >
           <form action={salvarPunicaoMembroEspacoAction} className="mt-4 grid gap-2">
             <input type="hidden" name="espaco_id" value={selectedSpace.id} />
             <input
@@ -687,10 +747,13 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
               );
             })}
           </div>
-        </div>
+        </AgendaCard>
 
-        <div className="eid-mobile-section rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
-          <h2 className="text-lg font-bold text-eid-fg">Reservas recentes</h2>
+        <AgendaCard
+          title="Reservas recentes"
+          description="Reservas, visitantes, aulas, jogos e denúncias de no-show."
+          meta={`${(reservas ?? []).length} reservas`}
+        >
           <div className="mt-4 space-y-2">
             {(reservas ?? []).length ? (
               (reservas ?? []).map((item) => {
@@ -856,10 +919,13 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
               </p>
             )}
           </div>
-        </div>
+        </AgendaCard>
 
-        <div className="eid-mobile-section rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
-          <h2 className="text-lg font-bold text-eid-fg">Feriados personalizados</h2>
+        <AgendaCard
+          title="Feriados"
+          description="Sincronização automática e regras especiais por data."
+          meta={`${(feriados ?? []).length} feriados`}
+        >
           <form action={sincronizarFeriadosEspacoAction} className="mt-3">
             <input type="hidden" name="espaco_id" value={selectedSpace.id} />
             <input type="hidden" name="ano" value={new Date().getFullYear()} />
@@ -934,8 +1000,9 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
               );
             })}
           </div>
-        </div>
+        </AgendaCard>
       </section>
+      </div>
     </div>
   );
 }
