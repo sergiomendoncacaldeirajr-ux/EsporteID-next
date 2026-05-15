@@ -5011,6 +5011,78 @@ a.eid-card:hover {
   transform: none !important;
 }
 
+/* ── 6. Flatten: Agenda e Comunidade — wrappers e articles de partida abertos */
+
+/* Desafios aceitos: outer wrapper transparente */
+#desafios-aceitos-gestao > div {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+#desafios-aceitos-gestao > div > div[class*="min-h-10"] {
+  background: transparent !important;
+  border-bottom-color: color-mix(in srgb, var(--eid-border-subtle) 30%, transparent) !important;
+}
+#desafios-aceitos-gestao > div > div:last-child {
+  margin: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+#desafios-aceitos-gestao article {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-radius: 0 !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--eid-border-subtle) 35%, transparent) !important;
+}
+#desafios-aceitos-gestao article:last-child {
+  border-bottom-color: transparent !important;
+}
+
+/* Partidas e resultados: outer section + articles */
+#resultados-partida {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+#resultados-partida article {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-radius: 0 !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--eid-border-subtle) 35%, transparent) !important;
+}
+#resultados-partida article:last-child {
+  border-bottom-color: transparent !important;
+}
+
+/* Agenda — confrontos: outer wrapper transparente */
+[data-eid-agenda-page] section > div:where([class*="rounded"]) {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+[data-eid-agenda-page] section > div > div[class*="min-h-10"] {
+  background: transparent !important;
+  border-bottom-color: color-mix(in srgb, var(--eid-border-subtle) 30%, transparent) !important;
+}
+[data-eid-agenda-page] section article {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-radius: 0 !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--eid-border-subtle) 35%, transparent) !important;
+}
+[data-eid-agenda-page] section article:last-child {
+  border-bottom-color: transparent !important;
+}
+
 /* ── R5.8. hr e divisores — alinhados ao design system ──────────────────── */
 hr {
   border: none;
