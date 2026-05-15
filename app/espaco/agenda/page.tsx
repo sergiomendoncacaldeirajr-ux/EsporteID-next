@@ -108,6 +108,30 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
       : Promise.resolve({ data: [] as Array<Record<string, unknown>> }),
   ]);
   const solicitanteById = new Map((solicitantes ?? []).map((p) => [String(p.id), p]));
+  const membrosPunicaoMap = new Map<
+    string,
+    { id: string; nome: string | null; username: string | null }
+  >();
+  for (const p of solicitantes ?? []) {
+    membrosPunicaoMap.set(String(p.id), {
+      id: String(p.id),
+      nome: p.nome ?? null,
+      username: p.username ?? null,
+    });
+  }
+  for (const participante of (participantes ?? []) as ParticipanteReserva[]) {
+    const profile = Array.isArray(participante.profiles) ? participante.profiles[0] : participante.profiles;
+    const id = String(profile?.id ?? participante.usuario_id ?? "");
+    if (!id) continue;
+    membrosPunicaoMap.set(id, {
+      id,
+      nome: profile?.nome ?? null,
+      username: profile?.username ?? null,
+    });
+  }
+  const membrosPunicao = Array.from(membrosPunicaoMap.values()).sort((a, b) =>
+    String(a.nome ?? a.username ?? a.id).localeCompare(String(b.nome ?? b.username ?? b.id), "pt-BR")
+  );
   const partidaIds = [...new Set((reservas ?? []).map((item) => Number(item.partida_id ?? 0)).filter((id) => id > 0))];
   const torneioJogoIds = [...new Set((reservas ?? []).map((item) => Number(item.torneio_jogo_id ?? 0)).filter((id) => id > 0))];
   const professorAulaIds = [...new Set((reservas ?? []).map((item) => Number(item.professor_aula_id ?? 0)).filter((id) => id > 0))];
@@ -166,6 +190,19 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
     })),
     feriadosAutomaticos: [],
   });
+  const gradeAgrupada = new Map<string, { titulo: string; itens: typeof grade }>();
+  for (const item of grade ?? []) {
+    const diaIdx = Math.min(6, Math.max(0, Number(item.dia_semana)));
+    const unidade = (unidades ?? []).find((u) => u.id === item.espaco_unidade_id);
+    const key = `${diaIdx}:${item.espaco_unidade_id ?? "geral"}`;
+    if (!gradeAgrupada.has(key)) {
+      gradeAgrupada.set(key, {
+        titulo: `${DIAS_SEMANA_CURTO[diaIdx] ?? `Dia ${item.dia_semana}`} · ${unidade?.nome ?? "Unidade"}`,
+        itens: [],
+      });
+    }
+    gradeAgrupada.get(key)?.itens?.push(item);
+  }
 
   return (
     <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
@@ -239,86 +276,112 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
                 <p className="mt-1 text-[11px] text-eid-text-secondary">
                   Use para configurar limites e benefício grátis de membros sem precisar voltar em outra tela.
                 </p>
-                <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                  <input
-                    type="number"
-                    name="regra_limite_dia"
-                    defaultValue={0}
-                    min={0}
-                    placeholder="Limite geral/dia"
-                    className="eid-input-dark rounded-xl px-3 py-2 text-sm"
-                  />
-                  <input
-                    type="number"
-                    name="regra_limite_semana"
-                    defaultValue={0}
-                    min={0}
-                    placeholder="Limite geral/semana"
-                    className="eid-input-dark rounded-xl px-3 py-2 text-sm"
-                  />
-                  <input
-                    type="number"
-                    name="regra_cooldown_horas"
-                    defaultValue={0}
-                    min={0}
-                    placeholder="Cooldown (h)"
-                    className="eid-input-dark rounded-xl px-3 py-2 text-sm"
-                  />
-                  <input
-                    type="number"
-                    name="regra_antecedencia_min_horas"
-                    defaultValue={0}
-                    min={0}
-                    placeholder="Antecedência mínima (h)"
-                    className="eid-input-dark rounded-xl px-3 py-2 text-sm"
-                  />
-                  <input
-                    type="number"
-                    name="regra_antecedencia_max_dias"
-                    defaultValue={0}
-                    min={0}
-                    placeholder="Antecedência máxima (dias)"
-                    className="eid-input-dark rounded-xl px-3 py-2 text-sm"
-                  />
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <label className="block text-[11px] font-semibold text-eid-text-secondary">
+                    Limite de reservas por dia
+                    <input
+                      type="number"
+                      name="regra_limite_dia"
+                      defaultValue={0}
+                      min={0}
+                      className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm"
+                    />
+                    <span className="mt-1 block font-normal">0 deixa sem limite diário.</span>
+                  </label>
+                  <label className="block text-[11px] font-semibold text-eid-text-secondary">
+                    Limite de reservas por semana
+                    <input
+                      type="number"
+                      name="regra_limite_semana"
+                      defaultValue={0}
+                      min={0}
+                      className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm"
+                    />
+                    <span className="mt-1 block font-normal">0 deixa sem limite semanal.</span>
+                  </label>
+                  <label className="block text-[11px] font-semibold text-eid-text-secondary">
+                    Intervalo entre reservas (horas)
+                    <input
+                      type="number"
+                      name="regra_cooldown_horas"
+                      defaultValue={0}
+                      min={0}
+                      className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm"
+                    />
+                    <span className="mt-1 block font-normal">Tempo mínimo entre marcações do mesmo membro.</span>
+                  </label>
+                  <label className="block text-[11px] font-semibold text-eid-text-secondary">
+                    Antecedência mínima (horas)
+                    <input
+                      type="number"
+                      name="regra_antecedencia_min_horas"
+                      defaultValue={0}
+                      min={0}
+                      className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm"
+                    />
+                    <span className="mt-1 block font-normal">0 permite reservar imediatamente.</span>
+                  </label>
+                  <label className="block text-[11px] font-semibold text-eid-text-secondary sm:col-span-2">
+                    Janela máxima para reservar (dias)
+                    <input
+                      type="number"
+                      name="regra_antecedencia_max_dias"
+                      defaultValue={0}
+                      min={0}
+                      className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm"
+                    />
+                    <span className="mt-1 block font-normal">0 deixa a agenda sem limite de dias à frente.</span>
+                  </label>
                 </div>
                 <div className="mt-2 rounded-xl border border-eid-primary-500/20 bg-eid-primary-500/5 p-2.5">
                   <label className="inline-flex items-center gap-2 text-xs text-eid-fg">
                     <input type="checkbox" name="regra_reservas_gratis_liberadas" />
                     Permitir reserva grátis para membros
                   </label>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                    <input
-                      type="number"
-                      name="regra_gratis_limite_dia"
-                      defaultValue={0}
-                      min={0}
-                      placeholder="Grátis por dia"
-                      className="eid-input-dark rounded-xl px-3 py-2 text-sm"
-                    />
-                    <input
-                      type="number"
-                      name="regra_gratis_limite_semana"
-                      defaultValue={0}
-                      min={0}
-                      placeholder="Grátis por semana"
-                      className="eid-input-dark rounded-xl px-3 py-2 text-sm"
-                    />
-                    <input
-                      type="number"
-                      name="regra_gratis_intervalo_horas"
-                      defaultValue={0}
-                      min={0}
-                      placeholder="Intervalo grátis (h)"
-                      className="eid-input-dark rounded-xl px-3 py-2 text-sm"
-                    />
-                    <input
-                      type="number"
-                      name="regra_gratis_antecedencia_max_dias"
-                      defaultValue={0}
-                      min={0}
-                      placeholder="Antecedência grátis (dias)"
-                      className="eid-input-dark rounded-xl px-3 py-2 text-sm"
-                    />
+                  <p className="mt-1 text-[11px] text-eid-text-secondary">
+                    Configure apenas se membros puderem usar reservas sem cobrança.
+                  </p>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <label className="block text-[11px] font-semibold text-eid-text-secondary">
+                      Reservas grátis por dia
+                      <input
+                        type="number"
+                        name="regra_gratis_limite_dia"
+                        defaultValue={0}
+                        min={0}
+                        className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm"
+                      />
+                    </label>
+                    <label className="block text-[11px] font-semibold text-eid-text-secondary">
+                      Reservas grátis por semana
+                      <input
+                        type="number"
+                        name="regra_gratis_limite_semana"
+                        defaultValue={0}
+                        min={0}
+                        className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm"
+                      />
+                    </label>
+                    <label className="block text-[11px] font-semibold text-eid-text-secondary">
+                      Intervalo entre grátis (horas)
+                      <input
+                        type="number"
+                        name="regra_gratis_intervalo_horas"
+                        defaultValue={0}
+                        min={0}
+                        className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm"
+                      />
+                    </label>
+                    <label className="block text-[11px] font-semibold text-eid-text-secondary">
+                      Janela grátis máxima (dias)
+                      <input
+                        type="number"
+                        name="regra_gratis_antecedencia_max_dias"
+                        defaultValue={0}
+                        min={0}
+                        className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm"
+                      />
+                    </label>
                   </div>
                 </div>
               </div>
@@ -382,39 +445,50 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
               Adicionar à grade
             </button>
           </form>
-          <div className="mt-4 space-y-2">
-            {(grade ?? []).map((item) => {
-              const diaIdx = Math.min(6, Math.max(0, Number(item.dia_semana)));
-              const unidade = (unidades ?? []).find((u) => u.id === item.espaco_unidade_id);
-              return (
-                <div
-                  key={item.id}
-                  className="flex flex-col gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 p-3 text-xs sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <p className="text-eid-text-secondary">
-                    <span className="font-semibold text-eid-fg">
-                      {DIAS_SEMANA_CURTO[diaIdx] ?? `Dia ${item.dia_semana}`}
+          <div className="mt-4 space-y-3">
+            {Array.from(gradeAgrupada.values()).length ? (
+              Array.from(gradeAgrupada.values()).map((grupo) => (
+                <div key={grupo.titulo} className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-black text-eid-fg">{grupo.titulo}</p>
+                    <span className="rounded-full border border-[color:var(--eid-border-subtle)] px-2.5 py-1 text-[11px] font-semibold text-eid-text-secondary">
+                      {grupo.itens?.length ?? 0} horário(s)
                     </span>
-                    {" · "}
-                    {String(item.hora_inicio).slice(0, 5)} às {String(item.hora_fim).slice(0, 5)}
-                    {unidade ? ` · ${unidade.nome}` : ""}
-                    {!item.ativo ? " · inativo" : ""}
-                    {item.liberar_professor ? " · liberado professor" : ""}
-                    {item.liberar_torneio ? " · liberado torneio" : ""}
-                  </p>
-                  <form action={removerHorarioSemanalEspacoAction} className="shrink-0">
-                    <input type="hidden" name="espaco_id" value={selectedSpace.id} />
-                    <input type="hidden" name="horario_id" value={item.id} />
-                    <button
-                      type="submit"
-                      className="w-full rounded-lg border border-red-500/35 bg-red-500/10 px-3 py-1.5 text-[11px] font-semibold text-red-300 sm:w-auto"
-                    >
-                      Remover
-                    </button>
-                  </form>
+                  </div>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {(grupo.itens ?? []).map((item) => (
+                      <div key={item.id} className="flex items-center justify-between gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 px-3 py-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-eid-fg">
+                            {String(item.hora_inicio).slice(0, 5)} às {String(item.hora_fim).slice(0, 5)}
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-eid-text-secondary">
+                            {!item.ativo ? "Inativo" : "Disponível"}
+                            {item.liberar_professor ? " · professor" : ""}
+                            {item.liberar_torneio ? " · torneio" : ""}
+                          </p>
+                        </div>
+                        <form action={removerHorarioSemanalEspacoAction} className="shrink-0">
+                          <input type="hidden" name="espaco_id" value={selectedSpace.id} />
+                          <input type="hidden" name="horario_id" value={item.id} />
+                          <button
+                            type="submit"
+                            aria-label={`Remover horário ${String(item.hora_inicio).slice(0, 5)}`}
+                            className="rounded-lg border border-red-500/35 bg-red-500/10 px-3 py-1.5 text-[11px] font-semibold text-red-300"
+                          >
+                            Remover
+                          </button>
+                        </form>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              );
-            })}
+              ))
+            ) : (
+              <p className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-4 text-sm text-eid-text-secondary">
+                Nenhum horário cadastrado na grade semanal.
+              </p>
+            )}
           </div>
         </div>
 
@@ -519,7 +593,23 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
           </p>
           <form action={salvarPunicaoMembroEspacoAction} className="mt-4 grid gap-2">
             <input type="hidden" name="espaco_id" value={selectedSpace.id} />
-            <input name="alvo_usuario_id" placeholder="ID do usuário punido" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
+            <input
+              name="alvo_usuario_id"
+              list="membros-punicao-list"
+              placeholder="Digite 3 letras do nome do membro"
+              className="eid-input-dark rounded-xl px-3 py-2 text-sm"
+            />
+            <datalist id="membros-punicao-list">
+              {membrosPunicao.map((membro) => (
+                <option key={membro.id} value={membro.id}>
+                  {membro.nome ?? membro.username ?? membro.id}
+                  {membro.username ? ` · @${membro.username}` : ""}
+                </option>
+              ))}
+            </datalist>
+            <p className="-mt-1 text-[11px] text-eid-text-secondary">
+              Comece a digitar o nome e selecione o membro na lista.
+            </p>
             <select name="periodo" defaultValue="1_semana" className="eid-input-dark rounded-xl px-3 py-2 text-sm">
               <option value="1_semana">Suspensão por 1 semana</option>
               <option value="1_mes">Suspensão por 1 mês</option>
