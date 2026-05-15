@@ -4433,14 +4433,16 @@ body.eid-capacitor-app .eid-profile-edit-screen :where(label:has(input[type="che
 
 /* ── 1. Scrollbars ocultas globalmente (sensação de app nativo) ─────────── */
 html, body, * {
-  scrollbar-width: none;
+  scrollbar-width: none !important;
+  scrollbar-color: transparent transparent !important;
 }
 html::-webkit-scrollbar,
 body::-webkit-scrollbar,
 *::-webkit-scrollbar {
-  display: none;
+  display: none !important;
   width: 0 !important;
   height: 0 !important;
+  background: transparent !important;
 }
 
 /* ── 2. Nav inferior — frosted glass (hallmark de tab bar nativa iOS/Android) ── */
