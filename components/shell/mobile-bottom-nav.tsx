@@ -770,10 +770,10 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                   aria-label={item.label}
                 >
                   <span
-                    className={`relative flex h-[30px] w-[38px] items-center justify-center rounded-xl transition-all duration-200 ${
+                    className={`relative flex h-[30px] w-[38px] items-center justify-center rounded-xl transition-all duration-[220ms] ${
                       item.active
-                        ? "bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_14%,transparent),color-mix(in_srgb,var(--eid-primary-500)_7%,transparent))] shadow-[0_0_10px_-3px_rgba(37,99,235,0.25),inset_0_1px_0_rgba(255,255,255,0.06)]"
-                        : "bg-transparent"
+                        ? "scale-[1.12] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_18%,transparent),color-mix(in_srgb,var(--eid-primary-500)_9%,transparent))] shadow-[0_0_14px_-3px_rgba(37,99,235,0.32),inset_0_1px_0_rgba(255,255,255,0.08)]"
+                        : "scale-100 bg-transparent"
                     }`}
                     style={{ color: item.active ? "var(--eid-primary-400)" : "var(--eid-text-secondary)" }}
                   >
@@ -782,10 +782,10 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                   </span>
 
                   <span
-                    className="text-[10px] leading-none transition-all duration-200"
+                    className="text-[10px] leading-none transition-all duration-[220ms]"
                     style={{
                       color: item.active ? "var(--eid-fg)" : "var(--eid-text-secondary)",
-                      fontWeight: item.active ? 700 : 500,
+                      fontWeight: item.active ? 800 : 500,
                     }}
                   >
                     {item.label}

@@ -5956,3 +5956,152 @@ body.eid-app-shell button[aria-busy="true"] > * {
   gap: 0.375rem !important;
 }
 
+/* =============================================================================
+ * Native App Finish III — Progresso, Nav, Skeleton, Ambientes, Confrontos, EID
+ * ============================================================================= */
+
+/* ── 1. Barra de progresso de navegação — mais grossa e vibrante ─────────── */
+.eid-native-transition-bar::after {
+  height: 3px !important;
+  width: 48% !important;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--eid-primary-500) 80%, transparent) 20%,
+    var(--eid-primary-400) 50%,
+    var(--eid-action-400) 80%,
+    transparent 100%
+  ) !important;
+  box-shadow: 0 0 12px 1px color-mix(in srgb, var(--eid-primary-500) 55%, transparent) !important;
+  border-radius: 999px !important;
+}
+
+/* ── 2. Skeleton — fundo de carregamento em avatares e imagens ──────────── */
+/* Container circular de avatar: fundo blueish enquanto imagem carrega */
+body.eid-app-shell :where(
+  [data-eid-ranking-page],
+  [data-eid-agenda-page],
+  [data-eid-comunidade-panel],
+  [data-eid-confrontos-page],
+  [data-eid-profile-eid-page]
+) :where(.rounded-full.overflow-hidden, .overflow-hidden.rounded-full) {
+  background: color-mix(in srgb, var(--eid-surface) 65%, var(--eid-primary-700) 35%);
+}
+
+/* Imagens em cards retangulares: fundo neutro escuro enquanto carrega */
+body.eid-app-shell :where(
+  [data-eid-confrontos-page],
+  [data-eid-ranking-page],
+  [data-eid-agenda-page]
+) :where(.rounded-xl.overflow-hidden, .overflow-hidden.rounded-xl, .overflow-hidden.rounded-2xl) img {
+  background: color-mix(in srgb, var(--eid-surface) 80%, var(--eid-primary-700) 20%);
+}
+
+/* ── 3. Cores ambiente por seção ────────────────────────────────────────── */
+/* Agenda: glow teal/verde no topo */
+[data-eid-agenda-page] {
+  background-image: radial-gradient(
+    ellipse 90% 35% at 50% 0%,
+    color-mix(in srgb, #0d9488 9%, transparent),
+    transparent 65%
+  );
+}
+
+/* Comunidade: warm social amber/orange */
+[data-eid-comunidade-panel] {
+  background-image: radial-gradient(
+    ellipse 85% 28% at 50% 0%,
+    color-mix(in srgb, var(--eid-action-500) 8%, transparent),
+    transparent 60%
+  );
+}
+
+/* Confrontos: action orange-blue mix */
+[data-eid-confrontos-page] {
+  background-image: radial-gradient(
+    ellipse 85% 30% at 50% 0%,
+    color-mix(in srgb, var(--eid-action-500) 7%, transparent),
+    transparent 58%
+  );
+}
+
+/* EID Stats: blue profissional mais saturado */
+[data-eid-profile-eid-page] {
+  background-image: radial-gradient(
+    ellipse 80% 32% at 50% 0%,
+    color-mix(in srgb, var(--eid-primary-500) 14%, transparent),
+    transparent 60%
+  );
+}
+
+/* ── 4. EID Stats — cards e hero panel ─────────────────────────────────── */
+[data-eid-profile-eid-page] :where(.eid-surface-panel, .eid-card) {
+  border-color: rgba(37, 99, 235, 0.14) !important;
+  box-shadow:
+    0 8px 28px -14px rgba(15, 23, 42, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Hero com gradiente mais expressivo */
+[data-eid-profile-eid-page] :where(.eid-surface-panel):first-of-type {
+  box-shadow:
+    0 12px 36px -16px rgba(37, 99, 235, 0.3),
+    0 4px 16px -8px rgba(15, 23, 42, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+}
+
+/* Número EID grande — mais destaque */
+[data-eid-profile-eid-page] :where([class*="text-4xl"], [class*="text-5xl"], [class*="text-3xl"]) {
+  text-shadow: 0 2px 18px color-mix(in srgb, var(--eid-primary-500) 28%, transparent);
+}
+
+/* ── 5. Confrontos — hero card e cards de partida ───────────────────────── */
+/* Hero card da página /confrontos */
+[data-eid-confrontos-page] > section:first-of-type {
+  border-color: rgba(37, 99, 235, 0.16) !important;
+  box-shadow:
+    0 16px 42px -24px rgba(15, 23, 42, 0.65),
+    inset 0 1px 0 rgba(255, 255,255, 0.06) !important;
+}
+
+/* SegLink — tabs Próximos/Encerrados/Individual/Dupla/Times */
+[data-eid-confrontos-page] :where([class*="rounded-xl"][class*="rounded-2xl"]),
+[data-eid-confrontos-page] :where(a[class*="rounded-xl"]) {
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+/* Cards de confronto individuais — borda mais marcada */
+[data-eid-confrontos-page] article,
+[data-eid-confrontos-page] :where(.rounded-2xl.border) {
+  border-color: rgba(37, 99, 235, 0.15) !important;
+  box-shadow:
+    0 8px 24px -12px rgba(15, 23, 42, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Badge de placar (orange) — mais proeminente */
+[data-eid-confrontos-page] :where([class*="eid-action"][class*="rounded-full"]) {
+  box-shadow: 0 3px 10px -4px rgba(249, 115, 22, 0.45) !important;
+}
+
+/* Confrontos card no ranking — glow laranja no hover mais suave */
+[data-eid-ranking-page] :where(.border-eid-action-500\/22, [class*="border-eid-action"]) {
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+/* ── 6. Tema claro — ajustes de contraste ───────────────────────────────── */
+[data-eid-theme="light"] [data-eid-agenda-page] {
+  background-image: radial-gradient(
+    ellipse 90% 35% at 50% 0%,
+    color-mix(in srgb, #0d9488 6%, transparent),
+    transparent 60%
+  );
+}
+[data-eid-theme="light"] [data-eid-comunidade-panel] {
+  background-image: radial-gradient(
+    ellipse 85% 28% at 50% 0%,
+    color-mix(in srgb, var(--eid-action-500) 5%, transparent),
+    transparent 55%
+  );
+}
+
