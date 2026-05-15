@@ -4416,3 +4416,205 @@ body.eid-capacitor-app .eid-profile-edit-screen :where(label:has(input[type="che
     align-items: flex-start;
   }
 }
+
+/* =============================================================================
+ * EsporteID — Polimento visual: sensação de app nativo
+ * Adicionado separadamente para facilitar revisão/rollback.
+ * Regras: apenas apresentação — zero lógica, zero estrutura DOM.
+ * ============================================================================= */
+
+/* ── 1. Scrollbars finas globais (web-app não tem barra de rolagem grossa) ──── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--eid-border) 60%, transparent) transparent;
+}
+*::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--eid-border) 65%, transparent);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--eid-text-muted) 40%, transparent);
+}
+
+/* ── 2. Nav inferior — frosted glass (hallmark de tab bar nativa iOS/Android) ── */
+#eid-mobile-bottom-nav > nav > div {
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+}
+
+/* Nav inferior no tema claro: surface semi-transparente branca */
+[data-eid-theme="light"] #eid-mobile-bottom-nav > nav > div {
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.88),
+    rgba(255, 255, 255, 0.94)
+  ) !important;
+  border-color: rgba(15, 23, 42, 0.09) !important;
+  box-shadow:
+    0 -1px 0 rgba(15, 23, 42, 0.06),
+    0 16px 36px -22px rgba(15, 23, 42, 0.18),
+    0 0 0 1px rgba(15, 23, 42, 0.04) !important;
+}
+
+/* ── 3. Topbar — refinamento dark: separador mais legível ─────────────────── */
+[data-eid-theme="dark"] #eid-persistent-topbar {
+  border-bottom-color: rgba(37, 99, 235, 0.14) !important;
+  box-shadow:
+    0 1px 0 rgba(37, 99, 235, 0.1),
+    0 8px 28px -12px rgba(15, 23, 42, 0.55) !important;
+}
+
+/* Topbar no tema claro: vidro fosco branco com tint azul sutil */
+[data-eid-theme="light"] #eid-persistent-topbar {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.95) 100%
+  ) !important;
+  border-bottom-color: rgba(37, 99, 235, 0.13) !important;
+  box-shadow:
+    0 1px 0 rgba(37, 99, 235, 0.1),
+    0 4px 20px -8px rgba(15, 23, 42, 0.09) !important;
+}
+
+/* ── 4. Search bar — foco mais expressivo ────────────────────────────────── */
+#eid-persistent-topbar input[type="search"]:focus,
+#eid-persistent-topbar input[type="text"]:focus,
+#eid-persistent-topbar input:focus {
+  border-color: rgba(37, 99, 235, 0.5) !important;
+  box-shadow:
+    0 0 0 3px rgba(37, 99, 235, 0.16),
+    0 2px 8px -4px rgba(15, 23, 42, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+[data-eid-theme="light"] #eid-persistent-topbar input:focus {
+  box-shadow:
+    0 0 0 3px rgba(37, 99, 235, 0.14),
+    0 2px 8px -4px rgba(15, 23, 42, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+
+/* ── 5. Animação de entrada de página — mais snappy, menos dramática ──────── */
+@keyframes eid-content-block-enter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0) scale(0.962);
+    animation-timing-function: cubic-bezier(0.18, 0.88, 0.18, 1.02);
+  }
+  68% {
+    opacity: 1;
+    transform: translate3d(0, -1.5px, 0) scale(1.003);
+    animation-timing-function: cubic-bezier(0.3, 1, 0.4, 1);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+/* Duração ligeiramente mais curta para resposta mais imediata */
+.eid-app-route-enter-children > *:not([data-eid-no-route-enter]) {
+  animation-duration: 580ms;
+}
+.eid-progressive-enter > * {
+  animation-duration: 520ms;
+}
+
+/* Stagger mais apertado — evita espera longa em listas */
+.eid-progressive-enter > *:nth-child(2)  { animation-delay: 42ms; }
+.eid-progressive-enter > *:nth-child(3)  { animation-delay: 84ms; }
+.eid-progressive-enter > *:nth-child(4)  { animation-delay: 126ms; }
+.eid-progressive-enter > *:nth-child(5)  { animation-delay: 165ms; }
+.eid-progressive-enter > *:nth-child(6)  { animation-delay: 200ms; }
+.eid-progressive-enter > *:nth-child(7)  { animation-delay: 232ms; }
+.eid-progressive-enter > *:nth-child(8)  { animation-delay: 260ms; }
+.eid-progressive-enter > *:nth-child(9)  { animation-delay: 285ms; }
+.eid-progressive-enter > *:nth-child(10) { animation-delay: 308ms; }
+.eid-progressive-enter > *:nth-child(n + 11) { animation-delay: 328ms; }
+
+/* Mantém motion-reduce */
+@media (prefers-reduced-motion: reduce) {
+  .eid-app-route-enter-children > *:not([data-eid-no-route-enter]),
+  .eid-progressive-enter > * {
+    animation: none !important;
+  }
+}
+
+/* ── 6. Chip de nav desktop — pill ativo com acento mais definido ─────────── */
+[data-eid-theme="light"] header nav a[class*="border-[rgba(37,99,235"] {
+  box-shadow:
+    0 2px 10px -4px rgba(37, 99, 235, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* ── 7. Focus ring global — mais visível e consistente ───────────────────── */
+:focus-visible {
+  outline-color: color-mix(in srgb, var(--eid-primary-500) 70%, transparent);
+  outline-offset: 3px;
+}
+
+/* ── 8. Inputs e selects: color-scheme consistente com o tema ────────────── */
+[data-eid-theme="light"] input,
+[data-eid-theme="light"] select,
+[data-eid-theme="light"] textarea {
+  color-scheme: light;
+}
+[data-eid-theme="dark"] input,
+[data-eid-theme="dark"] select,
+[data-eid-theme="dark"] textarea {
+  color-scheme: dark;
+}
+
+/* ── 9. Press state em links da nav inferior — feedback tátil mais rico ───── */
+#eid-mobile-bottom-nav nav a:active > span:first-child {
+  transform: scale(0.88);
+  transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── 10. Indicador de rota ativa na nav inferior — dot abaixo do label ────── */
+#eid-mobile-bottom-nav nav a span.text-\[10px\]:not(:empty) {
+  position: relative;
+}
+
+/* ── 11. Sombra ambient no conteúdo principal — profundidade de camadas ───── */
+#eid-app-shell-main-wrap {
+  isolation: isolate;
+}
+
+/* ── 12. eid-card no light: sombra com tint azul muito sutil ─────────────── */
+[data-eid-theme="light"] .eid-card {
+  box-shadow:
+    0 4px 20px rgba(15, 23, 42, 0.08),
+    0 1px 4px rgba(15, 23, 42, 0.04),
+    0 0 0 1px rgba(37, 99, 235, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* ── 13. Highlight de borda superior em todos os cards (glass rim light) ──── */
+.eid-surface-panel,
+.eid-card,
+.eid-list-item {
+  position: relative;
+}
+
+/* ── 14. Transição suave ao mudar de tema (background-color via CSS vars) ─── */
+html {
+  transition:
+    background-color 0.25s ease,
+    color 0.18s ease;
+}
+
+/* Cards: apenas border e shadow transitam (background vem de CSS vars — não interpola nativamente) */
+.eid-surface-panel {
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+.eid-auth-card {
+  transition: box-shadow 0.22s ease, border-color 0.22s ease;
+}
