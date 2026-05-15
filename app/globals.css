@@ -4618,3 +4618,117 @@ html {
 .eid-auth-card {
   transition: box-shadow 0.22s ease, border-color 0.22s ease;
 }
+
+/* =============================================================================
+ * EsporteID — Round 3: Shimmer, chips, podium, badges, search font
+ * ============================================================================= */
+
+/* ── R3.1. Search bar — fonte menor, mais proporcional ao header ─────────── */
+#eid-topbar-search {
+  font-size: 12px !important;
+}
+@media (min-width: 640px) {
+  #eid-topbar-search {
+    font-size: 13px !important;
+  }
+}
+
+/* ── R3.2. Skeleton shimmer — sweep deslizante (iOS/Android nativo) ─────── */
+@keyframes eid-skeleton-shimmer {
+  0% {
+    transform: translateX(-150%) skewX(-14deg);
+  }
+  100% {
+    transform: translateX(260%) skewX(-14deg);
+  }
+}
+
+.eid-loading-skeleton-block::after {
+  content: "";
+  position: absolute;
+  inset-y: 0;
+  left: 0;
+  width: 38%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.065) 50%,
+    transparent 100%
+  );
+  animation: eid-skeleton-shimmer 2.0s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  pointer-events: none;
+}
+
+[data-eid-theme="light"] .eid-loading-skeleton-block::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.58) 50%,
+    transparent 100%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eid-loading-skeleton-block::after {
+    animation: none;
+  }
+}
+
+/* ── R3.3. eid-chip — hover com sombra + active mais snappy ─────────────── */
+.eid-chip:hover {
+  border-color: color-mix(in srgb, var(--eid-border) 65%, var(--eid-primary-500) 35%) !important;
+  box-shadow: 0 2px 8px -4px rgba(37, 99, 235, 0.12);
+}
+.eid-chip:active {
+  transform: scale(0.93) !important;
+  transition-duration: 0.07s !important;
+  box-shadow: none !important;
+}
+
+/* eid-chip-active: glow azul sutil */
+.eid-chip-active {
+  box-shadow:
+    0 0 0 1px rgba(37, 99, 235, 0.18),
+    0 3px 12px -5px rgba(37, 99, 235, 0.28) !important;
+}
+[data-eid-theme="light"] .eid-chip-active {
+  background: color-mix(in srgb, var(--eid-primary-500) 16%, #ffffff 84%) !important;
+  border-color: rgba(37, 99, 235, 0.28) !important;
+  color: var(--eid-primary-700) !important;
+  box-shadow:
+    0 0 0 1px rgba(37, 99, 235, 0.2),
+    0 4px 14px -6px rgba(37, 99, 235, 0.38) !important;
+}
+
+/* ── R3.4. Ranking — chips de filtro inativos no light: mais definidos ───── */
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-filter-segment:not(.eid-ranking-chip-active) {
+  background: color-mix(in srgb, var(--eid-surface) 82%, var(--eid-card) 18%);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-chip-active {
+  box-shadow:
+    0 0 0 1px rgba(37, 99, 235, 0.2),
+    0 4px 16px -6px rgba(37, 99, 235, 0.4) !important;
+}
+
+/* ── R3.5. Podium card — profundidade e glass no dark ────────────────────── */
+[data-eid-theme="dark"] .eid-podium-card {
+  box-shadow:
+    0 8px 28px -16px rgba(15, 23, 42, 0.7),
+    0 0 0 1px rgba(37, 99, 235, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+.eid-podium-card {
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+/* ── R3.6. Badges semânticos — micro glow colorido ───────────────────────── */
+.eid-badge-success {
+  box-shadow: 0 0 10px -4px color-mix(in srgb, var(--eid-success-500) 38%, transparent);
+}
+.eid-badge-danger {
+  box-shadow: 0 0 10px -4px color-mix(in srgb, var(--eid-danger-500) 38%, transparent);
+}
+.eid-badge-warning {
+  box-shadow: 0 0 10px -4px color-mix(in srgb, var(--eid-warning-500) 38%, transparent);
+}
