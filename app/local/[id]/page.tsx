@@ -47,6 +47,19 @@ function parseJsonArray(val: unknown): string[] {
   }
 }
 
+function parseJsonRecord(value: unknown): Record<string, unknown> | null {
+  if (!value) return null;
+  if (typeof value === "object" && !Array.isArray(value)) return value as Record<string, unknown>;
+  try {
+    const parsed = JSON.parse(String(value));
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 function PublicSection({
   title,
   children,
@@ -126,7 +139,7 @@ export default async function LocalPublicPage({ params }: Props) {
 
   const isGestor = user != null && loc.responsavel_usuario_id === user.id;
   const minhaClaimPendente = claimResult.data;
-  const venueConfig = (loc.venue_config_json ?? null) as Record<string, unknown> | null;
+  const venueConfig = parseJsonRecord(loc.venue_config_json);
   const lat = loc.lat ?? venueConfig?.lat ?? null;
   const lng = loc.lng ?? venueConfig?.lng ?? null;
   const mapsHref =

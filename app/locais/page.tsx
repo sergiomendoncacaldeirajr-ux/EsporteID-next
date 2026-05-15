@@ -102,10 +102,23 @@ function parseCoord(value: unknown) {
   return Number.isFinite(parsed) ? parsed : NaN;
 }
 
+function parseJsonRecord(value: unknown): Record<string, unknown> | null {
+  if (!value) return null;
+  if (typeof value === "object" && !Array.isArray(value)) return value as Record<string, unknown>;
+  try {
+    const parsed = JSON.parse(String(value));
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 function coordFromLocal(l: LocalCard, key: "lat" | "lng") {
   const direct = parseCoord(l[key]);
   if (Number.isFinite(direct)) return direct;
-  const cfg = (l.venue_config_json ?? null) as Record<string, unknown> | null;
+  const cfg = parseJsonRecord(l.venue_config_json);
   const fallback = parseCoord(cfg?.[key]);
   return Number.isFinite(fallback) ? fallback : NaN;
 }

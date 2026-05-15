@@ -38,6 +38,19 @@ function parseCoord(value: unknown) {
   return Number.isFinite(parsed) ? parsed : NaN;
 }
 
+function parseJsonRecord(value: unknown): Record<string, unknown> | null {
+  if (!value) return null;
+  if (typeof value === "object" && !Array.isArray(value)) return value as Record<string, unknown>;
+  try {
+    const parsed = JSON.parse(String(value));
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function EspacoPublicLandingPage({ params }: Props) {
   const { slug } = await params;
   const supabase = await createClient();
@@ -136,7 +149,7 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
   }
 
   const unidadePrincipal = unidades?.[0] ?? null;
-  const venueConfig = (espaco.venue_config_json ?? null) as Record<string, unknown> | null;
+  const venueConfig = parseJsonRecord(espaco.venue_config_json);
   const espacoLatDirect = parseCoord(espaco.lat);
   const espacoLngDirect = parseCoord(espaco.lng);
   const espacoLat = Number.isFinite(espacoLatDirect) ? espacoLatDirect : parseCoord(venueConfig?.lat);

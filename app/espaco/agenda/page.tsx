@@ -284,12 +284,24 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
           meta={`${(grade ?? []).length} horários`}
           defaultOpen
         >
-          <div className="eid-mobile-subsection mt-4 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/5 p-3">
-            <h3 className="text-sm font-bold text-eid-fg">Assistente automático de horários</h3>
-            <p className="mt-1 text-xs text-eid-text-secondary">
-              Informe o funcionamento da unidade e o intervalo (ex.: 1h). O sistema gera todos os slots automaticamente para semana, sábado e domingo.
-            </p>
-            <form action={criarGradeAutomaticaEspacoAction} className="mt-3 grid gap-2">
+          <details className="group overflow-hidden rounded-2xl border border-eid-primary-500/25 bg-eid-primary-500/5">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3 marker:hidden">
+              <span className="min-w-0">
+                <span className="block text-sm font-black text-eid-fg">Adicionar nova quadra ou grade</span>
+                <span className="mt-0.5 block text-[11px] text-eid-text-secondary">
+                  Abra apenas quando quiser gerar horários ou adicionar um horário avulso.
+                </span>
+              </span>
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 text-base font-black text-eid-primary-300 transition group-open:rotate-45">
+                +
+              </span>
+            </summary>
+            <div className="border-t border-eid-primary-500/20 p-3">
+              <h3 className="text-sm font-bold text-eid-fg">Assistente automático de horários</h3>
+              <p className="mt-1 text-xs text-eid-text-secondary">
+                Informe o funcionamento da unidade e o intervalo (ex.: 1h). O sistema gera todos os slots automaticamente para semana, sábado e domingo.
+              </p>
+              <form action={criarGradeAutomaticaEspacoAction} className="mt-3 grid gap-2">
               <input type="hidden" name="espaco_id" value={selectedSpace.id} />
               <select name="espaco_unidade_id" defaultValue={unidades?.[0]?.id ?? ""} className="eid-input-dark rounded-xl px-3 py-2 text-sm">
                 {(unidades ?? []).map((unidade) => (
@@ -460,9 +472,14 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
               <button className="rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 px-4 py-2 text-xs font-bold text-eid-primary-300">
                 Gerar grade automática
               </button>
-            </form>
-          </div>
-          <form action={criarHorarioSemanalEspacoAction} className="mt-4 grid gap-3">
+              </form>
+
+              <div className="my-4 border-t border-[color:var(--eid-border-subtle)]" />
+              <h3 className="text-sm font-bold text-eid-fg">Adicionar horário avulso</h3>
+              <p className="mt-1 text-xs text-eid-text-secondary">
+                Use quando quiser criar só um horário específico em uma quadra.
+              </p>
+          <form action={criarHorarioSemanalEspacoAction} className="mt-3 grid gap-3">
             <input type="hidden" name="espaco_id" value={selectedSpace.id} />
             <select
               name="espaco_unidade_id"
@@ -517,6 +534,8 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
               Adicionar à grade
             </button>
           </form>
+            </div>
+          </details>
           <div className="mt-4 space-y-3">
             {Array.from(gradeAgrupada.values()).length ? (
               Array.from(gradeAgrupada.values()).map((grupo, grupoIndex) => (
