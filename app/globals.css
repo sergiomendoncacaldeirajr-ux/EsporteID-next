@@ -140,8 +140,10 @@
   /*
    * Folga entre o fim do conteúdo rolável e a faixa da nav: `body.eid-app-shell` já reserva
    * a altura da barra em `padding-bottom` — não repetir `var(--eid-shell-footer-offset)` no main.
+   * Mobile: FAB de ajuda fica a 5.5rem do fundo com 3rem de altura → cobre até 8.5rem do viewport.
+   * Com body-padding do nav (≈2.7rem), precisamos de ≥6rem de page-pb para nada ficar sob o FAB.
    */
-  --eid-shell-content-bottom-pad: max(0.75rem, 12px);
+  --eid-shell-content-bottom-pad: max(6rem, calc(env(safe-area-inset-bottom, 0px) + 5rem));
 }
 
 @media (min-width: 768px) {
@@ -149,6 +151,8 @@
     /* Desktop: conteúdo desce um pouco em relação ao header */
     --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 9.125rem);
     --eid-shell-footer-offset: calc(2rem + max(0px, env(safe-area-inset-bottom, 0px)));
+    /* Desktop: FAB a 2rem do fundo, 2.75rem de altura → cobre até 4.75rem. Body-pad ≈2rem → 3rem suficiente. */
+    --eid-shell-content-bottom-pad: 3rem;
   }
 }
 
