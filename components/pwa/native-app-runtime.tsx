@@ -455,10 +455,8 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
   const [permissionPrompt, setPermissionPrompt] = useState<NativePermissionPrompt | null>(null);
   const [nativeLocked, setNativeLocked] = useState(false);
   const [nativeUnlocking, setNativeUnlocking] = useState(false);
-  const [nativeRefreshing, setNativeRefreshing] = useState(false);
   const [nativeTransitioning, setNativeTransitioning] = useState(false);
   const [nativeUploadBusy, setNativeUploadBusy] = useState(false);
-  const [pullDistance, setPullDistance] = useState(0);
   const [offlineCacheAt, setOfflineCacheAt] = useState(0);
   const [offlineSnapshot, setOfflineSnapshot] = useState<NativeOfflineSnapshot | null>(null);
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
@@ -1249,69 +1247,6 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
     };
   }, [pathname]);
 
-  useEffect(() => {
-    if (!isAnyNativeApp()) return;
-    let startY = 0;
-    let tracking = false;
-    let armed = false;
-
-    const isInteractiveTarget = (target: EventTarget | null) =>
-      target instanceof Element &&
-      Boolean(target.closest("input,textarea,select,button,a,[role='button'],[data-eid-no-pull-refresh='true']"));
-
-    const onTouchStart = (event: TouchEvent) => {
-      if (nativeRefreshing || window.scrollY > 0 || isInteractiveTarget(event.target)) return;
-      const touch = event.touches[0];
-      if (!touch) return;
-      startY = touch.clientY;
-      tracking = true;
-      armed = false;
-    };
-
-    const onTouchMove = (event: TouchEvent) => {
-      if (!tracking) return;
-      const touch = event.touches[0];
-      if (!touch) return;
-      const distance = Math.max(0, touch.clientY - startY);
-      if (distance <= 0) return;
-      if (window.scrollY > 0) {
-        tracking = false;
-        setPullDistance(0);
-        return;
-      }
-      if (distance > 8) event.preventDefault();
-      const nextDistance = Math.min(96, Math.round(distance * 0.45));
-      armed = nextDistance >= 58;
-      setPullDistance(nextDistance);
-    };
-
-    const onTouchEnd = () => {
-      if (!tracking) return;
-      tracking = false;
-      if (!armed) {
-        setPullDistance(0);
-        return;
-      }
-      setNativeRefreshing(true);
-      setPullDistance(72);
-      router.refresh();
-      window.setTimeout(() => {
-        setNativeRefreshing(false);
-        setPullDistance(0);
-      }, 1100);
-    };
-
-    document.addEventListener("touchstart", onTouchStart, { passive: true });
-    document.addEventListener("touchmove", onTouchMove, { passive: false });
-    document.addEventListener("touchend", onTouchEnd, { passive: true });
-    document.addEventListener("touchcancel", onTouchEnd, { passive: true });
-    return () => {
-      document.removeEventListener("touchstart", onTouchStart);
-      document.removeEventListener("touchmove", onTouchMove);
-      document.removeEventListener("touchend", onTouchEnd);
-      document.removeEventListener("touchcancel", onTouchEnd);
-    };
-  }, [nativeRefreshing, router]);
 
   useEffect(() => {
     if (!isCapacitorNativeApp()) return;
@@ -1501,15 +1436,6 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
 
   return (
     <>
-      {pullDistance > 0 || nativeRefreshing ? (
-        <div
-          className="eid-native-pull-refresh"
-          style={{ transform: `translate3d(-50%, ${Math.max(0, pullDistance)}px, 0)` }}
-          aria-hidden="true"
-        >
-          <span className={nativeRefreshing ? "eid-native-pull-spinner is-spinning" : "eid-native-pull-spinner"} />
-        </div>
-      ) : null}
       {nativeTransitioning ? <div className="eid-native-transition-bar" aria-hidden="true" /> : null}
       {nativeUploadBusy ? (
         <div className="eid-native-upload-headsup" role="status" aria-live="polite">

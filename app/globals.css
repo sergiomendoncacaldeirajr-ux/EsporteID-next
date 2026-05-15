@@ -5677,3 +5677,164 @@ body::-webkit-scrollbar,
   overscroll-behavior: contain !important;
 }
 
+/* =============================================================================
+ * Native App Finish II — Entrada, Avatares, Bottom Sheet, Agenda, Comunidade
+ * ============================================================================= */
+
+/* ── 1. Animação de entrada: mais rápida e spring-like ───────────────────── */
+/* Reduz deslocamento vertical e usa easing de decelerate (iOS-style) */
+.eid-progressive-enter > *,
+.eid-app-route-enter-children > *:not([data-eid-no-route-enter]) {
+  animation-duration: 360ms !important;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+/* Stagger mais apertado — primeiros itens aparecem quase juntos */
+.eid-progressive-enter > *:nth-child(1)  { animation-delay: 0ms !important; }
+.eid-progressive-enter > *:nth-child(2)  { animation-delay: 28ms !important; }
+.eid-progressive-enter > *:nth-child(3)  { animation-delay: 52ms !important; }
+.eid-progressive-enter > *:nth-child(4)  { animation-delay: 74ms !important; }
+.eid-progressive-enter > *:nth-child(5)  { animation-delay: 92ms !important; }
+.eid-progressive-enter > *:nth-child(6)  { animation-delay: 108ms !important; }
+.eid-progressive-enter > *:nth-child(n + 7) { animation-delay: 122ms !important; }
+
+/* Menor deslocamento inicial: 26px → 14px, scale mais suave */
+@keyframes eid-content-block-enter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.972);
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+/* ── 2. Bottom sheet — slide-up para modais no app nativo ───────────────── */
+@keyframes eid-bottom-sheet-up {
+  from {
+    transform: translateY(20px) scale(0.985);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Painéis com role="dialog" no app nativo recebem entrada bottom-up */
+body.eid-capacitor-app [role="dialog"] > div:not([aria-hidden]),
+body.eid-native-android-app [role="dialog"] > div:not([aria-hidden]) {
+  animation: eid-bottom-sheet-up 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Backdrop dos modais: blur mais intenso no app nativo */
+body.eid-capacitor-app [role="dialog"] > [class*="inset-0"],
+body.eid-native-android-app [role="dialog"] > [class*="inset-0"] {
+  backdrop-filter: blur(12px) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(1.4) !important;
+}
+
+/* ── 3. Avatar ring + profundidade em todo o app ────────────────────────── */
+/* Containers circulares de foto de perfil */
+body.eid-app-shell :where(
+  [data-eid-ranking-page],
+  [data-eid-agenda-page],
+  [data-eid-comunidade-panel],
+  [data-eid-confrontos-page]
+) .rounded-full.overflow-hidden {
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, var(--eid-primary-500) 38%, transparent),
+    0 3px 10px -3px rgba(0, 0, 0, 0.55);
+}
+
+/* Avatar do perfil (ranking podium e cards grandes) — ring mais marcado */
+[data-eid-ranking-page] .eid-ranking-card .rounded-full.overflow-hidden,
+[data-eid-ranking-page] [class*="podium"] .rounded-full.overflow-hidden {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--eid-primary-500) 50%, transparent),
+    0 0 0 3.5px color-mix(in srgb, var(--eid-primary-500) 14%, transparent),
+    0 5px 16px -4px rgba(0, 0, 0, 0.6);
+}
+
+/* Tema claro: anel azul mais discreto */
+[data-eid-theme="light"] body.eid-app-shell :where(
+  [data-eid-ranking-page],
+  [data-eid-agenda-page],
+  [data-eid-comunidade-panel],
+  [data-eid-confrontos-page]
+) .rounded-full.overflow-hidden {
+  box-shadow:
+    0 0 0 1.5px rgba(37, 99, 235, 0.22),
+    0 2px 8px -3px rgba(15, 23, 42, 0.25);
+}
+
+/* ── 4. Agenda — cards de partida e seções ──────────────────────────────── */
+/* Cards de partida: borda mais visível, sombra mais profunda */
+[data-eid-agenda-page] :where(.rounded-2xl.border) {
+  border-color: rgba(37, 99, 235, 0.16) !important;
+  box-shadow:
+    0 6px 24px -10px rgba(15, 23, 42, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055) !important;
+}
+
+/* Separador entre grupos de datas na agenda */
+[data-eid-agenda-page] :where(h2[class*="text-"], h3[class*="text-"]) {
+  position: relative;
+  letter-spacing: -0.01em;
+}
+
+/* Botões de ação CTA na agenda: sombra colorida laranja */
+[data-eid-agenda-page] :where(.eid-btn-dashboard-cta, .eid-btn-match-cta, [class*="eid-btn"][class*="cta"]) {
+  box-shadow:
+    0 5px 16px -6px color-mix(in srgb, var(--eid-action-500) 60%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+}
+
+/* ── 5. Comunidade — seções, pedidos e convites ─────────────────────────── */
+/* Cards gerais */
+[data-eid-comunidade-panel] :where(.rounded-2xl.border, .rounded-xl.border) {
+  border-color: rgba(37, 99, 235, 0.13) !important;
+}
+
+/* Pedidos de desafio / match pendente: anel laranja sutil para chamar atenção */
+[data-eid-comunidade-panel] :where(
+  [class*="pedido"],
+  [class*="desafio"],
+  [class*="convite"]
+):where(.rounded-2xl, .rounded-xl) {
+  border-color: rgba(249, 115, 22, 0.2) !important;
+  box-shadow:
+    0 0 0 1px rgba(249, 115, 22, 0.06),
+    0 6px 22px -10px rgba(15, 23, 42, 0.4) !important;
+}
+
+/* Seção de notificações: separador mais claro */
+[data-eid-comunidade-panel] :where(section > header, section > [class*="header"]) {
+  letter-spacing: -0.01em;
+}
+
+/* ── 6. Font tabular global para métricas numéricas ─────────────────────── */
+body.eid-app-shell :where(
+  [data-eid-ranking-page] [class*="font-black"],
+  [class*="ranking"][class*="num"],
+  [class*="ranking"][class*="pts"],
+  [class*="ranking"][class*="pos"],
+  [class*="score"],
+  [class*="placar"]
+) {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* ── 7. Reduced motion — respeita preferência do usuário ────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .eid-progressive-enter > *,
+  .eid-app-route-enter-children > *:not([data-eid-no-route-enter]),
+  body.eid-capacitor-app [role="dialog"] > div:not([aria-hidden]),
+  body.eid-native-android-app [role="dialog"] > div:not([aria-hidden]) {
+    animation: none !important;
+    animation-delay: 0ms !important;
+  }
+}
+
