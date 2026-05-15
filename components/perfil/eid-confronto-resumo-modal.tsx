@@ -1491,6 +1491,7 @@ export function EidConfrontoResumoModal({
         role="presentation"
       >
         <div
+          data-eid-resultado-modal
           className={`max-h-[92vh] w-full max-w-xl overflow-hidden rounded-[1.35rem] border border-[color:color-mix(in_srgb,var(--eid-primary-500)_26%,var(--eid-border-subtle)_74%)] bg-eid-card shadow-[0_28px_64px_-28px_rgba(2,6,23,0.82),0_0_0_1px_color-mix(in_srgb,var(--eid-fg)_6%,transparent)_inset] transition-all duration-200 ${
             closing ? "translate-y-3 scale-[0.985] opacity-0" : "translate-y-0 scale-100 opacity-100"
           }`}

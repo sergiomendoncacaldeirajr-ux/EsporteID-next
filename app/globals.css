@@ -627,15 +627,23 @@ html {
    */
   touch-action: auto;
   /* Desabilita pull-to-refresh e overscroll nativo — comportamento de app. */
-  overscroll-behavior-y: none;
+  overscroll-behavior: none;
   /* Evita “faixa branca” quando o viewport iOS e a altura do body não batem. */
   background-color: var(--eid-bg);
 }
 
 body {
-  overscroll-behavior-y: none;
+  overscroll-behavior: none;
   /* iOS/WebKit: mantém inércia/bounce nativos no documento. */
   -webkit-overflow-scrolling: touch;
+}
+
+#app-main-column {
+  overscroll-behavior: none;
+}
+
+#eid-app-shell-main-wrap {
+  overscroll-behavior: none;
 }
 
 /* Fonte padrão: Barlow — atlética, compacta, premium */
@@ -4420,11 +4428,15 @@ body.eid-capacitor-app .eid-profile-edit-screen :where(label:has(input[type="che
  * ============================================================================= */
 
 /* ── 1. Scrollbars ocultas globalmente (sensação de app nativo) ─────────── */
-* {
+html, body, * {
   scrollbar-width: none;
 }
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
 *::-webkit-scrollbar {
   display: none;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* ── 2. Nav inferior — frosted glass (hallmark de tab bar nativa iOS/Android) ── */
@@ -5108,12 +5120,55 @@ hr {
   opacity: 0.9;
 }
 
+/* ── Largura: aproveitamento horizontal — remove max-w estreito ─────────── */
+[data-eid-dashboard-page],
+[data-eid-perfil-page],
+[data-eid-profile-eid-page],
+[data-eid-ranking-page],
+[data-eid-agenda-page],
+[data-eid-performance-page],
+[data-eid-historico-page] {
+  max-width: 100% !important;
+}
+
+/* ── Feed mode — Modal de resultado (confronto) ─────────────────────────── */
+
+/* Cards internos do modal: sem caixa */
+[data-eid-resultado-modal] div[class*="rounded-2xl"][class*="overflow-hidden"] {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Headers dos cards internos: sem gradiente, separador sutil */
+[data-eid-resultado-modal] div[class*="rounded-2xl"][class*="overflow-hidden"] > div[class*="border-b"] {
+  background: transparent !important;
+  border-bottom-color: color-mix(in srgb, var(--eid-border-subtle) 40%, transparent) !important;
+}
+
 /* ── Feed mode — Estatísticas EID por esporte ───────────────────────────── */
 
 /* Headers de seção (Tendência EID, Ver Estatísticas): sem gradiente */
 [data-eid-profile-eid-page] .eid-surface-panel > div[class*="border-b"] {
   background: transparent !important;
   border-bottom-color: color-mix(in srgb, var(--eid-border-subtle) 40%, transparent) !important;
+}
+
+/* ── Feed mode — Desafio ────────────────────────────────────────────────── */
+
+/* Cards de conteúdo: sem caixa */
+.eid-desafio-ui div[class*="rounded-2xl"][class*="overflow-hidden"],
+.eid-desafio-ui div[class*="rounded-xl"][class*="overflow-hidden"] {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Sub-cabeçalhos internos: sem gradiente */
+.eid-desafio-ui div[class*="rounded-2xl"][class*="overflow-hidden"] > div[class*="border-b"],
+.eid-desafio-ui div[class*="rounded-xl"][class*="overflow-hidden"] > div[class*="border-b"] {
+  background: transparent !important;
+  border-bottom-color: color-mix(in srgb, var(--eid-border-subtle) 35%, transparent) !important;
 }
 
 /* ── Feed mode — Páginas de edição (Perfil / Equipes / Performance EID) ─── */

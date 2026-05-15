@@ -127,7 +127,7 @@ export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
   const requestHeaders = new Headers(request.headers);
   const hideAppShell =
-    path.startsWith("/editar") || path.startsWith("/onboarding") || isFullscreenCadastrarLocalPath(path);
+    path.startsWith("/editar") || path.startsWith("/onboarding") || path.startsWith("/desafio") || isFullscreenCadastrarLocalPath(path);
   const showOnboardingChrome = false;
   if (hideAppShell) requestHeaders.set(EID_HIDE_APP_SHELL_HEADER, "1");
   if (showOnboardingChrome) requestHeaders.set(EID_SHOW_ONBOARDING_CHROME_HEADER, "1");
