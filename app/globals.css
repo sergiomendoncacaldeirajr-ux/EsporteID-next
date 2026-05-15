@@ -4791,18 +4791,6 @@ body > div[class*="fixed"][class*="inset-0"][class*="bg-black"] {
     0 2px 8px -4px rgba(37, 99, 235, 0.1) !important;
 }
 
-/* ── R4.6. Notificação não-lida — barra lateral colorida (accent bar) ────── */
-.eid-notificacao-unread,
-[class*="border-eid-primary-500"][class*="bg-"][class*="gradient"][class*="card"] {
-  border-left-width: 3px !important;
-  border-left-color: var(--eid-primary-500) !important;
-  padding-left: calc(0.75rem - 2px) !important;
-}
-
-/* Seletor mais preciso para EidNotificacaoRow unread */
-div:has(> span[class*="rounded-full"][class*="bg-"][class*="primary"]):where([class*="border-eid-primary-500"]) {
-  border-left: 3px solid var(--eid-primary-500) !important;
-}
 
 /* ── R4.7. Cards-link — micro scale no hover ─────────────────────────────── */
 a.eid-surface-panel:hover,
@@ -4954,6 +4942,73 @@ img {
   background: color-mix(in srgb, var(--eid-card) 50%, transparent) !important;
   border-color: rgba(37, 99, 235, 0.1) !important;
   box-shadow: none !important;
+}
+
+/* =============================================================================
+ * EsporteID — Feed mode global: estilo aberto, sem caixas (inspiração Instagram)
+ * Bordas e sombras saem — espaço e tipografia viram os separadores.
+ * Auth card e modais preservados (classes distintas).
+ * ============================================================================= */
+
+/* ── 1. List items: completamente sem caixa ──────────────────────────────── */
+.eid-list-item {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+a.eid-list-item:hover,
+button.eid-list-item:hover {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  background: color-mix(in srgb, var(--eid-primary-500) 5%, transparent) !important;
+  transform: none !important;
+}
+
+/* ── 2. Surface panels: sem borda e sombra, fundo quase transparente ─────── */
+.eid-surface-panel {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  background: color-mix(in srgb, var(--eid-card) 18%, transparent) !important;
+}
+a.eid-surface-panel:hover,
+button.eid-surface-panel:hover {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+  background: color-mix(in srgb, var(--eid-primary-500) 6%, transparent) !important;
+}
+[data-eid-theme="light"] .eid-surface-panel {
+  background: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* ── 3. Cards: sem borda e sombra, fundo muito sutil ────────────────────── */
+.eid-card {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  background: color-mix(in srgb, var(--eid-card) 42%, transparent) !important;
+}
+a.eid-card:hover {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+[data-eid-theme="light"] .eid-card {
+  background: rgba(255, 255, 255, 0.55) !important;
+  box-shadow: none !important;
+}
+
+/* ── 4. EidPanelHeader dentro de container: sem background, separador sutil */
+.eid-surface-panel > div[class*="min-h-10"],
+.eid-list-item > div[class*="min-h-10"] {
+  background: transparent !important;
+  border-bottom-color: color-mix(in srgb, var(--eid-border-subtle) 40%, transparent) !important;
+}
+
+/* ── 5. Cards-link hover: sem sombra/borda no feed mode ─────────────────── */
+a.eid-surface-panel:hover,
+a.eid-card:hover {
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 /* ── R5.8. hr e divisores — alinhados ao design system ──────────────────── */
