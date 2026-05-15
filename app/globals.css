@@ -4732,3 +4732,102 @@ html {
 .eid-badge-warning {
   box-shadow: 0 0 10px -4px color-mix(in srgb, var(--eid-warning-500) 38%, transparent);
 }
+
+/* =============================================================================
+ * EsporteID — Round 4: Modal blur, selection, caret, inputs, notifs, hover
+ * ============================================================================= */
+
+/* ── R4.1. Smooth scroll global ──────────────────────────────────────────── */
+:root {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { scroll-behavior: auto; }
+}
+
+/* ── R4.2. Seleção de texto — azul da marca ──────────────────────────────── */
+::selection {
+  background: rgba(37, 99, 235, 0.28);
+  color: var(--eid-fg);
+}
+[data-eid-theme="light"] ::selection {
+  background: rgba(37, 99, 235, 0.2);
+}
+
+/* ── R4.3. Cursor de digitação — azul primário em todos os campos ────────── */
+input,
+textarea,
+[contenteditable] {
+  caret-color: var(--eid-primary-500);
+}
+
+/* ── R4.4. Modal overlay — backdrop blur (padrão iOS/Android) ────────────── */
+[role="dialog"] > [class*="absolute"][class*="inset-0"],
+[role="dialog"] > button[class*="inset-0"] {
+  backdrop-filter: blur(6px) saturate(1.2);
+  -webkit-backdrop-filter: blur(6px) saturate(1.2);
+}
+
+/* Overlay direto com bg-black (portal no body) */
+body > div[role="dialog"][class*="fixed"],
+body > div[class*="fixed"][class*="inset-0"][class*="bg-black"] {
+  backdrop-filter: blur(6px) saturate(1.2);
+  -webkit-backdrop-filter: blur(6px) saturate(1.2);
+}
+
+/* ── R4.5. eid-input-dark — focus ring mais expressivo ──────────────────── */
+.eid-input-dark:focus {
+  border-color: color-mix(in srgb, var(--eid-primary-500) 65%, var(--eid-border-subtle)) !important;
+  box-shadow:
+    inset 0 1px 1px rgba(0, 0, 0, 0.08),
+    0 0 0 3px rgba(37, 99, 235, 0.18),
+    0 2px 8px -4px rgba(37, 99, 235, 0.15) !important;
+}
+[data-eid-theme="light"] .eid-input-dark:focus {
+  border-color: rgba(37, 99, 235, 0.55) !important;
+  box-shadow:
+    inset 0 1px 1px rgba(15, 23, 42, 0.03),
+    0 0 0 3px rgba(37, 99, 235, 0.14),
+    0 2px 8px -4px rgba(37, 99, 235, 0.1) !important;
+}
+
+/* ── R4.6. Notificação não-lida — barra lateral colorida (accent bar) ────── */
+.eid-notificacao-unread,
+[class*="border-eid-primary-500"][class*="bg-"][class*="gradient"][class*="card"] {
+  border-left-width: 3px !important;
+  border-left-color: var(--eid-primary-500) !important;
+  padding-left: calc(0.75rem - 2px) !important;
+}
+
+/* Seletor mais preciso para EidNotificacaoRow unread */
+div:has(> span[class*="rounded-full"][class*="bg-"][class*="primary"]):where([class*="border-eid-primary-500"]) {
+  border-left: 3px solid var(--eid-primary-500) !important;
+}
+
+/* ── R4.7. Cards-link — micro scale no hover ─────────────────────────────── */
+a.eid-surface-panel:hover,
+a.eid-card:hover {
+  transform: translateY(-1px) scale(1.005);
+  box-shadow:
+    0 12px 36px -18px rgba(15, 23, 42, 0.55),
+    0 0 0 1px rgba(37, 99, 235, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+[data-eid-theme="light"] a.eid-surface-panel:hover,
+[data-eid-theme="light"] a.eid-card:hover {
+  box-shadow:
+    0 8px 28px -12px rgba(15, 23, 42, 0.14),
+    0 0 0 1px rgba(37, 99, 235, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* ── R4.8. Tabular numbers — métricas e placares alinhados ──────────────── */
+.tabular-nums,
+[class*="tabular-nums"],
+.eid-score,
+[class*="eid-score"],
+[class*="eid-pts"],
+[class*="eid-rank"] {
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  font-variant-numeric: tabular-nums lining-nums;
+}
