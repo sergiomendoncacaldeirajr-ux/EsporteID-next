@@ -63,7 +63,7 @@ function SideFace({ side, variant, interactive, showEid }: { side: ConfrontoSide
 export function ConfrontoCard({ item }: { item: PublicConfronto }) {
   const formacao = item.tipo === "dupla" || item.tipo === "time";
   const isEncerrado = item.statusView === "encerrados";
-  const detailHref = `/confrontos/${item.id}`;
+  const detailHref = `/confrontos/${item.id}?embed=1`;
   const dist = item.distanciaKm == null ? null : item.distanciaKm < 1 ? `${Math.round(item.distanciaKm * 1000)} m` : `${item.distanciaKm.toFixed(1)} km`;
 
   return (

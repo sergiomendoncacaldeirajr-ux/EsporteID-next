@@ -199,24 +199,24 @@ export default async function ConfrontoDetalhePage({
     item.tipo === "dupla" ? "Duplas" : item.tipo === "time" ? "Times" : "Individual";
 
   return (
-    <main className="mx-auto flex w-full max-w-lg flex-col gap-4 px-3 pb-[calc(var(--eid-shell-content-bottom-pad)+2rem)] pt-3 sm:max-w-2xl sm:px-6 sm:pb-[var(--eid-shell-content-bottom-pad)]">
-      {/* Page header */}
-      <div className={`flex items-start gap-2 ${embed ? "justify-end" : "justify-between"}`}>
-        {!embed ? (
+    <main className={`mx-auto flex w-full max-w-lg flex-col gap-3 px-3 pb-[calc(var(--eid-shell-content-bottom-pad)+2rem)] sm:max-w-2xl sm:px-6 sm:pb-[var(--eid-shell-content-bottom-pad)] ${embed ? "pt-1" : "pt-3"}`}>
+      {/* Page header — only when accessed directly (drawer provides its own nav) */}
+      {!embed ? (
+        <div className="flex items-center gap-3">
           <Link
             href={`/confrontos?view=${view}${tipo !== "individual" ? `&tipo=${tipo}` : ""}`}
             className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 text-eid-primary-300 transition hover:bg-eid-surface active:scale-[0.95]"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden />
           </Link>
-        ) : null}
-        <div className="min-w-0 flex-1 text-right">
-          <h1 className="truncate text-[15px] font-black leading-tight text-eid-fg">
-            {nomeA}{esporteLabel ? ` · ${esporteLabel}` : ""}
-          </h1>
-          <p className="mt-0.5 text-[11px] text-eid-text-secondary">Modalidade: {modalidadeLabel}</p>
+          <div className="min-w-0">
+            <h1 className="truncate text-[15px] font-black leading-tight text-eid-fg">
+              {nomeA}{esporteLabel ? ` · ${esporteLabel}` : ""}
+            </h1>
+            <p className="text-[11px] text-eid-text-secondary">Modalidade: {modalidadeLabel}</p>
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {/* Resumo card */}
       <ResumoCard item={item} />

@@ -9,13 +9,6 @@ function n(value: unknown) {
   return Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
 }
 
-function cleanMessage(message: string | null) {
-  const raw = String(message ?? "").trim();
-  if (!raw || raw.startsWith("score_payload:")) return null;
-  const idx = raw.indexOf("score_payload:");
-  return (idx >= 0 ? raw.slice(0, idx) : raw).trim() || null;
-}
-
 function SectionHeader({ title, badge }: { title: string; badge?: string }) {
   return (
     <div className="flex items-center justify-between gap-2 px-1">
@@ -147,7 +140,6 @@ function RoundsDetail({ rounds }: { rounds: NonNullable<MatchScorePayload["round
 
 export function ConfrontoDetalheResultado({ item }: { item: PublicConfronto }) {
   const payload = parseScorePayloadFromPartidaMensagem(item.mensagem);
-  const note = cleanMessage(item.mensagem);
 
   const hasDetailedScore =
     (payload?.type === "gols" && payload.goals) ||
@@ -155,7 +147,7 @@ export function ConfrontoDetalheResultado({ item }: { item: PublicConfronto }) {
     (payload?.type === "pontos" && payload.points) ||
     (payload?.type === "rounds" && payload.rounds);
 
-  if (!hasDetailedScore && !note) return null;
+  if (!hasDetailedScore) return null;
 
   return (
     <div className="grid gap-3">
@@ -167,13 +159,6 @@ export function ConfrontoDetalheResultado({ item }: { item: PublicConfronto }) {
         <PointsDetail item={item} points={payload.points} />
       ) : payload?.type === "rounds" && payload.rounds ? (
         <RoundsDetail rounds={payload.rounds} />
-      ) : null}
-
-      {note ? (
-        <div className="overflow-hidden rounded-3xl border border-[color:var(--eid-border-subtle)] bg-eid-card/75 px-4 py-3 eid-light:bg-white">
-          <p className="text-[9px] font-black uppercase tracking-[0.1em] text-eid-text-secondary">Observação</p>
-          <p className="mt-1 text-xs leading-relaxed text-eid-fg">{note}</p>
-        </div>
       ) : null}
     </div>
   );

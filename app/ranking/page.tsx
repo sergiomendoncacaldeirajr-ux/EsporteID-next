@@ -135,7 +135,7 @@ export default async function RankingPage({ searchParams }: Props) {
             </div>
             <div className="block justify-self-end" aria-hidden>
               <div className="relative h-[82px] w-[132px] overflow-hidden sm:h-[165px] sm:w-[320px]">
-                <Image src="/ranking-podio-alpha.png" alt="" fill unoptimized className="object-contain object-center" />
+                <Image src="/ranking-podio-alpha.png" alt="" fill unoptimized className="object-contain object-center mix-blend-screen eid-light:mix-blend-multiply" />
               </div>
             </div>
           </div>
