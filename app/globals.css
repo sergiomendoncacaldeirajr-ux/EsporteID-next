@@ -5108,6 +5108,57 @@ hr {
   opacity: 0.9;
 }
 
+/* ── Feed mode — Estatísticas EID por esporte ───────────────────────────── */
+
+/* Headers de seção (Tendência EID, Ver Estatísticas): sem gradiente */
+[data-eid-profile-eid-page] .eid-surface-panel > div[class*="border-b"] {
+  background: transparent !important;
+  border-bottom-color: color-mix(in srgb, var(--eid-border-subtle) 40%, transparent) !important;
+}
+
+/* ── Feed mode — Páginas de edição (Perfil / Equipes / Performance EID) ─── */
+
+/* Seções de painel nas telas de edição: sem caixa */
+.eid-profile-edit-screen section {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Headers internos de seção (gradiente azul/laranja/verde): sem fundo */
+.eid-profile-edit-screen section > div[class*="border-b"] {
+  background: transparent !important;
+  border-bottom-color: color-mix(in srgb, var(--eid-border-subtle) 35%, transparent) !important;
+}
+
+/* ── Feed mode — Histórico completo ────────────────────────────────────────── */
+
+/* Header card do histórico: sem caixa */
+[data-eid-historico-page] > div > div[class*="rounded-2xl"][class*="overflow-hidden"] {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Grid de estatísticas (Vitórias/Derrotas/Empates/Rank/Torneios): sem caixa */
+[data-eid-historico-page] > div > div[class*="grid-cols-5"] > div {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Itens da lista: flat com separador */
+[data-eid-historico-page] ul > li {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--eid-border-subtle) 35%, transparent) !important;
+}
+[data-eid-historico-page] ul > li:last-child {
+  border-bottom-color: transparent !important;
+}
+
 /* ── Feed mode — Performance (Estatísticas EID) ─────────────────────────── */
 
 /* Todos os articles nas seções: sem caixa, separador por linha */

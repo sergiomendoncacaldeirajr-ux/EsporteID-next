@@ -275,7 +275,7 @@ export async function PerfilPublicoBelowFold({
   const ocultarSecaoEquipesParaVisitante = !isSelf && alvoSemFormacao && semCardsEquipesPerfil;
 
   return (
-    <div className="mt-4 grid gap-4">
+    <div className="mt-4 grid gap-2">
       {isSelf ? <MatchIdadeGateBanner gate={viewerMatchIdadeGate} /> : null}
       {!isSelf ? (
         <section>
