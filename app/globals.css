@@ -626,18 +626,14 @@ html {
    * `touch-action: manipulation` continua aplicado apenas em controles interativos.
    */
   touch-action: auto;
-  /*
-   * `auto`: mantém o comportamento nativo ao chegar no fim da rolagem (elástico / “rubber band” no iOS
-   * e overscroll visual no Android), sensação mais de app. Em alguns navegadores Android isso pode
-   * voltar a permitir pull-to-refresh ao puxar do topo — trade-off aceito para recuperar o efeito.
-   */
-  overscroll-behavior-y: auto;
+  /* Desabilita pull-to-refresh e overscroll nativo — comportamento de app. */
+  overscroll-behavior-y: none;
   /* Evita “faixa branca” quando o viewport iOS e a altura do body não batem. */
   background-color: var(--eid-bg);
 }
 
 body {
-  overscroll-behavior-y: auto;
+  overscroll-behavior-y: none;
   /* iOS/WebKit: mantém inércia/bounce nativos no documento. */
   -webkit-overflow-scrolling: touch;
 }
@@ -4423,24 +4419,12 @@ body.eid-capacitor-app .eid-profile-edit-screen :where(label:has(input[type="che
  * Regras: apenas apresentação — zero lógica, zero estrutura DOM.
  * ============================================================================= */
 
-/* ── 1. Scrollbars finas globais (web-app não tem barra de rolagem grossa) ──── */
+/* ── 1. Scrollbars ocultas globalmente (sensação de app nativo) ─────────── */
 * {
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--eid-border) 60%, transparent) transparent;
+  scrollbar-width: none;
 }
 *::-webkit-scrollbar {
-  width: 3px;
-  height: 3px;
-}
-*::-webkit-scrollbar-track {
-  background: transparent;
-}
-*::-webkit-scrollbar-thumb {
-  border-radius: 99px;
-  background: color-mix(in srgb, var(--eid-border) 65%, transparent);
-}
-*::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--eid-text-muted) 40%, transparent);
+  display: none;
 }
 
 /* ── 2. Nav inferior — frosted glass (hallmark de tab bar nativa iOS/Android) ── */
@@ -5122,6 +5106,20 @@ hr {
     transparent
   );
   opacity: 0.9;
+}
+
+/* ── Feed mode — Performance (Estatísticas EID) ─────────────────────────── */
+
+/* Todos os articles nas seções: sem caixa, separador por linha */
+[data-eid-performance-page] section article {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--eid-border-subtle) 35%, transparent) !important;
+}
+[data-eid-performance-page] section article:last-child {
+  border-bottom-color: transparent !important;
 }
 
 /* ── Feed mode — Perfil ─────────────────────────────────────────────────── */
