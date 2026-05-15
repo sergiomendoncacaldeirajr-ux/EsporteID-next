@@ -98,8 +98,8 @@
   --eid-on-dark: var(--eid-fg);
 
   /* Bordas / foco */
-  --eid-border: rgba(255, 255, 255, 0.09);
-  --eid-border-subtle: rgba(255, 255, 255, 0.065);
+  --eid-border: rgba(255, 255, 255, 0.1);
+  --eid-border-subtle: rgba(255, 255, 255, 0.08);
   --eid-focus-ring: var(--eid-primary-500);
 
   /* Status legível no escuro (evitar 300 em fundo claro — ver tema light) */
@@ -394,6 +394,9 @@ body.eid-app-shell {
 [data-eid-theme="light"] .eid-surface-panel {
   border-color: transparent;
   background: var(--eid-card);
+  box-shadow:
+    0 2px 16px -4px rgba(15, 23, 42, 0.09),
+    0 0 0 1px rgba(15, 23, 42, 0.05);
 }
 
 [data-eid-theme="light"] .eid-list-item {
@@ -1582,10 +1585,10 @@ label:has(input.sr-only):not(.eid-no-press):active {
 @keyframes eid-skeleton-breathe {
   0%,
   100% {
-    opacity: 0.58;
+    opacity: 0.52;
   }
   50% {
-    opacity: 0.76;
+    opacity: 0.82;
   }
 }
 
@@ -1730,9 +1733,9 @@ label:has(input.sr-only):not(.eid-no-press):active {
 }
 
 [data-eid-theme="light"] .eid-loading-skeleton-block {
-  background: color-mix(in srgb, var(--eid-field-bg) 82%, var(--eid-border-subtle) 18%);
-  border-color: color-mix(in srgb, var(--eid-border-subtle) 55%, transparent);
-  animation-duration: 2.9s;
+  background: color-mix(in srgb, var(--eid-field-bg) 88%, var(--eid-border) 12%);
+  border-color: color-mix(in srgb, var(--eid-border) 45%, transparent);
+  animation-duration: 2.4s;
 }
 
 /*
@@ -2392,17 +2395,17 @@ button[data-eid-remove-media-btn="true"]:active {
   background-image:
     radial-gradient(
       ellipse 110% 60% at 50% -10%,
-      color-mix(in srgb, var(--eid-primary-500) 22%, transparent),
+      color-mix(in srgb, var(--eid-primary-500) 26%, transparent),
       transparent 55%
     ),
     radial-gradient(
       ellipse 60% 40% at 100% 90%,
-      color-mix(in srgb, var(--eid-action-500) 11%, transparent),
+      color-mix(in srgb, var(--eid-action-500) 13%, transparent),
       transparent 50%
     ),
     radial-gradient(
       ellipse 50% 35% at 0% 60%,
-      color-mix(in srgb, var(--eid-primary-500) 6%, transparent),
+      color-mix(in srgb, var(--eid-primary-500) 8%, transparent),
       transparent 45%
     ),
     linear-gradient(
@@ -2417,22 +2420,27 @@ button[data-eid-remove-media-btn="true"]:active {
   background-image:
     radial-gradient(
       ellipse 100% 55% at 50% -15%,
-      color-mix(in srgb, var(--eid-primary-500) 12%, transparent),
+      color-mix(in srgb, var(--eid-primary-500) 14%, transparent),
       transparent 50%
     ),
     radial-gradient(
       ellipse 70% 45% at 100% 80%,
-      color-mix(in srgb, var(--eid-action-500) 6%, transparent),
+      color-mix(in srgb, var(--eid-action-500) 8%, transparent),
       transparent 45%
     ),
-    linear-gradient(165deg, #ffffff 0%, var(--eid-bg) 55%, #eef2f8 100%);
+    radial-gradient(
+      ellipse 45% 30% at 0% 40%,
+      color-mix(in srgb, var(--eid-primary-500) 5%, transparent),
+      transparent 50%
+    ),
+    linear-gradient(165deg, #ffffff 0%, var(--eid-bg) 55%, #eaeff7 100%);
 }
 
 /* Cartão em telas de login/cadastro */
 .eid-auth-card {
   position: relative;
   border-radius: var(--eid-radius-lg);
-  border: 1px solid color-mix(in srgb, var(--eid-primary-500) 16%, var(--eid-border-subtle));
+  border: 1px solid color-mix(in srgb, var(--eid-primary-500) 18%, var(--eid-border-subtle));
   background: linear-gradient(
     155deg,
     color-mix(in srgb, var(--eid-card) 93%, var(--eid-primary-500) 7%) 0%,
@@ -2440,10 +2448,10 @@ button[data-eid-remove-media-btn="true"]:active {
   );
   backdrop-filter: blur(28px) saturate(1.4);
   box-shadow:
-    0 28px 64px -20px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(255, 255, 255, 0.035),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+    0 32px 72px -20px rgba(0, 0, 0, 0.62),
+    0 0 0 1px rgba(255, 255, 255, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.14);
 }
 
 .eid-public-auth-shell {
@@ -2480,6 +2488,15 @@ button[data-eid-remove-media-btn="true"]:active {
 
 [data-eid-public-auth] button {
   min-height: 2.75rem;
+}
+
+/* Inputs auth: placeholder mais nítido + foco mais expressivo */
+[data-eid-public-auth] input::placeholder {
+  opacity: 0.65;
+  transition: opacity 0.15s ease;
+}
+[data-eid-public-auth] input:focus::placeholder {
+  opacity: 0.35;
 }
 
 [data-eid-public-auth] [role="alert"],
@@ -2675,10 +2692,11 @@ button[data-eid-remove-media-btn="true"]:active {
   background: linear-gradient(155deg, color-mix(in srgb, white 97%, var(--eid-primary-500) 3%), white);
   backdrop-filter: none;
   box-shadow:
-    0 8px 40px -8px rgba(15, 23, 42, 0.14),
-    0 0 0 1px rgba(37, 99, 235, 0.07),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  border-color: color-mix(in srgb, var(--eid-primary-500) 14%, var(--eid-border-subtle));
+    0 12px 52px -10px rgba(15, 23, 42, 0.18),
+    0 2px 10px -4px rgba(15, 23, 42, 0.07),
+    0 0 0 1px rgba(37, 99, 235, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  border-color: color-mix(in srgb, var(--eid-primary-500) 16%, var(--eid-border-subtle));
 }
 
 /* Botão primário (CTA) — laranja marca */
@@ -2729,8 +2747,8 @@ button[data-eid-remove-media-btn="true"]:active {
   cursor: not-allowed;
 }
 .eid-btn-primary:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--eid-action-500) 65%, transparent);
-  outline-offset: 2px;
+  outline: 2px solid color-mix(in srgb, var(--eid-action-500) 72%, transparent);
+  outline-offset: 3px;
 }
 
 .eid-btn-match-cta {
@@ -2825,7 +2843,7 @@ a:focus-visible:not(.eid-btn-primary) {
 /* Cartão */
 .eid-card {
   border-radius: var(--eid-radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   background: linear-gradient(
     160deg,
     color-mix(in srgb, var(--eid-card) 98%, var(--eid-primary-500) 2%),
@@ -2835,13 +2853,16 @@ a:focus-visible:not(.eid-btn-primary) {
   box-shadow:
     0 6px 28px -12px rgba(15, 23, 42, 0.5),
     0 0 20px -18px rgba(37, 99, 235, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 [data-eid-theme="light"] .eid-card {
-  border-color: rgba(15, 23, 42, 0.07);
+  border-color: rgba(15, 23, 42, 0.08);
   background: var(--eid-card);
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.07), 0 0 0 1px rgba(37, 99, 235, 0.05);
+  box-shadow:
+    0 4px 20px rgba(15, 23, 42, 0.08),
+    0 1px 4px rgba(15, 23, 42, 0.04),
+    0 0 0 1px rgba(37, 99, 235, 0.06);
 }
 
 /* Campos — aparência de app (sem chrome nativo em selects) */
@@ -3201,7 +3222,9 @@ input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:inva
 }
 
 [data-eid-theme="light"] [data-eid-dashboard-page] .eid-dashboard-app-nav-item.eid-list-item:hover {
-  background: color-mix(in srgb, var(--eid-primary-500) 12%, #ffffff 88%) !important;
+  background: color-mix(in srgb, var(--eid-primary-500) 8%, #ffffff 92%) !important;
+  box-shadow: 0 4px 14px -6px rgba(37, 99, 235, 0.18), 0 0 0 1px rgba(37, 99, 235, 0.1) !important;
+  transform: translateY(-1px);
 }
 
 /* Tema escuro — bordas/divisórias mais suaves nas páginas repaginadas. */
@@ -3301,7 +3324,7 @@ input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:inva
 
 /* Superfície padrão tipo Ranking (glass card). */
 .eid-surface-panel {
-  border: 1px solid rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: var(--eid-radius-xl);
   background: linear-gradient(
     160deg,
@@ -3311,7 +3334,8 @@ input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:inva
   box-shadow:
     0 16px 32px -18px rgba(15, 23, 42, 0.5),
     0 0 28px -20px rgba(37, 99, 235, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
 }
 
 /* Chip interativo reutilizável (ativo/inativo). */
@@ -3488,19 +3512,40 @@ input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:inva
 /* Item de lista reutilizável para blocos de cards. */
 .eid-list-item {
   border-radius: var(--eid-radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.065);
   background: linear-gradient(
     155deg,
     color-mix(in srgb, var(--eid-card) 97%, var(--eid-primary-500) 3%),
     color-mix(in srgb, var(--eid-surface) 98%, transparent)
   );
-  box-shadow: 0 6px 20px -14px rgba(15, 23, 42, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.03);
-  transition: box-shadow 0.18s ease, border-color 0.18s ease, transform 0.14s ease;
+  box-shadow: 0 6px 20px -14px rgba(15, 23, 42, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  transition: box-shadow 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
 }
 
 a.eid-list-item:hover, button.eid-list-item:hover {
-  border-color: rgba(37, 99, 235, 0.12);
-  box-shadow: 0 8px 28px -12px rgba(15, 23, 42, 0.55), 0 0 0 1px rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.2);
+  box-shadow: 0 10px 32px -12px rgba(15, 23, 42, 0.55), 0 0 0 1px rgba(37, 99, 235, 0.12);
+  transform: translateY(-1px);
+}
+
+/* eid-surface-panel: micro-lift hover em elementos interativos */
+a.eid-surface-panel:hover,
+button.eid-surface-panel:hover {
+  border-color: rgba(37, 99, 235, 0.14);
+  box-shadow:
+    0 20px 40px -18px rgba(15, 23, 42, 0.55),
+    0 0 32px -20px rgba(37, 99, 235, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  transform: translateY(-1px);
+}
+
+[data-eid-theme="light"] a.eid-surface-panel:hover,
+[data-eid-theme="light"] button.eid-surface-panel:hover {
+  border-color: transparent;
+  box-shadow:
+    0 4px 24px -4px rgba(15, 23, 42, 0.13),
+    0 0 0 1px rgba(37, 99, 235, 0.1);
+  transform: translateY(-1px);
 }
 
 /* Evita "caixa dentro da caixa" quando cards são aninhados. */
