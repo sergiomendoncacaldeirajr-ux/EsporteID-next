@@ -79,7 +79,7 @@ export default async function ConfrontosPage({
   });
 
   return (
-    <main className="mx-auto flex w-full max-w-lg flex-col px-3 pb-[calc(var(--eid-shell-content-bottom-pad)+4.75rem)] pt-3 sm:max-w-2xl sm:px-6 sm:pb-[var(--eid-shell-content-bottom-pad)]">
+    <main data-eid-confrontos-page className="mx-auto flex w-full max-w-lg flex-col px-3 pb-[calc(var(--eid-shell-content-bottom-pad)+4.75rem)] pt-3 sm:max-w-2xl sm:px-6 sm:pb-[var(--eid-shell-content-bottom-pad)]">
       <div className={`mb-3 flex items-center gap-2 ${embed ? "justify-end" : "justify-between"}`}>
         {!embed ? (
           <Link href="/ranking" className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 text-eid-primary-300">

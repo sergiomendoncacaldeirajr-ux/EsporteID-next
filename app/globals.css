@@ -5176,6 +5176,80 @@ hr {
   padding-bottom: max(2rem, env(safe-area-inset-bottom, 0.5rem)) !important;
 }
 
+/* ── Feed mode — Confrontos ──────────────────────────────────────────────── */
+
+[data-eid-confrontos-page] { max-width: 100% !important; }
+
+/* Seção de filtros (topo): sem caixa */
+[data-eid-confrontos-page] > section[class*="rounded-2xl"][class*="overflow-hidden"] {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Cards de confronto: sem caixa + separador */
+[data-eid-confrontos-page] article[class*="rounded-2xl"][class*="overflow-hidden"] {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--eid-border-subtle) 40%, transparent) !important;
+  border-radius: 0 !important;
+  padding-bottom: 0.75rem !important;
+}
+[data-eid-confrontos-page] article[class*="rounded-2xl"][class*="overflow-hidden"]:last-child {
+  border-bottom-color: transparent !important;
+}
+
+/* ── Feed mode — Locais ──────────────────────────────────────────────────── */
+
+[data-eid-locais-page] main { max-width: 100% !important; }
+
+/* Seções wrapper (Seus locais / Todos os locais): sem caixa */
+[data-eid-locais-page] div[class*="rounded-2xl"][class*="overflow-hidden"] {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Cabeçalho de seção: apenas separador sutil */
+[data-eid-locais-page] div[class*="rounded-2xl"][class*="overflow-hidden"] > div[class*="border-b"] {
+  background: transparent !important;
+  border-bottom-color: color-mix(in srgb, var(--eid-border-subtle) 40%, transparent) !important;
+}
+
+/* LocalRow: sem caixa + separador entre itens */
+[data-eid-locais-page] div[class*="flex-col"][class*="gap-"] > a[class*="rounded-xl"] {
+  background: transparent !important;
+  border-color: transparent !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--eid-border-subtle) 40%, transparent) !important;
+  border-radius: 0 !important;
+}
+[data-eid-locais-page] div[class*="flex-col"][class*="gap-"] > a[class*="rounded-xl"]:last-child {
+  border-bottom-color: transparent !important;
+}
+
+/* ── Feed mode — Times / Vagas ───────────────────────────────────────────── */
+
+[data-eid-vagas-page] { max-width: 100% !important; }
+
+/* Hero (rounded-3xl) e seção de filtro (rounded-2xl): sem caixa */
+[data-eid-vagas-page] > div[class*="rounded-3xl"][class*="overflow-hidden"],
+[data-eid-vagas-page] > section[class*="rounded-2xl"][class*="overflow-hidden"] {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Pedidos de candidatura: sem caixa + separador */
+[data-eid-vagas-page] ul > li[class*="rounded-2xl"] {
+  background: transparent !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--eid-border-subtle) 40%, transparent) !important;
+  border-radius: 0 !important;
+}
+[data-eid-vagas-page] ul > li[class*="rounded-2xl"]:last-child {
+  border-bottom-color: transparent !important;
+}
+
 /* ── Feed mode — Páginas de edição (Perfil / Equipes / Performance EID) ─── */
 
 /* Seções de painel nas telas de edição: sem caixa */
