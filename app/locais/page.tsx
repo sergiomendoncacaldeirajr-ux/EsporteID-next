@@ -125,13 +125,6 @@ function coordFromLocal(l: LocalCard, key: "lat" | "lng") {
   return Number.isFinite(fallback) ? fallback : NaN;
 }
 
-function locationKey(l: Pick<LocalCard, "cidade" | "uf" | "localizacao">) {
-  const cidadeUf = [l.cidade, l.uf].filter(Boolean).join(" - ");
-  return String(cidadeUf || l.localizacao || "")
-    .trim()
-    .toLocaleLowerCase("pt-BR");
-}
-
 export default async function LocaisPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const q = (sp.q ?? "").trim().toLowerCase();
@@ -164,21 +157,9 @@ export default async function LocaisPage({ searchParams }: Props) {
   const hasCoords = Number.isFinite(myLat) && Number.isFinite(myLng);
 
   const locais = (locaisRaw ?? []) as LocalCard[];
-  const coordsPorLocalizacao = new Map<string, { lat: number; lng: number }>();
-  for (const l of locais) {
+  const locaisComDist = locais.map((l) => {
     const lat = coordFromLocal(l, "lat");
     const lng = coordFromLocal(l, "lng");
-    const key = locationKey(l);
-    if (key && Number.isFinite(lat) && Number.isFinite(lng) && !coordsPorLocalizacao.has(key)) {
-      coordsPorLocalizacao.set(key, { lat, lng });
-    }
-  }
-  const locaisComDist = locais.map((l) => {
-    const fallback = coordsPorLocalizacao.get(locationKey(l));
-    const latDirect = coordFromLocal(l, "lat");
-    const lngDirect = coordFromLocal(l, "lng");
-    const lat = Number.isFinite(latDirect) ? latDirect : (fallback?.lat ?? NaN);
-    const lng = Number.isFinite(lngDirect) ? lngDirect : (fallback?.lng ?? NaN);
     const dist = hasCoords ? distanciaKm(myLat, myLng, lat, lng) : 99999;
     return { l, dist };
   });

@@ -118,6 +118,41 @@ function text(formData: FormData, field: string) {
   return String(formData.get(field) ?? "").trim();
 }
 
+const HORARIO_META_PREFIX = "[eid-horario]";
+
+function parseHorarioObservacoes(raw: unknown) {
+  const linhas = String(raw ?? "")
+    .split("\n")
+    .map((linha) => linha.trimEnd());
+  let modoReserva = "mista" as "mista" | "paga" | "gratuita";
+  const texto = linhas
+    .filter((linha) => {
+      if (!linha.trim().startsWith(HORARIO_META_PREFIX)) return true;
+      try {
+        const parsed = JSON.parse(linha.trim().slice(HORARIO_META_PREFIX.length));
+        const modo = String(parsed?.modoReserva ?? "");
+        if (modo === "paga" || modo === "gratuita" || modo === "mista") modoReserva = modo;
+      } catch {
+        // Mantém compatibilidade com observações antigas ou digitadas manualmente.
+      }
+      return false;
+    })
+    .join("\n")
+    .trim();
+  return { texto, modoReserva };
+}
+
+function horarioModoFromForm(formData: FormData) {
+  const modo = text(formData, "modo_reserva_horario");
+  return modo === "paga" || modo === "gratuita" || modo === "mista" ? modo : "mista";
+}
+
+function montarHorarioObservacoes(raw: unknown, modoReserva: "mista" | "paga" | "gratuita") {
+  const textoLimpo = parseHorarioObservacoes(raw).texto;
+  const meta = `${HORARIO_META_PREFIX}${JSON.stringify({ modoReserva })}`;
+  return [textoLimpo, meta].filter(Boolean).join("\n");
+}
+
 function parseRecord(raw: unknown): Record<string, unknown> {
   if (!raw) return {};
   if (typeof raw === "string") {
@@ -678,6 +713,7 @@ export async function criarHorarioSemanalEspacoAction(formData: FormData) {
   const horaFim = text(formData, "hora_fim");
   const liberarProfessor = checkbox(formData, "liberar_professor");
   const liberarTorneio = checkbox(formData, "liberar_torneio");
+  const modoReservaHorario = horarioModoFromForm(formData);
   const liberarParaUsername = text(formData, "liberar_para_username").replace(/^@/, "");
   if (diaSemana < 0 || diaSemana > 6 || !horaInicio || !horaFim) {
     throw new Error("Preencha dia e faixa horária válidos.");
@@ -704,7 +740,7 @@ export async function criarHorarioSemanalEspacoAction(formData: FormData) {
       liberar_professor: liberarProfessor,
       liberar_torneio: liberarTorneio,
       liberar_para_usuario_id: liberarParaUsuarioId,
-      observacoes: text(formData, "observacoes") || null,
+      observacoes: montarHorarioObservacoes(text(formData, "observacoes"), modoReservaHorario),
     })
     .select("id")
     .single();
@@ -715,7 +751,45 @@ export async function criarHorarioSemanalEspacoAction(formData: FormData) {
     p_entidade_tipo: "espaco_horario",
     p_entidade_id: data.id,
     p_acao: "grade_criada",
-    p_payload: { diaSemana, horaInicio, horaFim },
+    p_payload: { diaSemana, horaInicio, horaFim, modoReservaHorario },
+    p_autor_usuario_id: user.id,
+  });
+
+  revalidatePath("/espaco/agenda");
+  revalidatePath("/espaco");
+  revalidatePath("/espaco/configuracao");
+}
+
+export async function atualizarHorarioSemanalEspacoAction(formData: FormData) {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const horarioId = Number(formData.get("horario_id") ?? 0);
+  if (!espacoId || !horarioId) throw new Error("Identificador inválido.");
+
+  const { supabase, user } = await requireEspacoManager(espacoId);
+  const ativo = text(formData, "ativo") === "true";
+  const modoReservaHorario = horarioModoFromForm(formData);
+  const liberarProfessor = checkbox(formData, "liberar_professor");
+  const liberarTorneio = checkbox(formData, "liberar_torneio");
+  const observacoes = montarHorarioObservacoes(text(formData, "observacoes"), modoReservaHorario);
+
+  const { error } = await supabase
+    .from("espaco_horarios_semanais")
+    .update({
+      ativo,
+      liberar_professor: liberarProfessor,
+      liberar_torneio: liberarTorneio,
+      observacoes,
+    })
+    .eq("id", horarioId)
+    .eq("espaco_generico_id", espacoId);
+  if (error) throw new Error(error.message);
+
+  await supabase.rpc("espaco_criar_auditoria", {
+    p_espaco_id: espacoId,
+    p_entidade_tipo: "espaco_horario",
+    p_entidade_id: horarioId,
+    p_acao: "grade_atualizada",
+    p_payload: { ativo, modoReservaHorario, liberarProfessor, liberarTorneio },
     p_autor_usuario_id: user.id,
   });
 
@@ -948,6 +1022,7 @@ export async function criarGradeAutomaticaEspacoAction(formData: FormData) {
   const domingoInicio = text(formData, "domingo_hora_inicio");
   const domingoFim = text(formData, "domingo_hora_fim");
   const limparExistente = checkbox(formData, "limpar_grade_existente");
+  const modoReservaHorario = horarioModoFromForm(formData);
   const aplicarRegrasAgora = checkbox(formData, "aplicar_regras_agora");
   const feriadosAutomaticosAtivos = checkbox(formData, "feriados_automaticos_ativos");
   const feriadoOperacaoPadrao = text(formData, "feriado_operacao_padrao") === "aberto" ? "aberto" : "fechado";
@@ -996,7 +1071,7 @@ export async function criarGradeAutomaticaEspacoAction(formData: FormData) {
         dia_semana: day.dia,
         hora_inicio: minutesToTime(cursor),
         hora_fim: minutesToTime(cursor + intervaloMin),
-        observacoes: `Gerado automaticamente (${intervaloMin} min)`,
+        observacoes: montarHorarioObservacoes(`Gerado automaticamente (${intervaloMin} min)`, modoReservaHorario),
       });
     }
   }
@@ -2221,7 +2296,7 @@ export async function criarReservaEspacoAction(
           .gt("fim", inicio),
         supabase
           .from("espaco_horarios_semanais")
-          .select("dia_semana, hora_inicio, hora_fim, ativo")
+          .select("dia_semana, hora_inicio, hora_fim, ativo, observacoes")
           .eq("espaco_generico_id", espacoId)
           .or(
             unidadeId
@@ -2275,6 +2350,13 @@ export async function criarReservaEspacoAction(
         message: "Esse horário está fora da grade semanal disponível.",
       };
     }
+    const slotDaReserva = (gradeSemanal.data ?? []).find((slot) => {
+      const inicioSlot = String(slot.hora_inicio).slice(0, 5);
+      const fimSlot = String(slot.hora_fim).slice(0, 5);
+      const diaSlot = Number(slot.dia_semana);
+      return diaSlot === inicioDate.getDay() && inicioDate.toISOString().slice(11, 16) >= inicioSlot && fimDate.toISOString().slice(11, 16) <= fimSlot;
+    });
+    const modoReservaHorario = parseHorarioObservacoes(slotDaReserva?.observacoes).modoReserva;
 
     const feriadosAutomaticos = await fetchAutomaticHolidaysForYear({
       year: inicioDate.getFullYear(),
@@ -2334,6 +2416,14 @@ export async function criarReservaEspacoAction(
       checkbox(formData, "usar_beneficio_gratis") &&
       benefit.ok &&
       cfgBeneficiosGratis.reservasGratisLiberadas;
+    if (modoReservaHorario === "paga" && usarBeneficioGratis && !isGratuitoTipo) {
+      return {
+        ok: false,
+        message: "Este horário foi configurado pelo espaço para aceitar somente reserva paga.",
+      };
+    }
+    const reservaGratuitaPorHorario = modoReservaHorario === "gratuita" && !isGratuitoTipo;
+    const usarReservaSemCobranca = usarBeneficioGratis || reservaGratuitaPorHorario;
     if (usarBeneficioGratis) {
       const cfgReservas = cfgBeneficiosGratis;
       const inicioDia = new Date(
@@ -2444,7 +2534,7 @@ export async function criarReservaEspacoAction(
     const taxaReservaPlataformaDb = Math.max(0, Math.round(Number(espacoM.taxa_reserva_plataforma_centavos ?? 0)));
     const soMensalidadePaaS = modoMonet === "mensalidade_plataforma";
     const taxaReservaAplicar =
-      !usarBeneficioGratis &&
+      !usarReservaSemCobranca &&
       !soMensalidadePaaS &&
       valorCentavos > 0 &&
       taxaReservaPlataformaDb > 0
@@ -2469,10 +2559,10 @@ export async function criarReservaEspacoAction(
     }
 
     const calculo = calcularFinanceiroEspaco({
-      valorCentavos: usarBeneficioGratis ? 0 : valorCentavos,
+      valorCentavos: usarReservaSemCobranca ? 0 : valorCentavos,
       config: cfg,
-      taxaReservaPlataformaCentavos: usarBeneficioGratis ? 0 : taxaReservaAplicar,
-      comissaoPercentualPlataforma: usarBeneficioGratis
+      taxaReservaPlataformaCentavos: usarReservaSemCobranca ? 0 : taxaReservaAplicar,
+      comissaoPercentualPlataforma: usarReservaSemCobranca
         ? 0
         : Number((cfg as Record<string, unknown> | null)?.espaco_reserva_comissao_percentual ?? 0),
     });
@@ -2497,13 +2587,14 @@ export async function criarReservaEspacoAction(
         partida_id: partidaId,
         torneio_id: torneioIdVinculado,
         torneio_jogo_id: torneioJogoId,
-        reserva_gratuita: usarBeneficioGratis,
+        reserva_gratuita: usarReservaSemCobranca,
         espaco_socio_id: socio?.id ?? null,
         plano_socio_id: socio?.plano_socio_id ?? null,
         detalhes_json: {
           contexto: tipoReserva,
           pagamento: calculo.brutoCentavos > 0 ? "checkout_externo" : "isento",
           valor_centavos: calculo.brutoCentavos,
+          modo_reserva_horario: modoReservaHorario,
           jogo_vinculado_id: partidaId,
           torneio_jogo_id: torneioJogoId,
         },

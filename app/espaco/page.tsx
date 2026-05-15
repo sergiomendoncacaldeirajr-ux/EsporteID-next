@@ -6,6 +6,7 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock3,
+  Grid3X3,
   Landmark,
   Settings,
   Users,
@@ -106,10 +107,17 @@ export default async function EspacoHomePage() {
   const cards = [
     {
       href: "/espaco/agenda",
-      title: "Agenda e horários",
-      desc: "Grade semanal, bloqueios e reservas.",
+      title: "Agenda de reservas",
+      desc: "Calendário real, ocupação e reservas do dia.",
       Icon: CalendarDays,
       accent: "text-eid-primary-300",
+    },
+    {
+      href: "/espaco/grade",
+      title: "Grade fixa",
+      desc: "Horários semanais, pagos, grátis ou ambos.",
+      Icon: Grid3X3,
+      accent: "text-eid-primary-200",
     },
     {
       href: "/espaco/socios",

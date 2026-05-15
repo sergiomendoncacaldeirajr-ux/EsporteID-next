@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Clock3,
   FileText,
+  Grid3X3,
   Home,
   Landmark,
   Percent,
@@ -43,6 +44,7 @@ function PainelChromeInner({ space }: { space: EspacoPainelSpace }) {
   const navItems = [
     { href: "/espaco", label: "Início", Icon: Home },
     { href: "/espaco/agenda", label: "Agenda", Icon: CalendarDays },
+    { href: "/espaco/grade", label: "Grade", Icon: Grid3X3 },
     { href: "/espaco/socios", label: "Sócios", Icon: Users },
     ...(mostrarFinanceiro ? [{ href: "/espaco/financeiro", label: "Financ.", Icon: Wallet }] : []),
     { href: "/espaco/taxas", label: "Taxas", Icon: Percent },

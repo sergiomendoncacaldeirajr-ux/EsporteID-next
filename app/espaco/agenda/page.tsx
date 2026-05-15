@@ -1,13 +1,10 @@
 import {
   adicionarVisitanteReservaEspacoAction,
   alterarStatusPunicaoMembroEspacoAction,
-  criarGradeAutomaticaEspacoAction,
   criarBloqueioEspacoAction,
-  criarHorarioSemanalEspacoAction,
   criarSobreposicaoFeriadoEspacoAction,
   denunciarNoShowReservaEspacoAction,
   removerBloqueioEspacoAction,
-  removerHorarioSemanalEspacoAction,
   salvarPunicaoMembroEspacoAction,
   atualizarOperacaoFeriadoEspacoAction,
   sincronizarFeriadosEspacoAction,
@@ -32,8 +29,65 @@ type ParticipanteReserva = {
 };
 
 type Props = {
-  searchParams?: Promise<{ espaco?: string }>;
+  searchParams?: Promise<{ espaco?: string; data?: string; unidade?: string }>;
 };
+
+const HORARIO_META_PREFIX = "[eid-horario]";
+
+function parseHorarioObservacoes(raw: unknown) {
+  const linhas = String(raw ?? "")
+    .split("\n")
+    .map((linha) => linha.trimEnd());
+  let modoReserva = "mista" as "mista" | "paga" | "gratuita";
+  const texto = linhas
+    .filter((linha) => {
+      if (!linha.trim().startsWith(HORARIO_META_PREFIX)) return true;
+      try {
+        const parsed = JSON.parse(linha.trim().slice(HORARIO_META_PREFIX.length));
+        const modo = String(parsed?.modoReserva ?? "");
+        if (modo === "paga" || modo === "gratuita" || modo === "mista") modoReserva = modo;
+      } catch {
+        return false;
+      }
+      return false;
+    })
+    .join("\n")
+    .trim();
+  return { texto, modoReserva };
+}
+
+function toYmd(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function parseYmd(value: string | undefined) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return new Date();
+  const [y, m, d] = value.split("-").map(Number);
+  const date = new Date(y, m - 1, d, 12, 0, 0, 0);
+  return Number.isNaN(date.getTime()) ? new Date() : date;
+}
+
+function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function makeAgendaHref(sp: { espaco?: string; data?: string; unidade?: string }, patch: { data?: string; unidade?: string }) {
+  const params = new URLSearchParams();
+  if (sp.espaco) params.set("espaco", sp.espaco);
+  params.set("data", patch.data ?? sp.data ?? toYmd(new Date()));
+  if (patch.unidade ?? sp.unidade) params.set("unidade", String(patch.unidade ?? sp.unidade));
+  return `/espaco/agenda?${params.toString()}`;
+}
+
+function moneyLabel(value: unknown) {
+  const number = Number(value ?? 0);
+  return number > 0 ? number.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "Sem cobrança";
+}
 
 function AgendaCard({
   title,
@@ -100,7 +154,7 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
       supabase
         .from("espaco_horarios_semanais")
         .select(
-          "id, espaco_unidade_id, dia_semana, hora_inicio, hora_fim, ativo, liberar_professor, liberar_torneio, liberar_para_usuario_id"
+          "id, espaco_unidade_id, dia_semana, hora_inicio, hora_fim, ativo, liberar_professor, liberar_torneio, liberar_para_usuario_id, observacoes"
         )
         .eq("espaco_generico_id", selectedSpace.id)
         .order("dia_semana", { ascending: true }),
@@ -112,7 +166,7 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
       supabase
         .from("reservas_quadra")
         .select(
-          "id, espaco_unidade_id, inicio, fim, status_reserva, tipo_reserva, usuario_solicitante_id, partida_id, torneio_jogo_id, professor_aula_id"
+          "id, espaco_unidade_id, inicio, fim, status_reserva, tipo_reserva, reserva_gratuita, valor_total, usuario_solicitante_id, partida_id, torneio_jogo_id, professor_aula_id"
         )
         .eq("espaco_generico_id", selectedSpace.id)
         .order("inicio", { ascending: true }),
@@ -258,6 +312,32 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
     diaGrupo.itens.push(item);
     grupo.total += 1;
   }
+  const dataSelecionada = parseYmd(sp.data);
+  const dataSelecionadaYmd = toYmd(dataSelecionada);
+  const diaSelecionado = dataSelecionada.getDay();
+  const inicioSemana = addDays(dataSelecionada, -diaSelecionado);
+  const diasNavegacao = Array.from({ length: 7 }, (_, index) => addDays(inicioSemana, index));
+  const unidadeSelecionadaId =
+    Number(sp.unidade ?? 0) || Number((unidades ?? []).find((unidade) => unidade.status_operacao !== "inativa")?.id ?? unidades?.[0]?.id ?? 0);
+  const unidadeSelecionada = (unidades ?? []).find((unidade) => Number(unidade.id) === unidadeSelecionadaId);
+  const slotsDoDia = (grade ?? [])
+    .filter((item) => Number(item.espaco_unidade_id ?? 0) === unidadeSelecionadaId && Number(item.dia_semana) === diaSelecionado)
+    .sort((a, b) => String(a.hora_inicio).localeCompare(String(b.hora_inicio)));
+  const inicioDoDia = new Date(`${dataSelecionadaYmd}T00:00:00`);
+  const fimDoDia = new Date(`${dataSelecionadaYmd}T23:59:59`);
+  const reservasDoDia = (reservas ?? []).filter((reserva) => {
+    if (Number(reserva.espaco_unidade_id ?? 0) !== unidadeSelecionadaId) return false;
+    const inicioReserva = new Date(String(reserva.inicio));
+    return inicioReserva >= inicioDoDia && inicioReserva <= fimDoDia;
+  });
+  const bloqueiosDoDia = (bloqueios ?? []).filter((bloqueio) => {
+    if (bloqueio.espaco_unidade_id && Number(bloqueio.espaco_unidade_id) !== unidadeSelecionadaId) return false;
+    const inicioBloqueio = new Date(String(bloqueio.inicio));
+    const fimBloqueio = new Date(String(bloqueio.fim));
+    return inicioBloqueio <= fimDoDia && fimBloqueio >= inicioDoDia;
+  });
+  const ocupadosDoDia = reservasDoDia.filter((reserva) => reserva.status_reserva !== "cancelada").length;
+  const disponiveisDoDia = Math.max(0, slotsDoDia.filter((slot) => Boolean(slot.ativo)).length - ocupadosDoDia);
 
   return (
     <div className="space-y-4">
@@ -276,351 +356,177 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
         ))}
       </section>
 
+      <section className="rounded-2xl border border-eid-primary-500/20 bg-eid-card/95 p-4 shadow-sm sm:p-5">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-wide text-eid-primary-300">Agenda do dia</p>
+            <h2 className="mt-1 text-xl font-black text-eid-fg">
+              {dataSelecionada.toLocaleDateString("pt-BR", {
+                weekday: "long",
+                day: "2-digit",
+                month: "long",
+              })}
+            </h2>
+            <p className="mt-1 text-sm text-eid-text-secondary">
+              {unidadeSelecionada?.nome ?? "Quadra"} · {ocupadosDoDia} ocupado(s) · {disponiveisDoDia} livre(s)
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Link
+              href={makeAgendaHref(sp, { data: toYmd(addDays(dataSelecionada, -1)) })}
+              className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-3 py-2 text-xs font-bold text-eid-fg"
+            >
+              Dia anterior
+            </Link>
+            <Link
+              href={makeAgendaHref(sp, { data: toYmd(new Date()) })}
+              className="rounded-xl border border-eid-primary-500/30 bg-eid-primary-500/10 px-3 py-2 text-xs font-bold text-eid-primary-300"
+            >
+              Hoje
+            </Link>
+            <Link
+              href={makeAgendaHref(sp, { data: toYmd(addDays(dataSelecionada, 1)) })}
+              className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-3 py-2 text-xs font-bold text-eid-fg"
+            >
+              Próximo dia
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+          {diasNavegacao.map((dia) => {
+            const ativo = toYmd(dia) === dataSelecionadaYmd;
+            return (
+              <Link
+                key={toYmd(dia)}
+                href={makeAgendaHref(sp, { data: toYmd(dia) })}
+                className={[
+                  "min-w-[78px] rounded-2xl border px-3 py-2 text-center text-xs transition",
+                  ativo
+                    ? "border-eid-primary-500/45 bg-eid-primary-500/15 text-eid-fg"
+                    : "border-[color:var(--eid-border-subtle)] bg-eid-surface/45 text-eid-text-secondary",
+                ].join(" ")}
+              >
+                <span className="block font-black">{DIAS_SEMANA_CURTO[dia.getDay()]}</span>
+                <span className="mt-0.5 block text-[11px]">{dia.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}</span>
+              </Link>
+            );
+          })}
+        </div>
+
+        <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+          {(unidades ?? []).map((unidade) => {
+            const ativo = Number(unidade.id) === unidadeSelecionadaId;
+            return (
+              <Link
+                key={unidade.id}
+                href={makeAgendaHref(sp, { unidade: String(unidade.id), data: dataSelecionadaYmd })}
+                className={[
+                  "min-w-fit rounded-full border px-3 py-2 text-xs font-bold transition",
+                  ativo
+                    ? "border-eid-action-500/45 bg-eid-action-500/15 text-eid-action-400"
+                    : "border-[color:var(--eid-border-subtle)] bg-eid-surface/45 text-eid-text-secondary",
+                ].join(" ")}
+              >
+                {unidade.nome}
+              </Link>
+            );
+          })}
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {slotsDoDia.length ? (
+            slotsDoDia.map((slot) => {
+              const inicioSlot = `${dataSelecionadaYmd}T${String(slot.hora_inicio).slice(0, 5)}`;
+              const fimSlot = `${dataSelecionadaYmd}T${String(slot.hora_fim).slice(0, 5)}`;
+              const inicioSlotDate = new Date(inicioSlot);
+              const fimSlotDate = new Date(fimSlot);
+              const reserva = reservasDoDia.find((item) => {
+                if (item.status_reserva === "cancelada") return false;
+                const inicioReserva = new Date(String(item.inicio));
+                const fimReserva = new Date(String(item.fim));
+                return inicioReserva < fimSlotDate && fimReserva > inicioSlotDate;
+              });
+              const bloqueio = bloqueiosDoDia.find((item) => {
+                const inicioBloqueio = new Date(String(item.inicio));
+                const fimBloqueio = new Date(String(item.fim));
+                return inicioBloqueio < fimSlotDate && fimBloqueio > inicioSlotDate;
+              });
+              const meta = parseHorarioObservacoes(slot.observacoes);
+              const solicitante = reserva ? solicitanteById.get(String(reserva.usuario_solicitante_id ?? "")) : null;
+              const statusLabel = !slot.ativo ? "Desativado" : bloqueio ? "Bloqueado" : reserva ? "Ocupado" : "Disponível";
+              const badgeClass = !slot.ativo
+                ? "border-[color:var(--eid-border-subtle)] bg-eid-surface/60 text-eid-text-secondary"
+                : bloqueio
+                  ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
+                  : reserva
+                    ? "border-eid-action-500/30 bg-eid-action-500/10 text-eid-action-400"
+                    : "border-emerald-500/30 bg-emerald-500/10 text-emerald-200";
+              const modoLabel =
+                meta.modoReserva === "paga" ? "Somente paga" : meta.modoReserva === "gratuita" ? "Gratuita" : "Paga ou grátis";
+              return (
+                <article key={slot.id} className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-base font-black text-eid-fg">
+                        {String(slot.hora_inicio).slice(0, 5)} às {String(slot.hora_fim).slice(0, 5)}
+                      </p>
+                      <p className="mt-1 text-xs text-eid-text-secondary">{modoLabel}</p>
+                    </div>
+                    <span className={`rounded-full border px-2.5 py-1 text-[11px] font-bold ${badgeClass}`}>{statusLabel}</span>
+                  </div>
+
+                  {reserva ? (
+                    <div className="mt-3 rounded-xl border border-eid-action-500/20 bg-eid-action-500/10 p-3">
+                      <p className="text-xs font-bold text-eid-fg">{solicitante?.nome ?? solicitante?.username ?? "Reservante"}</p>
+                      <p className="mt-1 text-[11px] text-eid-text-secondary">
+                        {reserva.reserva_gratuita ? "Reserva gratuita" : moneyLabel(reserva.valor_total)} · {reserva.status_reserva}
+                      </p>
+                    </div>
+                  ) : bloqueio ? (
+                    <div className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3">
+                      <p className="text-xs font-bold text-eid-fg">{bloqueio.titulo ?? "Bloqueio"}</p>
+                      <p className="mt-1 text-[11px] text-eid-text-secondary">{bloqueio.tipo_bloqueio}</p>
+                    </div>
+                  ) : (
+                    <p className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3 text-xs text-eid-text-secondary">
+                      Sem reserva nesse horário.
+                    </p>
+                  )}
+
+                  <details className="group mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/45">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 text-xs font-bold text-eid-fg marker:hidden">
+                      Ações desta data
+                      <span className="text-base text-eid-primary-300 transition group-open:rotate-45">+</span>
+                    </summary>
+                    <div className="space-y-2 border-t border-[color:var(--eid-border-subtle)] p-3">
+                      <form action={criarBloqueioEspacoAction}>
+                        <input type="hidden" name="espaco_id" value={selectedSpace.id} />
+                        <input type="hidden" name="espaco_unidade_id" value={unidadeSelecionadaId} />
+                        <input type="hidden" name="titulo" value="Horário bloqueado pelo espaço" />
+                        <input type="hidden" name="inicio" value={inicioSlot} />
+                        <input type="hidden" name="fim" value={fimSlot} />
+                        <input type="hidden" name="tipo_bloqueio" value="bloqueio_manual" />
+                        <input type="hidden" name="motivo" value="Bloqueio criado pela agenda do dono de espaço." />
+                        <button className="w-full rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-xs font-bold text-amber-200">
+                          Bloquear só nesta data
+                        </button>
+                      </form>
+                    </div>
+                  </details>
+                </article>
+              );
+            })
+          ) : (
+            <p className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-4 text-sm text-eid-text-secondary md:col-span-2 xl:col-span-3">
+              Nenhum horário cadastrado para esta quadra neste dia. Use o card de grade semanal para criar horários.
+            </p>
+          )}
+        </div>
+      </section>
+
       <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
       <section className="space-y-4">
-        <AgendaCard
-          title="Grade semanal"
-          description={`Hoje: ${hojeResumo.aberto ? "aberto" : "fechado"} · ${hojeResumo.motivo}`}
-          meta={`${(grade ?? []).length} horários`}
-          defaultOpen
-        >
-          <details className="group overflow-hidden rounded-2xl border border-eid-primary-500/25 bg-eid-primary-500/5">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3 marker:hidden">
-              <span className="min-w-0">
-                <span className="block text-sm font-black text-eid-fg">Adicionar nova quadra ou grade</span>
-                <span className="mt-0.5 block text-[11px] text-eid-text-secondary">
-                  Abra apenas quando quiser gerar horários ou adicionar um horário avulso.
-                </span>
-              </span>
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 text-base font-black text-eid-primary-300 transition group-open:rotate-45">
-                +
-              </span>
-            </summary>
-            <div className="border-t border-eid-primary-500/20 p-3">
-              <h3 className="text-sm font-bold text-eid-fg">Assistente automático de horários</h3>
-              <p className="mt-1 text-xs text-eid-text-secondary">
-                Informe o funcionamento da unidade e o intervalo (ex.: 1h). O sistema gera todos os slots automaticamente para semana, sábado e domingo.
-              </p>
-              <form action={criarGradeAutomaticaEspacoAction} className="mt-3 grid gap-2">
-              <input type="hidden" name="espaco_id" value={selectedSpace.id} />
-              <select name="espaco_unidade_id" defaultValue={unidades?.[0]?.id ?? ""} className="eid-input-dark rounded-xl px-3 py-2 text-sm">
-                {(unidades ?? []).map((unidade) => (
-                  <option key={unidade.id} value={unidade.id}>
-                    {unidade.nome}
-                  </option>
-                ))}
-              </select>
-              <div className="grid gap-2 sm:grid-cols-3">
-                <input type="time" name="segsex_hora_inicio" defaultValue="08:00" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
-                <input type="time" name="segsex_hora_fim" defaultValue="18:00" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
-                <input type="number" name="intervalo_minutos" defaultValue={60} min={15} max={240} className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
-              </div>
-              <label className="inline-flex items-center gap-2 text-xs text-eid-fg">
-                <input type="checkbox" name="sabado_diferente" />
-                Sábado com horário diferente
-              </label>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <input type="time" name="sabado_hora_inicio" defaultValue="08:00" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
-                <input type="time" name="sabado_hora_fim" defaultValue="12:00" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
-              </div>
-              <label className="inline-flex items-center gap-2 text-xs text-eid-fg">
-                <input type="checkbox" name="domingo_diferente" />
-                Domingo com horário diferente
-              </label>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <input type="time" name="domingo_hora_inicio" defaultValue="08:00" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
-                <input type="time" name="domingo_hora_fim" defaultValue="12:00" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
-              </div>
-              <label className="inline-flex items-center gap-2 text-xs text-eid-fg">
-                <input type="checkbox" name="limpar_grade_existente" />
-                Limpar grade existente da unidade nos dias gerados antes de criar
-              </label>
-              <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-3">
-                <label className="inline-flex items-center gap-2 text-xs font-semibold text-eid-fg">
-                  <input type="checkbox" name="feriados_automaticos_ativos" />
-                  Ligar feriados automáticos e sobrepor a grade
-                </label>
-                <p className="mt-1 text-[11px] text-eid-text-secondary">
-                  Quando ligado, o sistema já cria os feriados do ano e aplica por cima da grade. Depois você escolhe abrir ou fechar em cada feriado.
-                </p>
-                <select
-                  name="feriado_operacao_padrao"
-                  defaultValue="fechado"
-                  className="eid-input-dark mt-2 rounded-xl px-3 py-2 text-sm"
-                >
-                  <option value="fechado">Padrão: fechar no feriado</option>
-                  <option value="aberto">Padrão: abrir no feriado</option>
-                </select>
-              </div>
-              <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-3">
-                <label className="inline-flex items-center gap-2 text-xs font-semibold text-eid-fg">
-                  <input type="checkbox" name="aplicar_regras_agora" />
-                  Já aplicar regras de reserva nessa etapa (deixa tudo pronto)
-                </label>
-                <p className="mt-1 text-[11px] text-eid-text-secondary">
-                  Use para configurar limites e benefício grátis de membros sem precisar voltar em outra tela.
-                </p>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <label className="block text-[11px] font-semibold text-eid-text-secondary">
-                    Limite de reservas por dia
-                    <input
-                      type="number"
-                      name="regra_limite_dia"
-                      defaultValue={0}
-                      min={0}
-                      className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm"
-                    />
-                    <span className="mt-1 block font-normal">0 deixa sem limite diário.</span>
-                  </label>
-                  <label className="block text-[11px] font-semibold text-eid-text-secondary">
-                    Limite de reservas por semana
-                    <input
-                      type="number"
-                      name="regra_limite_semana"
-                      defaultValue={0}
-                      min={0}
-                      className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm"
-                    />
-                    <span className="mt-1 block font-normal">0 deixa sem limite semanal.</span>
-                  </label>
-                  <label className="block text-[11px] font-semibold text-eid-text-secondary">
-                    Intervalo entre reservas (horas)
-                    <input
-                      type="number"
-                      name="regra_cooldown_horas"
-                      defaultValue={0}
-                      min={0}
-                      className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm"
-                    />
-                    <span className="mt-1 block font-normal">Tempo mínimo entre marcações do mesmo membro.</span>
-                  </label>
-                  <label className="block text-[11px] font-semibold text-eid-text-secondary">
-                    Antecedência mínima (horas)
-                    <input
-                      type="number"
-                      name="regra_antecedencia_min_horas"
-                      defaultValue={0}
-                      min={0}
-                      className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm"
-                    />
-                    <span className="mt-1 block font-normal">0 permite reservar imediatamente.</span>
-                  </label>
-                  <label className="block text-[11px] font-semibold text-eid-text-secondary sm:col-span-2">
-                    Janela máxima para reservar (dias)
-                    <input
-                      type="number"
-                      name="regra_antecedencia_max_dias"
-                      defaultValue={0}
-                      min={0}
-                      className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm"
-                    />
-                    <span className="mt-1 block font-normal">0 deixa a agenda sem limite de dias à frente.</span>
-                  </label>
-                </div>
-                <div className="mt-2 rounded-xl border border-eid-primary-500/20 bg-eid-primary-500/5 p-2.5">
-                  <label className="inline-flex items-center gap-2 text-xs text-eid-fg">
-                    <input type="checkbox" name="regra_reservas_gratis_liberadas" />
-                    Permitir reserva grátis para membros
-                  </label>
-                  <p className="mt-1 text-[11px] text-eid-text-secondary">
-                    Configure apenas se membros puderem usar reservas sem cobrança.
-                  </p>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    <label className="block text-[11px] font-semibold text-eid-text-secondary">
-                      Reservas grátis por dia
-                      <input
-                        type="number"
-                        name="regra_gratis_limite_dia"
-                        defaultValue={0}
-                        min={0}
-                        className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm"
-                      />
-                    </label>
-                    <label className="block text-[11px] font-semibold text-eid-text-secondary">
-                      Reservas grátis por semana
-                      <input
-                        type="number"
-                        name="regra_gratis_limite_semana"
-                        defaultValue={0}
-                        min={0}
-                        className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm"
-                      />
-                    </label>
-                    <label className="block text-[11px] font-semibold text-eid-text-secondary">
-                      Intervalo entre grátis (horas)
-                      <input
-                        type="number"
-                        name="regra_gratis_intervalo_horas"
-                        defaultValue={0}
-                        min={0}
-                        className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm"
-                      />
-                    </label>
-                    <label className="block text-[11px] font-semibold text-eid-text-secondary">
-                      Janela grátis máxima (dias)
-                      <input
-                        type="number"
-                        name="regra_gratis_antecedencia_max_dias"
-                        defaultValue={0}
-                        min={0}
-                        className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm"
-                      />
-                    </label>
-                  </div>
-                </div>
-              </div>
-              <button className="rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 px-4 py-2 text-xs font-bold text-eid-primary-300">
-                Gerar grade automática
-              </button>
-              </form>
-
-              <div className="my-4 border-t border-[color:var(--eid-border-subtle)]" />
-              <h3 className="text-sm font-bold text-eid-fg">Adicionar horário avulso</h3>
-              <p className="mt-1 text-xs text-eid-text-secondary">
-                Use quando quiser criar só um horário específico em uma quadra.
-              </p>
-          <form action={criarHorarioSemanalEspacoAction} className="mt-3 grid gap-3">
-            <input type="hidden" name="espaco_id" value={selectedSpace.id} />
-            <select
-              name="espaco_unidade_id"
-              className="eid-input-dark rounded-xl px-3 py-2 text-sm"
-              defaultValue={unidades?.[0]?.id ?? ""}
-            >
-              {(unidades ?? []).map((unidade) => (
-                <option key={unidade.id} value={unidade.id}>
-                  {unidade.nome}
-                </option>
-              ))}
-            </select>
-            <div className="grid gap-2 sm:grid-cols-3">
-              <select
-                name="dia_semana"
-                defaultValue="1"
-                className="eid-input-dark rounded-xl px-3 py-2 text-sm"
-              >
-                <option value="0">Dom</option>
-                <option value="1">Seg</option>
-                <option value="2">Ter</option>
-                <option value="3">Qua</option>
-                <option value="4">Qui</option>
-                <option value="5">Sex</option>
-                <option value="6">Sab</option>
-              </select>
-              <input type="time" name="hora_inicio" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
-              <input type="time" name="hora_fim" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
-            </div>
-            <textarea
-              name="observacoes"
-              rows={2}
-              placeholder="Observações"
-              className="eid-input-dark rounded-xl px-3 py-2 text-sm"
-            />
-            <div className="grid gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-3 text-xs text-eid-text-secondary sm:grid-cols-2">
-              <label className="inline-flex items-center gap-2">
-                <input type="checkbox" name="liberar_professor" />
-                Liberar este horário para professor
-              </label>
-              <label className="inline-flex items-center gap-2">
-                <input type="checkbox" name="liberar_torneio" />
-                Liberar este horário para organizador de torneio
-              </label>
-              <input
-                name="liberar_para_username"
-                placeholder="Opcional: @username específico"
-                className="eid-input-dark rounded-xl px-3 py-2 text-xs sm:col-span-2"
-              />
-            </div>
-            <button className="eid-btn-primary rounded-xl px-4 py-3 text-sm font-bold">
-              Adicionar à grade
-            </button>
-          </form>
-            </div>
-          </details>
-          <div className="mt-4 space-y-3">
-            {Array.from(gradeAgrupada.values()).length ? (
-              Array.from(gradeAgrupada.values()).map((grupo, grupoIndex) => (
-                <details
-                  key={grupo.unidadeNome}
-                  open={grupoIndex === 0}
-                  className="group overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45"
-                >
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3 marker:hidden">
-                    <span className="min-w-0">
-                      <span className="block text-sm font-black text-eid-fg">{grupo.unidadeNome}</span>
-                      <span className="mt-0.5 block text-[11px] text-eid-text-secondary">
-                        {grupo.dias.size} dia(s) configurado(s)
-                      </span>
-                    </span>
-                    <span className="flex shrink-0 items-center gap-2">
-                      <span className="rounded-full border border-[color:var(--eid-border-subtle)] px-2.5 py-1 text-[11px] font-semibold text-eid-text-secondary">
-                        {grupo.total} horário(s)
-                      </span>
-                      <span className="grid h-8 w-8 place-items-center rounded-full border border-eid-primary-500/25 bg-eid-primary-500/10 text-base font-black text-eid-primary-300 transition group-open:rotate-45">
-                        +
-                      </span>
-                    </span>
-                  </summary>
-                  <div className="space-y-2 border-t border-[color:var(--eid-border-subtle)] p-3">
-                    {Array.from(grupo.dias.entries()).map(([dia, diaGrupo], diaIndex) => (
-                      <details
-                        key={dia}
-                        open={grupoIndex === 0 && diaIndex === 0}
-                        className="group/dia overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55"
-                      >
-                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 marker:hidden">
-                          <span className="text-sm font-black text-eid-fg">{diaGrupo.titulo}</span>
-                          <span className="flex shrink-0 items-center gap-2">
-                            <span className="rounded-full bg-eid-surface/70 px-2.5 py-1 text-[11px] font-semibold text-eid-text-secondary">
-                              {diaGrupo.itens.length} horário(s)
-                            </span>
-                            <span className="text-base font-black text-eid-primary-300 transition group-open/dia:rotate-45">
-                              +
-                            </span>
-                          </span>
-                        </summary>
-                        <div className="grid gap-2 border-t border-[color:var(--eid-border-subtle)] p-3 sm:grid-cols-2">
-                          {diaGrupo.itens.map((item) => (
-                            <div
-                              key={item.id}
-                              className="flex items-center justify-between gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-3 py-2"
-                            >
-                              <div className="min-w-0">
-                                <p className="text-sm font-bold text-eid-fg">
-                                  {String(item.hora_inicio).slice(0, 5)} às {String(item.hora_fim).slice(0, 5)}
-                                </p>
-                                <p className="mt-0.5 text-[11px] text-eid-text-secondary">
-                                  {!item.ativo ? "Inativo" : "Disponível"}
-                                  {item.liberar_professor ? " · professor" : ""}
-                                  {item.liberar_torneio ? " · torneio" : ""}
-                                </p>
-                              </div>
-                              <form action={removerHorarioSemanalEspacoAction} className="shrink-0">
-                                <input type="hidden" name="espaco_id" value={selectedSpace.id} />
-                                <input type="hidden" name="horario_id" value={item.id} />
-                                <button
-                                  type="submit"
-                                  aria-label={`Remover horário ${String(item.hora_inicio).slice(0, 5)}`}
-                                  className="rounded-lg border border-red-500/35 bg-red-500/10 px-3 py-1.5 text-[11px] font-semibold text-red-300"
-                                >
-                                  Remover
-                                </button>
-                              </form>
-                            </div>
-                          ))}
-                        </div>
-                      </details>
-                    ))}
-                  </div>
-                </details>
-              ))
-            ) : (
-              <p className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-4 text-sm text-eid-text-secondary">
-                Nenhum horário cadastrado na grade semanal.
-              </p>
-            )}
-          </div>
-        </AgendaCard>
-
         <AgendaCard
           title="Bloqueios"
           description="Fechamentos, manutenção e sobreposições de feriado."

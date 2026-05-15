@@ -5490,8 +5490,89 @@ hr {
 [data-eid-notif-modal] li > div[class*="items-start"][class*="rounded-lg"],
 /* Dashboard — grid de atalhos */
 [data-eid-dashboard-page] section div[class*="grid"] > :is(a, div)[class*="rounded"] {
-  background: color-mix(in srgb, var(--eid-surface) 48%, transparent) !important;
-  border-color: color-mix(in srgb, var(--eid-border-subtle) 60%, transparent) !important;
+  background: color-mix(in srgb, var(--eid-surface) 62%, transparent) !important;
+  border-color: color-mix(in srgb, var(--eid-border-subtle) 85%, transparent) !important;
   border-radius: 0.75rem !important;
-  box-shadow: 0 2px 10px -6px rgba(0, 0, 0, 0.22) !important;
+  box-shadow: 0 2px 12px -6px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+/* =============================================================================
+ * EsporteID — Polimento visual global (premium aesthetics)
+ * ============================================================================= */
+
+/* ── 1. Ambient background glow — luz azul sutil no topo da página ───────── */
+#eid-app-shell-main-wrap {
+  background-image: radial-gradient(
+    ellipse 80% 40% at 50% 0%,
+    color-mix(in srgb, var(--eid-primary-500) 10%, transparent),
+    transparent 62%
+  );
+}
+
+/* ── 2. Tipografia — hierarquia e espaçamento refinados ──────────────────── */
+body.eid-app-shell h1 {
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+body.eid-app-shell h2 {
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+body.eid-app-shell h3 {
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+body.eid-app-shell p {
+  line-height: 1.6;
+}
+
+/* ── 3. Transições suaves globais em elementos interativos ───────────────── */
+body.eid-app-shell a,
+body.eid-app-shell button,
+body.eid-app-shell [role="button"],
+body.eid-app-shell .eid-list-item,
+body.eid-app-shell .eid-surface-panel,
+body.eid-app-shell .eid-card,
+body.eid-app-shell .eid-ranking-card,
+body.eid-app-shell .eid-dashboard-section {
+  transition:
+    background-color 0.14s ease,
+    border-color 0.14s ease,
+    color 0.12s ease,
+    box-shadow 0.14s ease,
+    opacity 0.12s ease,
+    transform 0.12s ease;
+}
+
+/* ── 4. Focus ring refinado — mais suave e consistente ───────────────────── */
+body.eid-app-shell :focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--eid-primary-500) 80%, transparent);
+  outline-offset: 2px;
+  border-radius: inherit;
+}
+
+/* ── 5. Inputs — profundidade e foco premium ─────────────────────────────── */
+body.eid-app-shell .eid-input-dark {
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  transition: border-color 0.14s ease, box-shadow 0.14s ease;
+}
+body.eid-app-shell .eid-input-dark:focus {
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 0 2px color-mix(in srgb, var(--eid-primary-500) 35%, transparent);
+}
+
+/* ── 6. Botões primários — brilho e profundidade ─────────────────────────── */
+body.eid-app-shell .eid-btn-primary {
+  box-shadow: 0 4px 14px -6px color-mix(in srgb, var(--eid-primary-500) 55%, transparent),
+              inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+body.eid-app-shell .eid-btn-primary:hover {
+  box-shadow: 0 6px 18px -6px color-mix(in srgb, var(--eid-primary-500) 65%, transparent),
+              inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+/* ── 7. Seções — cabeçalho com acento lateral sutil ─────────────────────── */
+body.eid-app-shell .eid-dashboard-section-head,
+body.eid-app-shell .eid-ranking-card-head {
+  border-left: 2px solid color-mix(in srgb, var(--eid-primary-500) 55%, transparent);
+  padding-left: calc(var(--spacing, 0px) + 0.25rem);
 }

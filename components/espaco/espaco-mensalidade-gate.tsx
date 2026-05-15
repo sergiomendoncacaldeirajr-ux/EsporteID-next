@@ -12,7 +12,11 @@ export function EspacoMensalidadeGate({ state, children }: { state: MensalidadeP
   const pathname = usePathname() ?? "";
   const onFinanceiro = pathname === FINANCEIRO || pathname.startsWith(`${FINANCEIRO}/`);
   const onIntegracao = pathname === INTEGRACAO || pathname.startsWith(`${INTEGRACAO}/`);
-  const onAgenda = pathname === "/espaco/agenda" || pathname.startsWith("/espaco/agenda/");
+  const onAgenda =
+    pathname === "/espaco/agenda" ||
+    pathname.startsWith("/espaco/agenda/") ||
+    pathname === "/espaco/grade" ||
+    pathname.startsWith("/espaco/grade/");
 
   if (onFinanceiro || onIntegracao) {
     return <>{children}</>;

@@ -8,13 +8,14 @@ import { contaSomenteDonoEspaco, listarPapeis } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 
 const ESPACO_SELECT =
-  "id, slug, nome_publico, status, localizacao, cidade, uf, esportes_ids, criado_por_usuario_id, responsavel_usuario_id, logo_arquivo, cover_arquivo, whatsapp_contato, email_contato, website_url, instagram_url, descricao_curta, descricao_longa, aceita_socios, permite_professores_aprovados, ativo_listagem, operacao_status, venue_config_json, configuracao_reservas_json, categoria_mensalidade, modo_reserva, modo_monetizacao, associacao_regra_json, clube_assinaturas_socios";
+  "id, slug, nome_publico, status, localizacao, cidade, uf, lat, lng, esportes_ids, criado_por_usuario_id, responsavel_usuario_id, logo_arquivo, cover_arquivo, whatsapp_contato, email_contato, website_url, instagram_url, descricao_curta, descricao_longa, aceita_socios, permite_professores_aprovados, ativo_listagem, operacao_status, venue_config_json, configuracao_reservas_json, categoria_mensalidade, modo_reserva, modo_monetizacao, associacao_regra_json, clube_assinaturas_socios";
 
 const ROTAS_PAINEL_ESPACO = new Set([
   "",
   "agenda",
   "configuracao",
   "financeiro",
+  "grade",
   "integracao-asaas",
   "notas-fiscais",
   "onboarding",
