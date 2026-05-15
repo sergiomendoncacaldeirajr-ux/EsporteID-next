@@ -27,20 +27,20 @@ export const DESAFIO_CHOICE_ACTION =
  * ~70% menor em área que o bloco full-width com texto 8px.
  */
 export const PEDIDO_ACEITAR_BTN_CLASS =
-  "inline-flex !h-[12px] !min-h-0 shrink-0 origin-center scale-[0.82] items-center justify-center overflow-hidden whitespace-nowrap rounded-[6px] border border-orange-200/35 bg-[linear-gradient(180deg,#ffb14a_0%,#ff8d1c_48%,#ef6c00_100%)] px-0 text-[4px] font-black uppercase leading-none tracking-[0.02em] text-white shadow-[0_8px_18px_-10px_rgba(239,108,0,0.75)] transition hover:brightness-105 active:brightness-95 disabled:opacity-60 [&_span]:inline-block [&_span]:origin-center [&_span]:scale-[0.78] md:!h-[18px] md:scale-100 md:px-1 md:text-[7px] md:[&_span]:scale-100";
+  "inline-flex !h-[22px] !min-h-0 shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-[8px] border border-orange-200/35 bg-[linear-gradient(180deg,#ffb14a_0%,#ff8d1c_48%,#ef6c00_100%)] px-2 text-[8px] font-black uppercase leading-none tracking-[0.04em] text-white shadow-[0_6px_16px_-8px_rgba(239,108,0,0.7)] transition hover:brightness-105 active:scale-[0.95] active:brightness-95 disabled:opacity-55 md:!h-[26px] md:px-2.5 md:text-[9px]";
 
 export const PEDIDO_RECUSAR_BTN_CLASS =
-  "inline-flex !h-[12px] !min-h-0 shrink-0 origin-center scale-[0.82] items-center justify-center overflow-hidden whitespace-nowrap rounded-[6px] border border-[#475569] bg-transparent px-0 text-[4px] font-black uppercase leading-none tracking-[0.02em] text-[#CBD5F5] transition hover:border-[#ef4444] hover:bg-red-500/15 hover:text-red-100 active:border-[#ef4444] active:bg-red-500/22 active:text-white disabled:opacity-60 [&_span]:inline-block [&_span]:origin-center [&_span]:scale-[0.78] md:!h-[18px] md:scale-100 md:px-1 md:text-[7px] md:[&_span]:scale-100 eid-light:border-[#475569] eid-light:text-[#475569]";
+  "inline-flex !h-[22px] !min-h-0 shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-[8px] border border-[#475569] bg-transparent px-2 text-[8px] font-black uppercase leading-none tracking-[0.04em] text-[#CBD5F5] transition hover:border-[#ef4444] hover:bg-red-500/15 hover:text-red-100 active:scale-[0.95] active:border-[#ef4444] active:bg-red-500/22 active:text-white disabled:opacity-55 md:!h-[26px] md:px-2.5 md:text-[9px] eid-light:border-[#475569] eid-light:text-[#475569]";
 
 /**
- * Cancelar compacto (candidatura, pedido enviado, atalho na agenda): mesma altura fixa que Aceitar/Recusar.
+ * Cancelar compacto (candidatura, pedido enviado, atalho na agenda).
  */
 export const PEDIDO_CANCELAR_COMPACT_BTN_CLASS =
-  "inline-flex !h-[10px] !min-h-0 shrink-0 items-center justify-center rounded-full border border-red-700/90 bg-red-700 px-0 text-[2px] font-black uppercase leading-none tracking-[0.02em] text-white shadow-[0_4px_14px_-4px_rgba(220,38,38,0.45)] transition hover:bg-red-800 disabled:opacity-60";
+  "inline-flex !h-[20px] !min-h-0 shrink-0 items-center justify-center gap-0.5 rounded-full border border-red-600/80 bg-red-600 px-2 text-[7.5px] font-black uppercase leading-none tracking-[0.04em] text-white shadow-[0_4px_14px_-4px_rgba(220,38,38,0.45)] transition hover:bg-red-500 active:scale-[0.95] disabled:opacity-55";
 
 /** Ver mais / Ver menos compacto com altura padronizada. */
 export const PEDIDO_VER_MAIS_COMPACT_BTN_CLASS =
-  "inline-flex !h-[18px] !min-h-0 shrink-0 items-center rounded-full border border-eid-primary-500/35 bg-eid-primary-500/8 px-1 text-[7px] font-black uppercase leading-none tracking-[0.03em] text-eid-primary-300 transition hover:border-eid-primary-500/50 disabled:opacity-60";
+  "inline-flex !h-[22px] !min-h-0 shrink-0 items-center rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 text-[8px] font-black uppercase leading-none tracking-[0.04em] text-eid-primary-300 transition hover:border-eid-primary-500/50 hover:bg-eid-primary-500/15 active:scale-[0.96] disabled:opacity-55";
 
 /**
  * Limpar compacto (pílula, fundo claro, ícone lixeira) — usado por `EidLimparCompactButton`.
