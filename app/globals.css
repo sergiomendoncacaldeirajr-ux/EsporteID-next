@@ -5124,6 +5124,21 @@ hr {
   opacity: 0.9;
 }
 
+/* ── Feed mode — Ranking ────────────────────────────────────────────────── */
+
+/* Outer card shell: sem caixa */
+.eid-ranking-card {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Card head: sem fundo, separador sutil */
+.eid-ranking-card-head {
+  background: transparent !important;
+  border-bottom-color: color-mix(in srgb, var(--eid-border-subtle) 35%, transparent) !important;
+}
+
 /* ── Feed mode — Dashboard ──────────────────────────────────────────────── */
 
 /* Outer section wrappers: sem caixa */
