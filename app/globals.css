@@ -4831,3 +4831,152 @@ a.eid-card:hover {
   font-feature-settings: "tnum" 1, "lnum" 1;
   font-variant-numeric: tabular-nums lining-nums;
 }
+
+/* =============================================================================
+ * EsporteID — Round 5: Autofill, scroll masks, images, trophy, hr
+ * ============================================================================= */
+
+/* ── R5.1. Autofill — mantém cores da marca (evita amarelo/azul do browser) */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px color-mix(in srgb, var(--eid-field-bg) 96%, var(--eid-primary-500) 4%) inset !important;
+  -webkit-text-fill-color: var(--eid-fg) !important;
+  caret-color: var(--eid-primary-500) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+[data-eid-theme="light"] input:-webkit-autofill,
+[data-eid-theme="light"] input:-webkit-autofill:hover,
+[data-eid-theme="light"] input:-webkit-autofill:focus,
+[data-eid-theme="light"] textarea:-webkit-autofill,
+[data-eid-theme="light"] select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px color-mix(in srgb, var(--eid-field-bg) 98%, var(--eid-primary-500) 2%) inset !important;
+}
+
+
+/* ── R5.3. Imagens — fade-in suave ao carregar ──────────────────────────── */
+@keyframes eid-img-appear {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+img {
+  animation: eid-img-appear 0.22s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  img { animation: none !important; }
+}
+
+/* ── R5.4. Dark mode — dimming de imagens dentro de cards (reduz brilho) ── */
+[data-eid-theme="dark"] .eid-surface-panel img,
+[data-eid-theme="dark"] .eid-card img,
+[data-eid-theme="dark"] [id*="perfil"] img {
+  filter: brightness(0.88) contrast(1.02);
+  transition: filter 0.22s ease;
+}
+[data-eid-theme="dark"] .eid-surface-panel img:hover,
+[data-eid-theme="dark"] .eid-card img:hover {
+  filter: brightness(0.96) contrast(1.01);
+}
+
+/* ── R5.5. Trophy chip — glow âmbar pulsante ─────────────────────────────── */
+@keyframes eid-trophy-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px -4px rgba(249, 115, 22, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px -2px rgba(249, 115, 22, 0.45), 0 0 8px -1px rgba(249, 115, 22, 0.2);
+  }
+}
+
+.eid-trophy-chip {
+  animation: eid-trophy-glow 3s ease-in-out infinite;
+}
+
+/* Selector para chips de troféu existentes nos perfis */
+#perfil-public-main span[class*="eid-action-500"][class*="rounded-full"],
+#perfil-public-main div[class*="eid-action-500"][class*="rounded-full"] {
+  animation: eid-trophy-glow 3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eid-trophy-chip,
+  #perfil-public-main span[class*="eid-action-500"][class*="rounded-full"] {
+    animation: none;
+  }
+}
+
+/* ── R5.6. Achatamento de camadas — Comunidade e Agenda ─────────────────── */
+
+/* Outer section "Partidas e resultados": fundo mais sutil */
+#resultados-partida {
+  background: color-mix(in srgb, var(--eid-card) 55%, transparent) !important;
+  border-color: rgba(37, 99, 235, 0.1) !important;
+  box-shadow: 0 2px 12px -8px rgba(15, 23, 42, 0.22) !important;
+}
+
+/* Sub-seções intermediárias (placar / agendadas): remover caixa visual */
+#resultados-partida .space-y-6 > div {
+  overflow: visible !important;
+  border-radius: 0 !important;
+  border-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Container de cards dentro da sub-seção (p-3): remover padding lateral */
+#resultados-partida .space-y-6 > div > div:last-child {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* EidPanelHeader de sub-seção: virar label simples sem bg nem borda pesada */
+#resultados-partida .space-y-6 > div > div:first-child:not(:last-child) {
+  background: transparent !important;
+  border-bottom-color: rgba(37, 99, 235, 0.1) !important;
+  min-height: auto !important;
+  padding-top: 0.25rem !important;
+  padding-bottom: 0.25rem !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Padding do wrapper de conteúdo: mais apertado sem as sub-caixas */
+#resultados-partida > div:last-child {
+  padding: 0.625rem !important;
+}
+
+/* Agenda — outer wrapper: mais leve, deixa os cards individuais respirar */
+[data-eid-agenda-page] section > div:first-child {
+  background: color-mix(in srgb, var(--eid-card) 50%, transparent) !important;
+  border-color: rgba(37, 99, 235, 0.1) !important;
+  box-shadow: none !important;
+}
+
+/* ── R5.8. hr e divisores — alinhados ao design system ──────────────────── */
+hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--eid-border-subtle) 18%,
+    var(--eid-border-subtle) 82%,
+    transparent
+  );
+  opacity: 0.75;
+  margin-block: 0;
+}
+[data-eid-theme="light"] hr {
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(15, 23, 42, 0.12) 18%,
+    rgba(15, 23, 42, 0.12) 82%,
+    transparent
+  );
+  opacity: 0.9;
+}
