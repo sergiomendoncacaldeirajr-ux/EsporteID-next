@@ -31,6 +31,13 @@ function planoHerdaRegra(plano: { beneficios_json?: unknown }, key: string) {
   );
 }
 
+function parseCoord(value: unknown) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return NaN;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : NaN;
+}
+
 export default async function EspacoPublicLandingPage({ params }: Props) {
   const { slug } = await params;
   const supabase = await createClient();
@@ -130,10 +137,12 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
 
   const unidadePrincipal = unidades?.[0] ?? null;
   const venueConfig = (espaco.venue_config_json ?? null) as Record<string, unknown> | null;
-  const espacoLat = Number(espaco.lat ?? venueConfig?.lat ?? NaN);
-  const espacoLng = Number(espaco.lng ?? venueConfig?.lng ?? NaN);
-  const userLat = Number(profileLocation?.lat ?? NaN);
-  const userLng = Number(profileLocation?.lng ?? NaN);
+  const espacoLatDirect = parseCoord(espaco.lat);
+  const espacoLngDirect = parseCoord(espaco.lng);
+  const espacoLat = Number.isFinite(espacoLatDirect) ? espacoLatDirect : parseCoord(venueConfig?.lat);
+  const espacoLng = Number.isFinite(espacoLngDirect) ? espacoLngDirect : parseCoord(venueConfig?.lng);
+  const userLat = parseCoord(profileLocation?.lat);
+  const userLng = parseCoord(profileLocation?.lng);
   const distancia =
     Number.isFinite(userLat) && Number.isFinite(userLng) && Number.isFinite(espacoLat) && Number.isFinite(espacoLng)
       ? distanciaKm(userLat, userLng, espacoLat, espacoLng)

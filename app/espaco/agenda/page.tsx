@@ -230,18 +230,33 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
     })),
     feriadosAutomaticos: [],
   });
-  const gradeAgrupada = new Map<string, { titulo: string; itens: typeof grade }>();
+  const gradeAgrupada = new Map<
+    string,
+    { unidadeNome: string; total: number; dias: Map<number, { titulo: string; itens: NonNullable<typeof grade> }> }
+  >();
   for (const item of grade ?? []) {
     const diaIdx = Math.min(6, Math.max(0, Number(item.dia_semana)));
     const unidade = (unidades ?? []).find((u) => u.id === item.espaco_unidade_id);
-    const key = `${diaIdx}:${item.espaco_unidade_id ?? "geral"}`;
-    if (!gradeAgrupada.has(key)) {
-      gradeAgrupada.set(key, {
-        titulo: `${DIAS_SEMANA_CURTO[diaIdx] ?? `Dia ${item.dia_semana}`} · ${unidade?.nome ?? "Unidade"}`,
-        itens: [],
-      });
+    const key = String(item.espaco_unidade_id ?? "geral");
+    let grupo = gradeAgrupada.get(key);
+    if (!grupo) {
+      grupo = {
+        unidadeNome: unidade?.nome ?? "Unidade",
+        total: 0,
+        dias: new Map(),
+      };
+      gradeAgrupada.set(key, grupo);
     }
-    gradeAgrupada.get(key)?.itens?.push(item);
+    let diaGrupo = grupo.dias.get(diaIdx);
+    if (!diaGrupo) {
+      diaGrupo = {
+        titulo: DIAS_SEMANA_CURTO[diaIdx] ?? `Dia ${item.dia_semana}`,
+        itens: [],
+      };
+      grupo.dias.set(diaIdx, diaGrupo);
+    }
+    diaGrupo.itens.push(item);
+    grupo.total += 1;
   }
 
   return (
@@ -504,42 +519,80 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
           </form>
           <div className="mt-4 space-y-3">
             {Array.from(gradeAgrupada.values()).length ? (
-              Array.from(gradeAgrupada.values()).map((grupo) => (
-                <div key={grupo.titulo} className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-black text-eid-fg">{grupo.titulo}</p>
-                    <span className="rounded-full border border-[color:var(--eid-border-subtle)] px-2.5 py-1 text-[11px] font-semibold text-eid-text-secondary">
-                      {grupo.itens?.length ?? 0} horário(s)
+              Array.from(gradeAgrupada.values()).map((grupo, grupoIndex) => (
+                <details
+                  key={grupo.unidadeNome}
+                  open={grupoIndex === 0}
+                  className="group overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45"
+                >
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3 marker:hidden">
+                    <span className="min-w-0">
+                      <span className="block text-sm font-black text-eid-fg">{grupo.unidadeNome}</span>
+                      <span className="mt-0.5 block text-[11px] text-eid-text-secondary">
+                        {grupo.dias.size} dia(s) configurado(s)
+                      </span>
                     </span>
-                  </div>
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                    {(grupo.itens ?? []).map((item) => (
-                      <div key={item.id} className="flex items-center justify-between gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 px-3 py-2">
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-eid-fg">
-                            {String(item.hora_inicio).slice(0, 5)} às {String(item.hora_fim).slice(0, 5)}
-                          </p>
-                          <p className="mt-0.5 text-[11px] text-eid-text-secondary">
-                            {!item.ativo ? "Inativo" : "Disponível"}
-                            {item.liberar_professor ? " · professor" : ""}
-                            {item.liberar_torneio ? " · torneio" : ""}
-                          </p>
+                    <span className="flex shrink-0 items-center gap-2">
+                      <span className="rounded-full border border-[color:var(--eid-border-subtle)] px-2.5 py-1 text-[11px] font-semibold text-eid-text-secondary">
+                        {grupo.total} horário(s)
+                      </span>
+                      <span className="grid h-8 w-8 place-items-center rounded-full border border-eid-primary-500/25 bg-eid-primary-500/10 text-base font-black text-eid-primary-300 transition group-open:rotate-45">
+                        +
+                      </span>
+                    </span>
+                  </summary>
+                  <div className="space-y-2 border-t border-[color:var(--eid-border-subtle)] p-3">
+                    {Array.from(grupo.dias.entries()).map(([dia, diaGrupo], diaIndex) => (
+                      <details
+                        key={dia}
+                        open={grupoIndex === 0 && diaIndex === 0}
+                        className="group/dia overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55"
+                      >
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 marker:hidden">
+                          <span className="text-sm font-black text-eid-fg">{diaGrupo.titulo}</span>
+                          <span className="flex shrink-0 items-center gap-2">
+                            <span className="rounded-full bg-eid-surface/70 px-2.5 py-1 text-[11px] font-semibold text-eid-text-secondary">
+                              {diaGrupo.itens.length} horário(s)
+                            </span>
+                            <span className="text-base font-black text-eid-primary-300 transition group-open/dia:rotate-45">
+                              +
+                            </span>
+                          </span>
+                        </summary>
+                        <div className="grid gap-2 border-t border-[color:var(--eid-border-subtle)] p-3 sm:grid-cols-2">
+                          {diaGrupo.itens.map((item) => (
+                            <div
+                              key={item.id}
+                              className="flex items-center justify-between gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-3 py-2"
+                            >
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-eid-fg">
+                                  {String(item.hora_inicio).slice(0, 5)} às {String(item.hora_fim).slice(0, 5)}
+                                </p>
+                                <p className="mt-0.5 text-[11px] text-eid-text-secondary">
+                                  {!item.ativo ? "Inativo" : "Disponível"}
+                                  {item.liberar_professor ? " · professor" : ""}
+                                  {item.liberar_torneio ? " · torneio" : ""}
+                                </p>
+                              </div>
+                              <form action={removerHorarioSemanalEspacoAction} className="shrink-0">
+                                <input type="hidden" name="espaco_id" value={selectedSpace.id} />
+                                <input type="hidden" name="horario_id" value={item.id} />
+                                <button
+                                  type="submit"
+                                  aria-label={`Remover horário ${String(item.hora_inicio).slice(0, 5)}`}
+                                  className="rounded-lg border border-red-500/35 bg-red-500/10 px-3 py-1.5 text-[11px] font-semibold text-red-300"
+                                >
+                                  Remover
+                                </button>
+                              </form>
+                            </div>
+                          ))}
                         </div>
-                        <form action={removerHorarioSemanalEspacoAction} className="shrink-0">
-                          <input type="hidden" name="espaco_id" value={selectedSpace.id} />
-                          <input type="hidden" name="horario_id" value={item.id} />
-                          <button
-                            type="submit"
-                            aria-label={`Remover horário ${String(item.hora_inicio).slice(0, 5)}`}
-                            className="rounded-lg border border-red-500/35 bg-red-500/10 px-3 py-1.5 text-[11px] font-semibold text-red-300"
-                          >
-                            Remover
-                          </button>
-                        </form>
-                      </div>
+                      </details>
                     ))}
                   </div>
-                </div>
+                </details>
               ))
             ) : (
               <p className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-4 text-sm text-eid-text-secondary">

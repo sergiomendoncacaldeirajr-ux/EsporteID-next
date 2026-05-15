@@ -95,11 +95,18 @@ function LocalRow({ l, dist }: { l: LocalCard; dist?: number }) {
   );
 }
 
+function parseCoord(value: unknown) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return NaN;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : NaN;
+}
+
 function coordFromLocal(l: LocalCard, key: "lat" | "lng") {
-  const direct = Number(l[key] ?? NaN);
+  const direct = parseCoord(l[key]);
   if (Number.isFinite(direct)) return direct;
   const cfg = (l.venue_config_json ?? null) as Record<string, unknown> | null;
-  const fallback = Number(cfg?.[key] ?? NaN);
+  const fallback = parseCoord(cfg?.[key]);
   return Number.isFinite(fallback) ? fallback : NaN;
 }
 

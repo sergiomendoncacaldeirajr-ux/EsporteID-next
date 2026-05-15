@@ -8,13 +8,6 @@ type Props = {
   searchParams?: Promise<{ espaco?: string; valor?: string }>;
 };
 
-function pct(value: number | null | undefined) {
-  return `${(Number(value ?? 0) * 100).toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}%`;
-}
-
 export default async function EspacoTaxasPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const espacoId = Number(sp.espaco ?? 0) || null;
@@ -72,14 +65,10 @@ export default async function EspacoTaxasPage({ searchParams }: Props) {
           <div key={taxa.metodo} className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4">
             <CreditCard className="h-5 w-5 text-eid-primary-300" aria-hidden />
             <p className="mt-3 text-sm font-black text-eid-fg">{taxa.label}</p>
-            <p className="mt-1 text-xs text-eid-text-secondary">
-              {taxa.taxaPercentual > 0 ? `${pct(taxa.taxaPercentual)} + ` : ""}
-              {fiscalCentavosToCurrency(taxa.taxaFixaCentavos)}
-            </p>
             <div className="mt-4 space-y-2 text-xs">
               <div className="flex justify-between gap-3">
-                <span className="text-eid-text-secondary">Taxa total estimada</span>
-                <span className="font-bold text-eid-fg">{fiscalCentavosToCurrency(taxa.custoTotalCentavos)}</span>
+                <span className="text-eid-text-secondary">Taxa total</span>
+                <span className="font-black text-eid-fg">{fiscalCentavosToCurrency(taxa.custoTotalCentavos)}</span>
               </div>
               <div className="flex justify-between gap-3 border-t border-[color:var(--eid-border-subtle)] pt-2">
                 <span className="text-eid-text-secondary">Líquido estimado</span>
