@@ -78,11 +78,11 @@
   --eid-radius-lg: 14px;
   --eid-radius-xl: 18px;
 
-  /* Superfícies — escuro: camadas de cinza/azulado (evita “buraco” preto) */
-  --eid-bg: #0b0f14;
-  --eid-surface: #121820;
-  --eid-card: #161d28;
-  --eid-field-bg: #1a222e;
+  /* Superfícies — escuro OLED: preto profundo com tonalidade naval */
+  --eid-bg: #07090d;
+  --eid-surface: #0e1520;
+  --eid-card: #131d2c;
+  --eid-field-bg: #182030;
 
   /*
    * Cor para `theme-color` / barra de status: igual ao topo real do app no escuro.
@@ -4650,14 +4650,16 @@ html {
   position: absolute;
   inset-y: 0;
   left: 0;
-  width: 38%;
+  width: 42%;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.065) 50%,
+    rgba(255, 255, 255, 0.09) 45%,
+    rgba(255, 255, 255, 0.11) 50%,
+    rgba(255, 255, 255, 0.09) 55%,
     transparent 100%
   );
-  animation: eid-skeleton-shimmer 2.0s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  animation: eid-skeleton-shimmer 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   pointer-events: none;
 }
 
@@ -5568,5 +5570,110 @@ body.eid-app-shell .eid-btn-primary {
 body.eid-app-shell .eid-btn-primary:hover {
   box-shadow: 0 6px 18px -6px color-mix(in srgb, var(--eid-primary-500) 65%, transparent),
               inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+/* =============================================================================
+ * Native app feel — polimento final
+ * ============================================================================= */
+
+/* ── 1. Text rendering global ────────────────────────────────────────────── */
+body.eid-app-shell {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ── 2. Tap highlight removido globalmente (sensação nativa) ─────────────── */
+body.eid-app-shell * {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── 3. Press states em links e cards (complementa botões já existentes) ─── */
+body.eid-app-shell a:not(.eid-no-press):not([aria-disabled="true"]) {
+  touch-action: manipulation;
+  transition:
+    transform 0.14s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.16s ease,
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+body.eid-app-shell a:not(.eid-no-press):not([aria-disabled="true"]):active {
+  transform: scale(0.97);
+  opacity: 0.82;
+}
+
+body.eid-app-shell .eid-list-item:active,
+body.eid-app-shell .eid-card:active,
+body.eid-app-shell .eid-surface-panel:active,
+body.eid-app-shell .eid-ranking-card:active {
+  transform: scale(0.98);
+  opacity: 0.85;
+}
+
+/* ── 4. Nav bar dark mode — frosted glass premium ────────────────────────── */
+#eid-mobile-bottom-nav > nav > div {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--eid-surface) 78%, transparent) 0%,
+    color-mix(in srgb, var(--eid-bg) 88%, transparent) 100%
+  ) !important;
+  border-top-color: rgba(255, 255, 255, 0.07) !important;
+  box-shadow:
+    0 -1px 0 rgba(255, 255, 255, 0.05),
+    0 -16px 40px -12px rgba(0, 0, 0, 0.55) !important;
+}
+
+/* ── 5. Botão de ação CTA laranja — sombra colorida ─────────────────────── */
+body.eid-app-shell .eid-btn-match-cta,
+body.eid-app-shell .eid-btn-dashboard-cta {
+  box-shadow: 0 4px 14px -6px color-mix(in srgb, var(--eid-action-500) 55%, transparent),
+              inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+body.eid-app-shell .eid-btn-match-cta:hover,
+body.eid-app-shell .eid-btn-dashboard-cta:hover {
+  box-shadow: 0 6px 18px -6px color-mix(in srgb, var(--eid-action-500) 65%, transparent),
+              inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+/* ── 6. View transition — saída mais rápida para sensação responsiva ─────── */
+::view-transition-old(.eid-vt-main-out) {
+  animation-duration: 110ms !important;
+}
+::view-transition-new(.eid-vt-main-in) {
+  animation-duration: 220ms !important;
+  animation-delay: 40ms !important;
+}
+
+/* =============================================================================
+ * Capacitor / Android WebView — polimento nativo
+ * Desabilita pull-to-refresh do SO, barra de scroll e overscroll glow.
+ * Funciona no Chromium WebView (Android 5+) sem precisar de nova AAB.
+ * ============================================================================= */
+
+/* Sem overscroll (pull-to-refresh + glow de borda) */
+html,
+body {
+  overscroll-behavior: none !important;
+  overscroll-behavior-y: none !important;
+}
+
+/* Sem scrollbar no WebView Android (Chromium aceita -webkit-scrollbar) */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Garante que o overscroll também não aparece em contêineres internos com scroll */
+.eid-app-shell,
+#eid-app-shell-main-wrap,
+[data-eid-ranking-page],
+[data-eid-confrontos-page],
+[data-eid-locais-page],
+[data-eid-vagas-page] {
+  overscroll-behavior: contain !important;
 }
 
