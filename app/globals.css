@@ -5176,6 +5176,52 @@ hr {
   padding-bottom: max(2rem, env(safe-area-inset-bottom, 0.5rem)) !important;
 }
 
+/* ── Feed mode — Sininho (Central de notificações) ───────────────────────── */
+
+/* Painel externo: fundo mais limpo sem gradiente */
+[data-eid-notif-modal] {
+  background: var(--eid-card) !important;
+}
+
+/* Toggle push: fundo transparente, apenas borda sutil */
+[data-eid-notif-modal] div[class*="mt-2.5"][class*="rounded-lg"][class*="border"] {
+  background: transparent !important;
+  border-color: color-mix(in srgb, var(--eid-border-subtle) 55%, transparent) !important;
+}
+
+/* Itens do resumo rápido (Agenda / Social / Placar): sem caixa + separador */
+[data-eid-notif-modal] li[class*="justify-between"][class*="rounded-lg"] {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--eid-border-subtle) 35%, transparent) !important;
+  border-radius: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+[data-eid-notif-modal] li[class*="justify-between"][class*="rounded-lg"]:last-child {
+  border-bottom-color: transparent !important;
+}
+
+/* Itens de notificação individual: sem caixa + separador */
+[data-eid-notif-modal] li > div[class*="items-start"][class*="rounded-lg"] {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--eid-border-subtle) 30%, transparent) !important;
+  border-radius: 0 !important;
+  padding-left: 0 !important;
+}
+[data-eid-notif-modal] li:last-child > div[class*="items-start"][class*="rounded-lg"] {
+  border-bottom-color: transparent !important;
+}
+
+/* Estado vazio (nenhuma notificação): sem caixa */
+[data-eid-notif-modal] div[class*="flex-col"][class*="rounded-lg"] {
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
 /* ── Feed mode — Confrontos ──────────────────────────────────────────────── */
 
 [data-eid-confrontos-page] { max-width: 100% !important; }
