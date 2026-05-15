@@ -5171,6 +5171,11 @@ hr {
   border-bottom-color: color-mix(in srgb, var(--eid-border-subtle) 35%, transparent) !important;
 }
 
+/* Respiro inferior — fullscreen sem shell (pb da variável fica 0) */
+.eid-desafio-ui {
+  padding-bottom: max(2rem, env(safe-area-inset-bottom, 0.5rem)) !important;
+}
+
 /* ── Feed mode — Páginas de edição (Perfil / Equipes / Performance EID) ─── */
 
 /* Seções de painel nas telas de edição: sem caixa */
