@@ -469,7 +469,6 @@ export async function RankingStreamBody({
               <span className="relative flex h-14 w-14 shrink-0 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-xl border border-eid-action-500/40 bg-eid-action-500/12 text-eid-action-300 shadow-[0_12px_26px_-14px_rgba(249,115,22,0.9),inset_0_1px_0_rgba(255,255,255,0.08)] transition group-hover:border-eid-action-500/65 group-hover:bg-eid-action-500/20 group-hover:shadow-[0_14px_28px_-12px_rgba(249,115,22,1)]">
                 <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.25),transparent_50%)] opacity-70" aria-hidden />
                 <span className="text-[14px] font-black leading-none tracking-tight">VS</span>
-                <span className="text-[6.5px] font-black uppercase leading-none tracking-[0.08em] text-eid-action-200/80">Ver</span>
               </span>
             </ProfileEditDrawerTrigger>
           </section>

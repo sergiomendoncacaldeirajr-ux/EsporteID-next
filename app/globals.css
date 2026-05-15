@@ -5124,6 +5124,35 @@ hr {
   opacity: 0.9;
 }
 
+/* ── Feed mode — Perfil ─────────────────────────────────────────────────── */
+
+/* Wrappers de seção: sem caixa (filhos diretos de <section>) */
+[data-eid-perfil-page] section > div[class*="rounded"][class*="overflow-hidden"] {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Sub-cabeçalhos dentro dos wrappers */
+[data-eid-perfil-page] section > div > div[class*="border-b"] {
+  background: transparent !important;
+  border-bottom-color: color-mix(in srgb, var(--eid-border-subtle) 35%, transparent) !important;
+}
+
+/* Articles e li dentro de seções do perfil */
+[data-eid-perfil-page] section article,
+[data-eid-perfil-page] section li[class*="rounded"] {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--eid-border-subtle) 35%, transparent) !important;
+}
+[data-eid-perfil-page] section article:last-child,
+[data-eid-perfil-page] section li[class*="rounded"]:last-child {
+  border-bottom-color: transparent !important;
+}
+
 /* ── Feed mode — Ranking ────────────────────────────────────────────────── */
 
 /* Outer card shell: sem caixa */

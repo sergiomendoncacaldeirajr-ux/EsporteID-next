@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 function cn(...xs: (string | false | undefined)[]) {
   return xs.filter(Boolean).join(" ");
@@ -14,21 +14,6 @@ type Props = {
 /** Bloco Filtros do ranking: inicia recolhido; seta expande/recolhe o painel. */
 export function RankingFilterBarPanel({ summaryRight, children }: Props) {
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem("eid:ranking-filter-open");
-      if (saved === "1") {
-        setOpen(true);
-        return;
-      }
-      if (document.body.classList.contains("eid-capacitor-app") || document.body.classList.contains("eid-native-android-app")) {
-        setOpen(true);
-      }
-    } catch {
-      /* best-effort */
-    }
-  }, []);
 
   const toggleOpen = () => {
     setOpen((v) => {
