@@ -5570,9 +5570,3 @@ body.eid-app-shell .eid-btn-primary:hover {
               inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
-/* ── 7. Seções — cabeçalho com acento lateral sutil ─────────────────────── */
-body.eid-app-shell .eid-dashboard-section-head,
-body.eid-app-shell .eid-ranking-card-head {
-  border-left: 2px solid color-mix(in srgb, var(--eid-primary-500) 55%, transparent);
-  padding-left: calc(var(--spacing, 0px) + 0.25rem);
-}
