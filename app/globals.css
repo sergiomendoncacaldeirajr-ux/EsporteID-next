@@ -5060,16 +5060,19 @@ a.eid-card:hover {
   border-bottom-color: transparent !important;
 }
 
-/* Agenda — confrontos: outer wrapper transparente */
-[data-eid-agenda-page] section > div:where([class*="rounded"]) {
+/* Agenda — wrappers de seção: transparentes (descendente para cobrir aninhamentos) */
+[data-eid-agenda-page] section div[class*="rounded-xl"][class*="overflow-hidden"],
+[data-eid-agenda-page] section div[class*="rounded-2xl"][class*="overflow-hidden"] {
   background: transparent !important;
   border-color: transparent !important;
   box-shadow: none !important;
 }
-[data-eid-agenda-page] section > div > div[class*="min-h-10"] {
+/* Agenda — EidPanelHeader dentro de seções */
+[data-eid-agenda-page] section div[class*="min-h-10"] {
   background: transparent !important;
   border-bottom-color: color-mix(in srgb, var(--eid-border-subtle) 30%, transparent) !important;
 }
+/* Agenda — cards tipo article (confrontos / desafios aceitos) */
 [data-eid-agenda-page] section article {
   background: transparent !important;
   border-color: transparent !important;
@@ -5080,6 +5083,19 @@ a.eid-card:hover {
   border-bottom: 1px solid color-mix(in srgb, var(--eid-border-subtle) 35%, transparent) !important;
 }
 [data-eid-agenda-page] section article:last-child {
+  border-bottom-color: transparent !important;
+}
+/* Agenda — pedidos de ranking usam <li> em vez de <article> */
+[data-eid-agenda-page] section li[class*="rounded"] {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-radius: 0 !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--eid-border-subtle) 35%, transparent) !important;
+}
+[data-eid-agenda-page] section li[class*="rounded"]:last-child {
   border-bottom-color: transparent !important;
 }
 
