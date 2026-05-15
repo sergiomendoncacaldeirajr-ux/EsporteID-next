@@ -112,7 +112,7 @@ export default async function RankingPage({ searchParams }: Props) {
         className="pointer-events-none absolute inset-x-0 top-0 z-0 h-48 max-h-[24rem] bg-[radial-gradient(ellipse_95%_60%_at_50%_-8%,rgba(37,99,235,0.13),transparent_55%),radial-gradient(ellipse_50%_30%_at_80%_0%,rgba(249,115,22,0.07),transparent_60%)] sm:h-64"
         aria-hidden
       />
-      <main className="eid-progressive-enter relative z-[1] mx-auto flex w-full min-w-0 max-w-lg flex-col px-3 pb-[calc(var(--eid-shell-content-bottom-pad)+4.75rem)] pt-0 sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[var(--eid-shell-content-bottom-pad)]">
+      <main className="eid-progressive-enter relative z-[1] mx-auto flex w-full min-w-0 max-w-lg flex-col px-3 pb-[calc(var(--eid-shell-content-bottom-pad)+1.5rem)] pt-0 sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[var(--eid-shell-content-bottom-pad)]">
         <div className={`eid-ranking-hero mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-3 py-3 sm:px-6 sm:py-5`}>
           <div className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full bg-eid-action-500/8 blur-3xl" aria-hidden />
           <div className="pointer-events-none absolute -bottom-6 -left-6 h-28 w-28 rounded-full bg-eid-primary-500/10 blur-3xl" aria-hidden />
