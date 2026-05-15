@@ -59,6 +59,9 @@ export default async function DashboardPage({ searchParams }: Props) {
   if (activeContext === "organizador" && contextState.papeis.includes("organizador")) {
     redirect("/organizador");
   }
+  if (activeContext === "espaco" && contextState.papeis.includes("espaco")) {
+    redirect("/espaco");
+  }
   if (contaSomenteDonoEspaco(contextState.papeis)) {
     redirect("/espaco");
   }

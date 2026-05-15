@@ -18,6 +18,7 @@ export async function asaasFetch<T>(path: string, init: AsaasRequestInit = {}): 
     method: init.method ?? "GET",
     headers: {
       "Content-Type": "application/json",
+      "User-Agent": "EsporteID/1.0 (https://esporteid.com.br; financeiro@esporteid.com.br)",
       access_token: apiKey,
     },
     body: init.body !== undefined ? JSON.stringify(init.body) : undefined,

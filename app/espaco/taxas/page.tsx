@@ -36,17 +36,15 @@ export default async function EspacoTaxasPage({ searchParams }: Props) {
       .limit(50),
   ]);
   const taxas = calcularTaxasAsaasEspaco({ valorCentavos: valorReferenciaCentavos, config });
-  const share = Number((config as Record<string, unknown> | null)?.espaco_plataforma_sobre_taxa_gateway ?? 0.5);
   const atualizadas = (config as Record<string, unknown> | null)?.asaas_taxas_atualizadas_em;
   const fonteTaxas = String((config as Record<string, unknown> | null)?.asaas_taxas_fonte ?? "admin");
 
-  const reaisPorMetodo = new Map<string, { count: number; fee: number; plataforma: number; bruto: number }>();
+  const reaisPorMetodo = new Map<string, { count: number; custo: number; bruto: number }>();
   for (const row of reais ?? []) {
     const key = String(row.asaas_billing_type ?? "OUTRO").toUpperCase();
-    const atual = reaisPorMetodo.get(key) ?? { count: 0, fee: 0, plataforma: 0, bruto: 0 };
+    const atual = reaisPorMetodo.get(key) ?? { count: 0, custo: 0, bruto: 0 };
     atual.count += 1;
-    atual.fee += Number(row.asaas_fee_centavos ?? 0);
-    atual.plataforma += Number(row.comissao_plataforma_centavos ?? 0);
+    atual.custo += Number(row.asaas_fee_centavos ?? 0) + Number(row.comissao_plataforma_centavos ?? 0);
     atual.bruto += Number(row.valor_bruto_centavos ?? 0);
     reaisPorMetodo.set(key, atual);
   }
@@ -57,13 +55,27 @@ export default async function EspacoTaxasPage({ searchParams }: Props) {
         <p className="text-[11px] font-bold uppercase tracking-wide text-eid-primary-300">Taxas</p>
         <h2 className="mt-1 text-2xl font-black text-eid-fg">Taxas de transação</h2>
         <p className="mt-1 max-w-3xl text-sm leading-relaxed text-eid-text-secondary">
-          Estimativa por método de pagamento para {selectedSpace.nome_publico}. A plataforma retém {pct(share)} da taxa
-          base do Asaas como comissão operacional.
+          Estimativa por método de pagamento para {selectedSpace.nome_publico}. Veja o custo total da transação e o
+          líquido previsto para o espaço.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-eid-text-secondary">
-          <span className="rounded-full border border-[color:var(--eid-border-subtle)] px-3 py-1">
-            Referência: {fiscalCentavosToCurrency(valorReferenciaCentavos)}
-          </span>
+          <form className="flex w-full flex-col gap-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-3 sm:w-auto sm:min-w-80 sm:flex-row sm:items-end">
+            {espacoId ? <input type="hidden" name="espaco" value={espacoId} /> : null}
+            <label className="min-w-0 flex-1 text-[11px] font-semibold text-eid-text-secondary">
+              Valor da cobrança
+              <input
+                name="valor"
+                type="number"
+                min="1"
+                step="0.01"
+                defaultValue={(valorReferenciaCentavos / 100).toFixed(2)}
+                className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm font-bold text-eid-fg"
+              />
+            </label>
+            <button className="eid-btn-primary rounded-xl px-4 py-2 text-xs font-black sm:mb-0.5">
+              Calcular
+            </button>
+          </form>
           <span className="rounded-full border border-[color:var(--eid-border-subtle)] px-3 py-1">
             Fonte: {fonteTaxas}
           </span>
@@ -86,12 +98,8 @@ export default async function EspacoTaxasPage({ searchParams }: Props) {
             </p>
             <div className="mt-4 space-y-2 text-xs">
               <div className="flex justify-between gap-3">
-                <span className="text-eid-text-secondary">Taxa Asaas</span>
-                <span className="font-bold text-eid-fg">{fiscalCentavosToCurrency(taxa.baseAsaasCentavos)}</span>
-              </div>
-              <div className="flex justify-between gap-3">
-                <span className="text-eid-text-secondary">Comissão plataforma</span>
-                <span className="font-bold text-eid-fg">{fiscalCentavosToCurrency(taxa.comissaoPlataformaCentavos)}</span>
+                <span className="text-eid-text-secondary">Taxa total estimada</span>
+                <span className="font-bold text-eid-fg">{fiscalCentavosToCurrency(taxa.custoTotalCentavos)}</span>
               </div>
               <div className="flex justify-between gap-3 border-t border-[color:var(--eid-border-subtle)] pt-2">
                 <span className="text-eid-text-secondary">Líquido estimado</span>
@@ -128,8 +136,12 @@ export default async function EspacoTaxasPage({ searchParams }: Props) {
                     <p className="mt-1 text-xs text-eid-text-secondary">{resumo.count} cobrança(s) com taxa efetiva</p>
                   </div>
                   <div className="text-right text-xs">
-                    <p className="font-bold text-eid-fg">Média Asaas {fiscalCentavosToCurrency(Math.round(resumo.fee / resumo.count))}</p>
-                    <p className="mt-1 text-eid-text-secondary">Plataforma {fiscalCentavosToCurrency(Math.round(resumo.plataforma / resumo.count))}</p>
+                    <p className="font-bold text-eid-fg">
+                      Custo médio {fiscalCentavosToCurrency(Math.round(resumo.custo / resumo.count))}
+                    </p>
+                    <p className="mt-1 text-eid-text-secondary">
+                      Ticket médio {fiscalCentavosToCurrency(Math.round(resumo.bruto / resumo.count))}
+                    </p>
                   </div>
                 </div>
               </div>

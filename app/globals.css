@@ -5431,3 +5431,67 @@ hr {
   border-color: color-mix(in srgb, var(--eid-border-subtle) 35%, transparent) !important;
   box-shadow: none !important;
 }
+
+/* =============================================================================
+ * Glass card mode — Substitui feed mode transparente por caixas sutis elegantes.
+ * Regras posteriores com mesma especificidade + !important ganham da cascade.
+ * ============================================================================= */
+
+/* Valores reutilizados:
+ *   bg      = color-mix(in srgb, var(--eid-surface) 48%, transparent)
+ *   border  = color-mix(in srgb, var(--eid-border-subtle) 60%, transparent)
+ *   radius  = 0.75rem
+ *   shadow  = 0 2px 10px -6px rgba(0,0,0,0.22)
+ */
+
+.eid-list-item,
+.eid-surface-panel,
+.eid-card,
+.eid-dashboard-section,
+.eid-ranking-card,
+/* Agenda */
+[data-eid-agenda-page] section div[class*="rounded-xl"][class*="overflow-hidden"],
+[data-eid-agenda-page] section div[class*="rounded-2xl"][class*="overflow-hidden"],
+[data-eid-agenda-page] section article,
+[data-eid-agenda-page] section li[class*="rounded"],
+/* Comunidade — desafios aceitos e resultados */
+#desafios-aceitos-gestao > div,
+#desafios-aceitos-gestao article,
+#resultados-partida,
+#resultados-partida article,
+/* Modal de resultado */
+[data-eid-resultado-modal] div[class*="rounded-2xl"][class*="overflow-hidden"],
+/* Desafio UI */
+.eid-desafio-ui div[class*="rounded-2xl"][class*="overflow-hidden"],
+.eid-desafio-ui div[class*="rounded-xl"][class*="overflow-hidden"],
+/* Edição de perfil / equipes */
+.eid-profile-edit-screen section,
+/* Histórico */
+[data-eid-historico-page] > div > div[class*="rounded-2xl"][class*="overflow-hidden"],
+[data-eid-historico-page] ul > li,
+/* Performance */
+[data-eid-performance-page] section article,
+/* Perfil público */
+[data-eid-perfil-page] section > div[class*="rounded"][class*="overflow-hidden"],
+[data-eid-perfil-page] section article,
+[data-eid-perfil-page] section li[class*="rounded"],
+/* Confrontos */
+[data-eid-confrontos-page] > section[class*="rounded-2xl"][class*="overflow-hidden"],
+[data-eid-confrontos-page] article[class*="rounded-2xl"][class*="overflow-hidden"],
+/* Locais */
+[data-eid-locais-page] div[class*="rounded-2xl"][class*="overflow-hidden"],
+[data-eid-locais-page] div[class*="flex-col"][class*="gap-"] > a[class*="rounded-xl"],
+/* Times / Vagas */
+[data-eid-vagas-page] > div[class*="rounded-3xl"][class*="overflow-hidden"],
+[data-eid-vagas-page] > section[class*="rounded-2xl"][class*="overflow-hidden"],
+[data-eid-vagas-page] ul > li[class*="rounded-2xl"],
+/* Sininho */
+[data-eid-notif-modal] li[class*="justify-between"][class*="rounded-lg"],
+[data-eid-notif-modal] li > div[class*="items-start"][class*="rounded-lg"],
+/* Dashboard — grid de atalhos */
+[data-eid-dashboard-page] section div[class*="grid"] > :is(a, div)[class*="rounded"] {
+  background: color-mix(in srgb, var(--eid-surface) 48%, transparent) !important;
+  border-color: color-mix(in srgb, var(--eid-border-subtle) 60%, transparent) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 2px 10px -6px rgba(0, 0, 0, 0.22) !important;
+}

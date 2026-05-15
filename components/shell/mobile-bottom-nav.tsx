@@ -559,6 +559,8 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
 
   if (onAuthPage) return null;
 
+  if (activeContext === "espaco") return null;
+
   if (pathname.startsWith("/admin") || pathname.startsWith("/espaco")) return null;
 
   const isHome =
@@ -566,9 +568,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       ? pathname === "/organizador"
       : activeContext === "professor"
         ? pathname === "/professor"
-        : activeContext === "espaco"
-          ? pathname === "/espaco"
-          : pathname === "/dashboard" || pathname === "/buscar";
+        : pathname === "/dashboard" || pathname === "/buscar";
   const isAgenda =
     pathname === "/agenda" ||
     pathname.startsWith("/match") ||
@@ -587,11 +587,6 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   const isProfAlunos = pathname === "/professor/alunos" || pathname.startsWith("/professor/alunos/");
   const isProfAvaliacoes =
     pathname === "/professor/avaliacoes" || pathname.startsWith("/professor/avaliacoes/");
-  const isEspAgenda = pathname === "/espaco/agenda" || pathname.startsWith("/espaco/agenda/");
-  const isEspSocios = pathname === "/espaco/socios" || pathname.startsWith("/espaco/socios/");
-  const isEspFinanceiro =
-    pathname === "/espaco/financeiro" || pathname.startsWith("/espaco/financeiro/");
-
   const items: Array<{
     href: string;
     label: string;
@@ -666,40 +661,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
               active: isPerfil,
             },
           ]
-        : activeContext === "espaco"
-          ? [
-              {
-                href: getContextHomeHref(activeContext),
-                label: "Home",
-                icon: <IconHome active={isHome} />,
-                active: isHome,
-              },
-              {
-                href: "/espaco/agenda",
-                label: "Agenda",
-                icon: <IconAgenda active={isEspAgenda} />,
-                active: isEspAgenda,
-              },
-              {
-                href: "/espaco/socios",
-                label: "Sócios",
-                icon: <IconSocial active={isEspSocios} />,
-                active: isEspSocios,
-              },
-              {
-                href: "/espaco/financeiro",
-                label: "Financeiro",
-                icon: <IconTrophy active={isEspFinanceiro} />,
-                active: isEspFinanceiro,
-              },
-              {
-                href: `/perfil/${resolvedUserId}`,
-                label: "Perfil",
-                icon: <IconPerfil active={isPerfil} />,
-                active: isPerfil,
-              },
-            ]
-          : [
+        : [
           {
             href: getContextHomeHref(activeContext),
             label: "Home",
