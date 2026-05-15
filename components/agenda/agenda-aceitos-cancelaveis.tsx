@@ -228,7 +228,7 @@ export function AgendaAceitosCancelaveis({
           const avatarEhFormacao =
             modalidadeKey !== "individual" && Boolean(m.oponenteAvatarEhTime && Number(m.oponenteTimeId ?? 0) > 0);
           const avatarShapeClass = avatarEhFormacao ? "rounded-xl" : "rounded-full";
-          const avatarFrameClass = `inline-flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ring-1 ring-eid-card md:h-10 md:w-10 md:text-xs ${avatarShapeClass}`;
+          const avatarFrameClass = `inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden border-2 border-[color:var(--eid-border-subtle)] bg-eid-surface text-sm font-black text-eid-primary-300 shadow-[0_4px_14px_-8px_rgba(15,23,42,0.4)] ${avatarShapeClass}`;
           const avatarNode = m.avatarOponente ? (
             <span className={`${avatarFrameClass} pointer-events-none relative`}>
               <Image src={m.avatarOponente} alt="" fill unoptimized className="object-cover object-center" />
@@ -250,37 +250,51 @@ export function AgendaAceitosCancelaveis({
           return (
             <article
               key={m.id}
-              className="rounded-2xl border border-[rgba(37,99,235,0.08)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] px-2.5 py-2.5 shadow-[0_2px_10px_-6px_rgba(15,23,42,0.25),inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-sm md:px-3 md:py-3"
+              className="relative rounded-2xl border border-[rgba(37,99,235,0.08)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] px-3 py-3 shadow-[0_2px_10px_-6px_rgba(15,23,42,0.25),inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-sm"
             >
-            <div className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-start gap-2 md:grid-cols-[40px_minmax(0,1fr)_auto]">
-              <div className="flex w-[40px] shrink-0 flex-col items-center">
+            {/* Status badge — absolute top-right */}
+            <div className="absolute right-2.5 top-2.5">
+              {String(m.status ?? "").includes("Pendente") ? (
+                <EidPendingBadge label={formatStatusLabel(m.statusLabel ?? m.status)} compact className="whitespace-nowrap text-[8px]" />
+              ) : String(m.statusLabel ?? "").trim().toLowerCase() === "agendado" ? (
+                <span className="whitespace-nowrap rounded-full border border-sky-500/35 bg-sky-500/12 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.06em] text-sky-300">
+                  Agendado
+                </span>
+              ) : String(m.status ?? "").trim().toLowerCase() === "aceito" ? (
+                <EidAcceptedBadge label={formatStatusLabel(m.statusLabel ?? m.status)} compact className="whitespace-nowrap text-[8px]" />
+              ) : (
+                <span className="whitespace-nowrap rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)]">
+                  {formatStatusLabel(m.statusLabel ?? m.status)}
+                </span>
+              )}
+            </div>
+
+            {/* Main content row: large avatar left + info right */}
+            <div className="flex items-start gap-3 pr-16">
+              <div className="flex shrink-0 flex-col items-center gap-1.5">
                 {eidHref ? (
                   <ProfileEditDrawerTrigger
                     href={eidHref}
                     title={`Estatísticas EID de ${m.nomeOponente}`}
                     fullscreen
                     topMode="backOnly"
-                    className={`block border-0 bg-transparent p-0 transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500 ${
-                      avatarShapeClass
-                    }`}
+                    className={`block border-0 bg-transparent p-0 transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500 ${avatarShapeClass}`}
                   >
                     {avatarNode}
                   </ProfileEditDrawerTrigger>
                 ) : (
                   avatarNode
                 )}
-                <div className="mt-1">
-                  <ProfileEidPerformanceSeal notaEid={Number(m.notaEidOponente ?? 0)} compact />
-                </div>
+                <ProfileEidPerformanceSeal notaEid={Number(m.notaEidOponente ?? 0)} compact />
               </div>
-              <div className="min-w-0">
-                <p className="truncate text-[13px] font-bold text-eid-fg md:text-sm">{m.nomeOponente}</p>
-                <p className="text-[11px] text-eid-text-secondary md:text-xs">
+              <div className="min-w-0 flex-1 pt-0.5">
+                <p className="truncate text-[15px] font-black leading-tight text-eid-fg">{m.nomeOponente}</p>
+                <p className="mt-0.5 text-[11px] text-eid-text-secondary">
                   <span className="inline-flex items-center gap-1">
                     <SportGlyphIcon sportName={m.esporte} />
                     <span>{m.esporte}</span>
                   </span>
-                  <span className="mx-1 opacity-70">|</span>
+                  <span className="mx-1 opacity-60">·</span>
                   <span className="inline-flex items-center gap-1">
                     <ModalidadeGlyphIcon
                       modalidade={
@@ -294,51 +308,35 @@ export function AgendaAceitosCancelaveis({
                     <span>{m.modalidade}</span>
                   </span>
                 </p>
-                <div className="text-[10px] md:text-[11px]">
+                <div className="mt-0.5 text-[10px]">
                   <EidCityState location={m.localizacaoOponente?.trim() ? m.localizacaoOponente : null} compact align="start" />
                 </div>
               </div>
-              <div className="flex justify-end">
-                {String(m.status ?? "").includes("Pendente") ? (
-                  <EidPendingBadge label={formatStatusLabel(m.statusLabel ?? m.status)} compact className="whitespace-nowrap md:text-[9px]" />
-                ) : String(m.statusLabel ?? "")
-                    .trim()
-                    .toLowerCase() === "agendado" ? (
-                  <span className="whitespace-nowrap rounded-full border border-sky-500/35 bg-sky-500/12 px-2 py-0.5 text-left text-[8px] font-black uppercase tracking-[0.06em] text-sky-300 md:text-[9px]">
-                    Agendado
-                  </span>
-                ) : String(m.status ?? "").trim().toLowerCase() === "aceito" ? (
-                  <EidAcceptedBadge label={formatStatusLabel(m.statusLabel ?? m.status)} compact className="whitespace-nowrap md:text-[9px]" />
-                ) : (
-                  <span className="whitespace-nowrap rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-left text-[8px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] md:text-[9px]">
-                    {formatStatusLabel(m.statusLabel ?? m.status)}
-                  </span>
-                )}
-              </div>
             </div>
 
-            <div className="mt-1.5 min-w-0 md:mt-2">
+            <div className="mt-2 min-w-0">
               {m.status === "CancelamentoPendente" ? (
-                <p className="mt-1 text-[10px] text-[color:color-mix(in_srgb,var(--eid-warning-500)_78%,var(--eid-fg)_22%)] md:text-[11px]">
+                <p className="text-[10px] text-[color:color-mix(in_srgb,var(--eid-warning-500)_78%,var(--eid-fg)_22%)]">
                   Aguardando resposta ao cancelamento até: <span className="font-semibold">{when(m.cancelResponseDeadlineAt)}</span>
                 </p>
               ) : null}
               {m.status === "ReagendamentoPendente" ? (
-                <p className="mt-1 text-[10px] text-[color:color-mix(in_srgb,var(--eid-warning-500)_78%,var(--eid-fg)_22%)] md:text-[11px]">
+                <p className="text-[10px] text-[color:color-mix(in_srgb,var(--eid-warning-500)_78%,var(--eid-fg)_22%)]">
                   Janela de escolha até: <span className="font-semibold">{when(m.rescheduleDeadlineAt)}</span>
                 </p>
               ) : null}
             </div>
-            <div className="mt-2.5 flex w-full flex-col gap-2 border-t border-[rgba(37,99,235,0.1)] pt-2.5 sm:w-auto md:mt-3 md:gap-2.5 md:pt-3">
+
+            <div className="mt-3 flex w-full flex-col gap-2.5 border-t border-[rgba(37,99,235,0.1)] pt-3">
               {!somenteInformativo && m.gestaoSomenteLeitura && m.status === "Aceito" ? (
-                <p className="rounded-lg border border-[rgba(37,99,235,0.1)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_5%,var(--eid-surface)),var(--eid-surface))] px-2 py-1.5 text-[10px] leading-snug text-eid-text-secondary md:text-[11px]">
+                <p className="rounded-lg border border-[rgba(37,99,235,0.1)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_5%,var(--eid-surface)),var(--eid-surface))] px-2 py-1.5 text-[10px] leading-snug text-eid-text-secondary">
                   Você integra o elenco: acompanhe o status aqui. <span className="font-semibold text-eid-fg">Só o líder</span>{" "}
                   combina data/local e lança o resultado no Painel.
                 </p>
               ) : null}
 
               {!somenteInformativo && m.gestaoSomenteLeitura && (m.status === "CancelamentoPendente" || m.status === "ReagendamentoPendente") ? (
-                <p className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-2 py-1.5 text-[10px] font-semibold leading-snug text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#f59e0b_45%)] md:text-[11px]">
+                <p className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-2 py-1.5 text-[10px] font-semibold leading-snug text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#f59e0b_45%)]">
                   {m.status === "CancelamentoPendente" ? (
                     <>
                       Pedido de cancelamento em andamento. <span className="text-eid-fg">Só o líder</span> da sua formação
@@ -354,27 +352,22 @@ export function AgendaAceitosCancelaveis({
               ) : null}
 
               {m.whatsappContato || podeReagendar ? (
-                <div className="flex w-full items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    {m.whatsappContato ? <WhatsAppContatoButton href={m.whatsappContato} nome={m.whatsappContatoNome} /> : null}
-                  </div>
+                <div className="grid gap-2" style={{ gridTemplateColumns: m.whatsappContato && podeReagendar ? "1fr 1fr" : "1fr" }}>
+                  {m.whatsappContato ? <WhatsAppContatoButton href={m.whatsappContato} nome={m.whatsappContatoNome} /> : null}
 
                   {podeReagendar ? (
                     <button
                       type="button"
-                      data-eid-reagendar-compact-btn="true"
                       disabled={pending}
                       onClick={() => {
                         setClickedAction((prev) => ({ ...prev, [m.id]: "requestReschedule" }));
                         setOpenRescheduleByMatch((prev) => ({ ...prev, [m.id]: !prev[m.id] }));
                       }}
-                      className="group inline-flex min-h-[24px] w-auto max-w-full shrink-0 items-center justify-center gap-1 rounded-full border border-eid-action-500/32 bg-eid-action-500/10 px-2 text-[7px] font-black uppercase tracking-[0.07em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-action-500)_28%)] shadow-[0_4px_14px_-10px_rgba(249,115,22,0.72)] transition hover:border-eid-action-500/50 hover:bg-eid-action-500/16 active:scale-[0.98] disabled:opacity-50 md:min-h-[26px] md:text-[8px]"
+                      className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl border border-eid-action-500/45 bg-eid-action-500/10 px-3 text-[11px] font-black uppercase tracking-[0.05em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-action-500)_28%)] shadow-[0_6px_18px_-10px_rgba(249,115,22,0.35)] transition hover:border-eid-action-500/65 hover:bg-eid-action-500/18 active:scale-[0.98] disabled:opacity-50 sm:text-[12px]"
                     >
-                      <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-eid-action-500 text-white shadow-[0_3px_10px_-6px_rgba(249,115,22,0.9)] transition group-hover:bg-eid-action-600">
-                        <svg viewBox="0 0 16 16" className="h-2.5 w-2.5" fill="currentColor" aria-hidden>
-                          <path d="M4.5 1a.5.5 0 0 1 .5.5V2h6v-.5a.5.5 0 0 1 1 0V2h.5A1.5 1.5 0 0 1 14 3.5v9A1.5 1.5 0 0 1 12.5 14h-9A1.5 1.5 0 0 1 2 12.5v-9A1.5 1.5 0 0 1 3.5 2H4v-.5a.5.5 0 0 1 .5-.5ZM3 5.5v7a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-7H3Zm1-2.5H3.5a.5.5 0 0 0-.5.5V4.5h10V3.5a.5.5 0 0 0-.5-.5H12v.5a.5.5 0 0 1-1 0V3H5v.5a.5.5 0 0 1-1 0V3Z" />
-                        </svg>
-                      </span>
+                      <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0 text-eid-action-400" fill="currentColor" aria-hidden>
+                        <path d="M4.5 1a.5.5 0 0 1 .5.5V2h6v-.5a.5.5 0 0 1 1 0V2h.5A1.5 1.5 0 0 1 14 3.5v9A1.5 1.5 0 0 1 12.5 14h-9A1.5 1.5 0 0 1 2 12.5v-9A1.5 1.5 0 0 1 3.5 2H4v-.5a.5.5 0 0 1 .5-.5ZM3 5.5v7a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-7H3Zm1-2.5H3.5a.5.5 0 0 0-.5.5V4.5h10V3.5a.5.5 0 0 0-.5-.5H12v.5a.5.5 0 0 1-1 0V3H5v.5a.5.5 0 0 1-1 0V3Z" />
+                      </svg>
                       <span>Reagendar</span>
                     </button>
                   ) : null}

@@ -236,12 +236,15 @@ export function RankingGenderToggle({
       <div className="eid-ranking-select-anim w-full max-w-[17.5rem] rounded-2xl border border-transparent bg-[color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
         <div className="grid grid-cols-3 gap-1">
           <Link prefetch={PREFETCH_FILTER_LINK} href={href({ genero: "masculino", page: 1 })} className={tipoSegmentButton(isMasc)}>
+            <span aria-hidden className="text-[10px]">♂</span>
             Masculino
           </Link>
           <Link prefetch={PREFETCH_FILTER_LINK} href={href({ genero: "misto", page: 1 })} className={tipoSegmentButton(isMisto)}>
+            <span aria-hidden className="text-[10px]">⚤</span>
             Misto
           </Link>
           <Link prefetch={PREFETCH_FILTER_LINK} href={href({ genero: "feminino", page: 1 })} className={tipoSegmentButton(isFem)}>
+            <span aria-hidden className="text-[10px]">♀</span>
             Feminino
           </Link>
         </div>

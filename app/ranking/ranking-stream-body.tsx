@@ -466,9 +466,10 @@ export async function RankingStreamBody({
                   {esporteNomeAtual ? ` · ${esporteNomeAtual}` : ""}
                 </span>
               </span>
-              <span className="relative flex h-14 w-14 shrink-0 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-xl border border-eid-action-500/40 bg-eid-action-500/12 text-eid-action-300 shadow-[0_12px_26px_-14px_rgba(249,115,22,0.9),inset_0_1px_0_rgba(255,255,255,0.08)] transition group-hover:border-eid-action-500/65 group-hover:bg-eid-action-500/20 group-hover:shadow-[0_14px_28px_-12px_rgba(249,115,22,1)]">
-                <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.25),transparent_50%)] opacity-70" aria-hidden />
-                <span className="text-[14px] font-black leading-none tracking-tight">VS</span>
+              <span className="relative flex h-14 w-14 shrink-0 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-2xl border border-eid-action-500/40 bg-[linear-gradient(145deg,#ff8d1c,#ef6c00)] text-white shadow-[0_12px_26px_-14px_rgba(249,115,22,0.9),inset_0_1px_0_rgba(255,255,255,0.18)] transition group-hover:shadow-[0_14px_28px_-12px_rgba(249,115,22,1)] group-hover:brightness-105">
+                <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.28),transparent_55%)] opacity-80" aria-hidden />
+                <span className="relative text-[13px] font-black leading-none tracking-wide">VS</span>
+                <span className="relative text-[9px] font-black leading-none opacity-80">›</span>
               </span>
             </ProfileEditDrawerTrigger>
           </section>
