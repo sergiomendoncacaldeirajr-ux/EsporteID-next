@@ -134,8 +134,10 @@ export default async function RankingPage({ searchParams }: Props) {
               </p>
             </div>
             <div className="block justify-self-end" aria-hidden>
-              <div className="relative h-[82px] w-[132px] sm:h-[165px] sm:w-[320px]">
-                <Image src="/ranking-podio-alpha.png" alt="" fill unoptimized className="object-contain object-center mix-blend-multiply" />
+              <div className="relative h-[82px] w-[132px] overflow-hidden rounded-2xl sm:h-[165px] sm:w-[320px]">
+                <Image src="/ranking-podio-alpha.png" alt="" fill unoptimized className="object-contain object-center eid-light:mix-blend-multiply" />
+                {/* Vinheta: mascara as bordas brancas no tema escuro */}
+                <span className="pointer-events-none absolute inset-0 rounded-2xl shadow-[inset_0_0_18px_6px_var(--eid-card)] eid-light:hidden" aria-hidden />
               </div>
             </div>
           </div>
