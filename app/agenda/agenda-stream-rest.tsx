@@ -25,8 +25,15 @@ export async function AgendaStreamRest({ supabase, userId, teamClause, agendaTea
     getMatchAgendamentoJanelaHoras(supabase),
   ]);
 
+  const matchIdsEmConfrontos = new Set(
+    p.partidasAgendadasVisiveis
+      .map((row) => Number(row.match_id ?? 0))
+      .filter((id) => Number.isFinite(id) && id > 0),
+  );
+  const aceitosSemConfrontoDuplicado = p.aceitosItems.filter((item) => !matchIdsEmConfrontos.has(Number(item.id)));
+
   const hasRanking = p.pendentesRankingStatus.length > 0;
-  const hasAceitos = p.aceitosItems.length > 0;
+  const hasAceitos = aceitosSemConfrontoDuplicado.length > 0;
   const hasPedidosEnvio = (p.pendentesEnvio ?? []).length > 0;
 
   if (!hasRanking && !hasAceitos && !hasPedidosEnvio) return null;
@@ -154,7 +161,7 @@ export async function AgendaStreamRest({ supabase, userId, teamClause, agendaTea
           ) : null}
           {hasAceitos ? (
             <AgendaAceitosCancelaveis
-              items={p.aceitosItems}
+              items={aceitosSemConfrontoDuplicado}
               agendamentoJanelaHoras={agendamentoJanelaHoras}
               somenteInformativo
               cadastrarLocalReturnBase="/agenda"
