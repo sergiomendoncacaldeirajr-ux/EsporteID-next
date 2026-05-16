@@ -105,6 +105,7 @@ function WhatsAppContatoButton({ href, nome }: { href: string; nome: string | nu
       target="_blank"
       rel="noopener noreferrer"
       aria-label={`Chamar ${primeiroNome === "WhatsApp" ? "no WhatsApp" : primeiroNome} no WhatsApp`}
+      data-eid-aceitos-acao-btn="true"
       className="flex min-h-[34px] w-full items-center justify-center gap-1 rounded-[8px] bg-[#25D366] px-2 text-[8.5px] font-black uppercase tracking-[0.05em] text-white shadow-[0_4px_14px_-8px_rgba(37,211,102,0.5)] transition hover:bg-[#1fbb5a] active:scale-[0.98] active:brightness-95 sm:min-h-[36px] sm:text-[9px]"
     >
       {WA_ICON}
@@ -359,6 +360,7 @@ export function AgendaAceitosCancelaveis({
                     <button
                       type="button"
                       disabled={pending}
+                      data-eid-aceitos-acao-btn="true"
                       onClick={() => {
                         setClickedAction((prev) => ({ ...prev, [m.id]: "requestReschedule" }));
                         setOpenRescheduleByMatch((prev) => ({ ...prev, [m.id]: !prev[m.id] }));

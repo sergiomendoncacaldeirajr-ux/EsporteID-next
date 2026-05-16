@@ -1984,6 +1984,26 @@ select,
     }
   }
 
+  /* WA + Reagendar nos cards de desafios aceitos — mesmo tamanho dos botões Aceitar/Recusar (34px). */
+  :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact]), .eid-touch-ui-scope)
+    :where(button[data-eid-aceitos-acao-btn="true"], a[data-eid-aceitos-acao-btn="true"]) {
+    min-height: 34px !important;
+    max-height: none !important;
+    padding: 4px 8px !important;
+    font-size: 8.5px !important;
+    line-height: 1.1 !important;
+    font-weight: 900 !important;
+    border-radius: 8px !important;
+  }
+
+  @media (min-width: 640px) {
+    :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact]), .eid-touch-ui-scope)
+      :where(button[data-eid-aceitos-acao-btn="true"], a[data-eid-aceitos-acao-btn="true"]) {
+      min-height: 36px !important;
+      font-size: 9px !important;
+    }
+  }
+
   /* Comunidade compacta: mesma escala dos botões sociais (sem 44px do touch padrão). */
   :where([data-eid-touch-ui][data-eid-touch-ui-compact]) button[data-eid-social-acao-btn="true"] {
     min-height: 34px !important;
