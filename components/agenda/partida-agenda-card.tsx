@@ -11,7 +11,10 @@ import {
 } from "@/app/agenda/actions";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
-import { DESAFIO_FLOW_CTA_BLOCK_CLASS } from "@/lib/desafio/flow-ui";
+import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-local-overlay-trigger";
+import { LocalAutocompleteInput } from "@/components/locais/local-autocomplete-input";
+import { EidDateTimePicker } from "@/components/agenda/eid-date-time-picker";
+import { DESAFIO_FLOW_CTA_BLOCK_CLASS, DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
 import { EidSocialAceitarButton, EidSocialRecusarButton } from "@/components/ui/eid-social-acao-buttons";
 import { createPortal } from "react-dom";
 import { Capacitor } from "@capacitor/core";
@@ -20,7 +23,11 @@ import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
 import type { PartidaAgendaFormacaoLado } from "@/lib/agenda/partida-formacao-lado";
 import { iniciaisFormacaoNome } from "@/lib/comunidade/iniciais-formacao";
 import { isNativeAndroidApp } from "@/lib/pwa/push-client";
-import { Bell, CalendarPlus, MapPin } from "lucide-react";
+import {
+  maxDatetimeLocalValueHorasAFrente,
+  minDatetimeLocalValue,
+} from "@/lib/agenda/confronto-agendamento-janela";
+import { Bell, CalendarClock, CalendarPlus, MapPin } from "lucide-react";
 
 export type { PartidaAgendaFormacaoLado } from "@/lib/agenda/partida-formacao-lado";
 
@@ -60,6 +67,10 @@ type Props = {
   ocultarFluxoCancelamento?: boolean;
   /** Na Agenda (só informação): não exibe aprovar/recusar proposta de data/hora; ação fica no Painel social. */
   ocultarFluxoAgendamento?: boolean;
+  whatsappContato?: string | null;
+  whatsappContatoNome?: string | null;
+  reagendamentoMatchId?: number | null;
+  agendamentoJanelaHoras?: number;
   /** Query `from=` nos links de EID (ex.: `/comunidade` no painel). */
   perfilEidFrom?: string;
 };
@@ -105,6 +116,40 @@ function formatDeadline(iso: string | null | undefined) {
   }
 }
 
+function addMinutesToDatetimeLocal(base: string, minutes: number): string {
+  const t = new Date(base).getTime();
+  if (Number.isNaN(t)) return base;
+  const dt = new Date(t + minutes * 60 * 1000);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+}
+
+function readReagendamentoLocalPrefillFromUrl():
+  | { matchId: number; prefill: string; nextUrl: string }
+  | null {
+  if (typeof window === "undefined") return null;
+  const params = new URLSearchParams(window.location.search);
+  const matchId = Number(params.get("reag_match") ?? "0");
+  const localNome = String(params.get("novo_local_nome") ?? "").trim();
+  const localizacao = String(params.get("novo_local_localizacao") ?? "").trim();
+  if (!Number.isFinite(matchId) || matchId < 1) return null;
+  if (!localNome && !localizacao) return null;
+  const prefill = localizacao ? `${localNome} — ${localizacao}` : localNome;
+  params.delete("novo_local_id");
+  params.delete("novo_local_nome");
+  params.delete("novo_local_localizacao");
+  params.delete("reag_match");
+  const nextQs = params.toString();
+  const nextUrl = `${window.location.pathname}${nextQs ? `?${nextQs}` : ""}${window.location.hash}`;
+  return { matchId, prefill, nextUrl };
+}
+
+const whatsappIcon = (
+  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0 text-[#25D366]" fill="currentColor" aria-hidden>
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
+  </svg>
+);
+
 const cardBase =
   "rounded-2xl border border-[rgba(37,99,235,0.1)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-2.5 shadow-[0_4px_16px_-8px_rgba(15,23,42,0.3),inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-sm transition md:p-4";
 
@@ -138,11 +183,21 @@ export function PartidaAgendaCard({
   somenteLeituraElenco = false,
   ocultarFluxoCancelamento = false,
   ocultarFluxoAgendamento = false,
+  whatsappContato = null,
+  whatsappContatoNome = null,
+  reagendamentoMatchId = null,
+  agendamentoJanelaHoras = 72,
   perfilEidFrom = "/agenda",
 }: Props) {
   const isPlacar = variant === "placar";
   const [openCancel, setOpenCancel] = useState(false);
   const [openDesist, setOpenDesist] = useState(false);
+  const [openReschedule, setOpenReschedule] = useState(false);
+  const [localReagendamentoPrefill, setLocalReagendamentoPrefill] = useState("");
+  const [minDateTimeLocal] = useState<string>(() => minDatetimeLocalValue());
+  const [maxDateTimeLocal] = useState<string>(() =>
+    maxDatetimeLocalValueHorasAFrente(agendamentoJanelaHoras)
+  );
   const [agendaActionClicked, setAgendaActionClicked] = useState<"accept" | "reject" | null>(null);
   const [nativeCalendarPlatform, setNativeCalendarPlatform] = useState<"android" | "ios" | null>(null);
   const [nativeToolsAvailable, setNativeToolsAvailable] = useState(false);
@@ -173,11 +228,26 @@ export function PartidaAgendaCard({
     }, 0);
     return () => window.clearTimeout(id);
   }, [state.ok]);
+  useEffect(() => {
+    if (!reagendamentoMatchId) return;
+    const urlPrefill = readReagendamentoLocalPrefillFromUrl();
+    if (!urlPrefill || urlPrefill.matchId !== reagendamentoMatchId) return;
+    const timer = window.setTimeout(() => {
+      setOpenReschedule(true);
+      setLocalReagendamentoPrefill(urlPrefill.prefill);
+      window.history.replaceState(null, "", urlPrefill.nextUrl);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [reagendamentoMatchId]);
   const ctaHref =
     href ??
     (isPlacar ? `/registrar-placar/${id}?from=/comunidade` : `/registrar-placar/${id}?modo=agenda`);
   const ctaText = ctaLabel ?? (isPlacar ? "Revisar resultado" : "Agendar data e local");
   const fromPath = perfilEidFrom;
+  const defaultOption2 = addMinutesToDatetimeLocal(minDateTimeLocal, 60);
+  const defaultOption3 = addMinutesToDatetimeLocal(minDateTimeLocal, 120);
+  const canRequestReschedule = Boolean(reagendamentoMatchId && !somenteLeituraElenco && !isPlacar);
+  const hasScheduleActions = Boolean((whatsappContato || canRequestReschedule) && !agendamentoPendente && !somenteLeituraElenco);
 
   function tituloLado(formacao: PartidaAgendaFormacaoLado | undefined, nomePerfil: string | null) {
     if (formacao?.nome) return formacao.nome;
@@ -514,13 +584,116 @@ export function PartidaAgendaCard({
         )
       ) : (
         <div className="mt-2.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 py-2 text-center md:mt-4">
-          <p className="text-[10px] font-semibold leading-snug text-eid-text-secondary md:text-xs">
-            {somenteLeituraElenco
-              ? "Você acompanha como membro do elenco. O líder define data e local e lança o resultado no Painel."
-              : agendamentoPendente
-                ? "Agendamento enviado. Aguardando aceite do oponente."
-                : "Data, horário e local já definidos pelo reagendamento aceito."}
-          </p>
+          {hasScheduleActions ? (
+            <div className="space-y-2">
+              <div
+                className="grid gap-2"
+                style={{ gridTemplateColumns: whatsappContato && canRequestReschedule ? "1fr 1fr" : "1fr" }}
+              >
+                {whatsappContato ? (
+                  <a
+                    href={whatsappContato}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-eid-aceitos-acao-btn="true"
+                    className="inline-flex min-h-[34px] w-full items-center justify-center gap-1.5 rounded-[8px] border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-2 text-[8.5px] font-black uppercase tracking-[0.05em] text-eid-fg transition hover:bg-eid-surface active:scale-[0.98] sm:min-h-[36px] sm:text-[9px]"
+                    aria-label={`Chamar ${whatsappContatoNome?.split(" ")[0] ?? "oponente"} no WhatsApp`}
+                  >
+                    {whatsappIcon}
+                    <span className="truncate">WhatsApp</span>
+                  </a>
+                ) : null}
+
+                {canRequestReschedule ? (
+                  <button
+                    type="button"
+                    disabled={pending}
+                    data-eid-aceitos-acao-btn="true"
+                    onClick={() => setOpenReschedule((v) => !v)}
+                    className="inline-flex min-h-[34px] w-full items-center justify-center gap-1.5 rounded-[8px] border border-eid-action-500/45 bg-eid-action-500/10 px-2 text-[8.5px] font-black uppercase tracking-[0.05em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-action-500)_28%)] transition hover:border-eid-action-500/65 hover:bg-eid-action-500/18 active:scale-[0.98] disabled:opacity-50 sm:min-h-[36px] sm:text-[9px]"
+                  >
+                    <CalendarClock className="h-3.5 w-3.5 shrink-0 text-eid-action-400" aria-hidden />
+                    <span>Reagendar</span>
+                  </button>
+                ) : null}
+              </div>
+
+              {openReschedule && reagendamentoMatchId ? (
+                <form
+                  action={formAction}
+                  className="grid gap-2 rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-border-subtle)_70%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_6%,var(--eid-card)_94%)] p-2.5 text-left"
+                >
+                  <input type="hidden" name="intent" value="request_reschedule" />
+                  <input type="hidden" name="match_id" value={String(reagendamentoMatchId)} />
+                  <p className="text-[9px] font-bold uppercase tracking-[0.07em] text-eid-text-secondary">
+                    Proponha 3 novos horários
+                  </p>
+                  <EidDateTimePicker
+                    name="opcao_1"
+                    defaultValue={minDateTimeLocal}
+                    min={minDateTimeLocal}
+                    max={maxDateTimeLocal}
+                    required
+                    optionNumber={1}
+                  />
+                  <EidDateTimePicker
+                    name="opcao_2"
+                    defaultValue={defaultOption2}
+                    min={minDateTimeLocal}
+                    max={maxDateTimeLocal}
+                    required
+                    optionNumber={2}
+                  />
+                  <EidDateTimePicker
+                    name="opcao_3"
+                    defaultValue={defaultOption3}
+                    min={minDateTimeLocal}
+                    max={maxDateTimeLocal}
+                    required
+                    optionNumber={3}
+                  />
+                  <LocalAutocompleteInput
+                    name="local_reagendamento"
+                    placeholder="Novo local (opcional)"
+                    defaultValue={localReagendamentoPrefill}
+                    minChars={3}
+                    className="eid-input-dark h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
+                  />
+                  <CadastrarLocalOverlayTrigger
+                    href={`/locais/cadastrar?return_to=${encodeURIComponent(`/agenda?reag_match=${reagendamentoMatchId}`)}`}
+                    className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full rounded-xl text-center !min-h-[32px] !px-2 !text-[9px]`}
+                  >
+                    + Cadastrar local genérico
+                  </CadastrarLocalOverlayTrigger>
+                  <button
+                    type="submit"
+                    disabled={pending}
+                    className="inline-flex min-h-[34px] w-full items-center justify-center rounded-xl border border-eid-action-500/45 bg-eid-action-500 px-3 text-[9px] font-black uppercase tracking-wide text-white shadow-[0_8px_20px_-10px_rgba(249,115,22,0.7)] transition hover:bg-eid-action-600 disabled:opacity-50 md:text-[10px]"
+                  >
+                    {pending ? "Enviando..." : "Enviar pedido de reagendamento"}
+                  </button>
+                  {state.ok ? (
+                    <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2 py-1.5 text-center text-[10px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#10b981_45%)]">
+                      {state.message}
+                    </p>
+                  ) : null}
+                  {!state.ok && state.message ? (
+                    <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-2 py-1.5 text-center text-[10px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#f43f5e_45%)]">
+                      {state.message}
+                    </p>
+                  ) : null}
+                </form>
+              ) : null}
+            </div>
+          ) : (
+            <p className="text-[10px] font-semibold leading-snug text-eid-text-secondary md:text-xs">
+              {somenteLeituraElenco
+                ? "Você acompanha como membro do elenco. O líder define data e local e lança o resultado no Painel."
+                : agendamentoPendente
+                  ? "Agendamento enviado. Aguardando aceite do oponente."
+                  : "Data e local definidos."}
+            </p>
+          )}
         </div>
       )}
 

@@ -12,6 +12,7 @@ import {
 } from "@/lib/agenda/partidas-usuario";
 import { pickFormacaoLadoPartida } from "@/lib/agenda/partida-formacao-lado";
 import { dueloKey } from "@/app/comunidade/comunidade-shared";
+import { getMatchAgendamentoJanelaHoras } from "@/lib/app-config/match-prazos";
 import { getAgendaConfrontosPayload } from "./agenda-page-payload";
 
 export type AgendaStreamConfrontosProps = {
@@ -22,8 +23,12 @@ export type AgendaStreamConfrontosProps = {
 };
 
 export async function AgendaStreamConfrontos({ supabase, userId, teamClause, agendaTeamIds }: AgendaStreamConfrontosProps) {
-  const p = await getAgendaConfrontosPayload(supabase, userId, teamClause, agendaTeamIds);
+  const [p, agendamentoJanelaHoras] = await Promise.all([
+    getAgendaConfrontosPayload(supabase, userId, teamClause, agendaTeamIds),
+    getMatchAgendamentoJanelaHoras(supabase),
+  ]);
   if (p.partidasAgendadasVisiveis.length === 0) return null;
+  const aceitosByMatchId = new Map(p.aceitosItems.map((item) => [Number(item.id), item]));
 
   return (
     <section className="mt-6 md:mt-10">
@@ -98,6 +103,8 @@ export async function AgendaStreamConfrontos({ supabase, userId, teamClause, age
               );
               const scheduleCanRespond = computeAgendaPodeResponderProposta(pr, userId, p.criadorPorTimeIdAgenda);
               const somenteLeituraElenco = !podeGerenciarPartida;
+              const aceitoItem =
+                Number.isFinite(midPartida) && midPartida > 0 ? aceitosByMatchId.get(midPartida) ?? null : null;
               return (
                 <PartidaAgendaCard
                   key={pr.id}
@@ -126,6 +133,12 @@ export async function AgendaStreamConfrontos({ supabase, userId, teamClause, age
                   agendamentoPodeResponder={scheduleCanRespond}
                   agendamentoDeadline={pr.agendamento_aceite_deadline ?? null}
                   somenteLeituraElenco={somenteLeituraElenco}
+                  whatsappContato={aceitoItem?.whatsappContato ?? null}
+                  whatsappContatoNome={aceitoItem?.whatsappContatoNome ?? null}
+                  reagendamentoMatchId={
+                    aceitoItem?.status === "Aceito" && !aceitoItem.gestaoSomenteLeitura ? aceitoItem.id : null
+                  }
+                  agendamentoJanelaHoras={agendamentoJanelaHoras}
                   ocultarFluxoCancelamento
                 />
               );
