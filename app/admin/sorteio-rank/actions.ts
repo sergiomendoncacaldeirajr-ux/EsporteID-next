@@ -192,16 +192,12 @@ export async function adminPublicarSorteio(formData: FormData) {
       const buildNotif = (uid: string) => ({
         usuario_id: uid,
         tipo: "sorteio_rank",
-        titulo: "Sorteio de Ranking — você foi sorteado!",
-        corpo:
-          `Seu confronto de ranking (${modLabel}) do mês ${mesRef} está disponível. ` +
+        mensagem:
+          `Sorteio de Ranking (${modLabel}) — seu confronto do mês ${mesRef} está disponível. ` +
           `Agende com seu oponente até ${limite}.`,
-        payload_json: {
-          confronto_id: c.id,
-          edicao_id: edicaoId,
-          data_limite: limite,
-        },
+        referencia_id: c.id,
         lida: false,
+        data_criacao: new Date().toISOString(),
       });
 
       // Lado 1

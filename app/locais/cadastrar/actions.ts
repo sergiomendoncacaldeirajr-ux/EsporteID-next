@@ -7,6 +7,7 @@ import { usuarioJaGerenciaEspaco } from "@/lib/espacos/server";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import { createClient } from "@/lib/supabase/server";
 import { normalizePtBrNameCase, normalizePtBrNameCaseLoose } from "@/lib/text/pt-br-name-case";
+import { geocodeAddressServer } from "@/lib/geocode/server-geocode";
 
 export async function cadastrarLocalGenerico(formData: FormData): Promise<void> {
   const supabase = await createClient();
@@ -28,8 +29,17 @@ export async function cadastrarLocalGenerico(formData: FormData): Promise<void> 
   const uf = String(formData.get("estado") ?? "").trim().toUpperCase();
   const cep = String(formData.get("cep") ?? "").trim();
   const complemento = normalizePtBrNameCaseLoose(String(formData.get("complemento") ?? ""));
-  const lat = String(formData.get("lat") ?? "").trim() || null;
-  const lng = String(formData.get("lng") ?? "").trim() || null;
+  let lat = String(formData.get("lat") ?? "").trim() || null;
+  let lng = String(formData.get("lng") ?? "").trim() || null;
+
+  if ((!lat || !lng) && endereco && cidade && uf) {
+    const geocoded = await geocodeAddressServer({ endereco, numero, bairro, cidade, estado: uf, cep });
+    if (geocoded) {
+      lat = geocoded.lat;
+      lng = geocoded.lng;
+    }
+  }
+
   const localizacao = normalizePtBrNameCaseLoose([cidade, uf].filter(Boolean).join(" - "));
   const returnTo = resolveBackHref(String(formData.get("return_to") ?? "").trim(), "/locais/cadastrar");
   const returnToQs = returnTo !== "/locais/cadastrar" ? `&return_to=${encodeURIComponent(returnTo)}` : "";
