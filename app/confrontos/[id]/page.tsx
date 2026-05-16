@@ -2,8 +2,9 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, CalendarClock, ChevronRight, MapPin, Share2, Trophy } from "lucide-react";
+import { ArrowLeft, CalendarClock, ChevronRight, MapPin, Trophy } from "lucide-react";
 import { ConfrontoDetalheResultado } from "@/components/confrontos/confronto-detalhe-resultado";
+import { ConfrontoShareButton } from "@/components/confrontos/confronto-share-button";
 import { loadPublicConfrontos, normalizeConfrontoTipo, sideInitial, type ConfrontoTipo, type ConfrontoSide, type PublicConfronto } from "@/lib/confrontos/public-feed";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
@@ -141,13 +142,11 @@ function ResumoCard({ item }: { item: PublicConfronto }) {
 
         {/* Share button */}
         {scoreText ? (
-          <button
-            type="button"
-            className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl border border-eid-action-500/22 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-500)_10%,var(--eid-card)),color-mix(in_srgb,var(--eid-action-500)_6%,var(--eid-surface)))] px-4 text-[12px] font-black uppercase tracking-[0.05em] text-eid-action-300 transition hover:border-eid-action-500/38 hover:brightness-105 active:scale-[0.98] eid-light:border-orange-200/60 eid-light:bg-orange-50 eid-light:text-orange-600"
-          >
-            <Share2 className="h-4 w-4 shrink-0" aria-hidden />
-            Compartilhar resultado
-          </button>
+          <ConfrontoShareButton
+            title={`${item.ladoA.name} ${scoreText} ${item.ladoB.name}`}
+            text={`Resultado de ${item.esporteNome ?? "esporte"} no EsporteID: ${item.ladoA.name} ${scoreText} ${item.ladoB.name}`}
+            path={`/confrontos/${item.id}`}
+          />
         ) : null}
       </div>
     </div>
@@ -199,7 +198,7 @@ export default async function ConfrontoDetalhePage({
     item.tipo === "dupla" ? "Duplas" : item.tipo === "time" ? "Times" : "Individual";
 
   return (
-    <main className={`mx-auto flex w-full max-w-lg flex-col gap-3 px-3 pb-[calc(var(--eid-shell-content-bottom-pad)+2rem)] sm:max-w-2xl sm:px-6 sm:pb-[var(--eid-shell-content-bottom-pad)] ${embed ? "pt-1" : "pt-3"}`}>
+    <main className={`eid-page-enter mx-auto flex w-full max-w-lg flex-col gap-3 px-3 pb-[calc(var(--eid-shell-content-bottom-pad)+2rem)] sm:max-w-2xl sm:px-6 sm:pb-[var(--eid-shell-content-bottom-pad)] ${embed ? "pt-1" : "pt-3"}`}>
       {/* Page header — only when accessed directly (drawer provides its own nav) */}
       {!embed ? (
         <div className="flex items-center gap-3">

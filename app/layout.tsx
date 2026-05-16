@@ -7,6 +7,7 @@ import { EidThemeHydration } from "@/components/eid-theme-hydration";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { OnboardingTopbar } from "@/components/onboarding/onboarding-topbar";
 import { InteractionFeedback } from "@/components/ui/interaction-feedback";
+import { EidToastProvider } from "@/components/ui/eid-toast";
 import { LegalGateDeferred } from "@/components/legal-gate";
 import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
 import { VisitorThemeToggleFloat } from "@/components/shell/visitor-theme-toggle-float";
@@ -241,6 +242,7 @@ export default async function RootLayout({
       <body
         className={`flex min-h-svh flex-col bg-eid-bg text-eid-fg${showAppChrome ? " eid-app-shell" : ""}`}
       >
+        <EidToastProvider>
         <EidThemeHydration />
         <NativeAppRuntime userId={user?.id ?? null} activeContext={activeContext} />
         <PwaBootstrap />
@@ -311,6 +313,7 @@ export default async function RootLayout({
           <LegalGateDeferred />
         </Suspense>
         {user ? <SupportCenterFloat modulosEmBreve={supportModulosEmBreve} /> : null}
+        </EidToastProvider>
       </body>
     </html>
   );

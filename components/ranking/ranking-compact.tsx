@@ -376,13 +376,13 @@ export function RankingPodium({
             <div className="pointer-events-none absolute left-2/3 top-[6.55rem] hidden h-[5.15rem] w-px -translate-x-1/2 bg-[color:color-mix(in_srgb,var(--eid-border-subtle)_82%,transparent)] sm:block" />
             <div className="grid w-full grid-cols-3 items-end gap-1 sm:gap-2">
             <div className="relative min-h-[1px]">
-              {second ? <PodiumFace slot={second} highlight={false} rankKind={rankKind} /> : null}
+              {second ? <PodiumFace slot={second} highlight={false} rankKind={rankKind} place={2} /> : null}
             </div>
             <div className="z-10 -translate-y-1">
-              {first ? <PodiumFace slot={first} highlight rankKind={rankKind} /> : null}
+              {first ? <PodiumFace slot={first} highlight rankKind={rankKind} place={1} /> : null}
             </div>
             <div className="relative min-h-[1px]">
-              {third ? <PodiumFace slot={third} highlight={false} rankKind={rankKind} /> : null}
+              {third ? <PodiumFace slot={third} highlight={false} rankKind={rankKind} place={3} /> : null}
             </div>
             </div>
           </div>
@@ -394,7 +394,7 @@ export function RankingPodium({
   );
 }
 
-function PodiumFace({ slot, highlight, rankKind }: { slot: PodiumSlot; highlight: boolean; rankKind: "match" | "eid" }) {
+function PodiumFace({ slot, highlight, rankKind, place }: { slot: PodiumSlot; highlight: boolean; rankKind: "match" | "eid"; place: 1 | 2 | 3 }) {
   const initial = (slot.nome.trim().slice(0, 2) || "—").toUpperCase();
   const placeTone =
     slot.place === "1º"
@@ -411,7 +411,7 @@ function PodiumFace({ slot, highlight, rankKind }: { slot: PodiumSlot; highlight
     "before:pointer-events-none before:absolute before:inset-0 before:rounded-full before:bg-white/4 before:opacity-70 before:animate-[pulse_2.8s_ease-in-out_infinite]"
   );
   return (
-    <div className={cn("flex flex-col items-center text-center", highlight && "scale-[1.03]")}>
+    <div className={cn("eid-podium-face flex flex-col items-center text-center", highlight && "scale-[1.03]")} data-place={String(place)}>
       <span className="mb-0.5 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-1 py-px text-[8px] font-black tabular-nums text-[color:color-mix(in_srgb,var(--eid-fg)_66%,var(--eid-primary-500)_34%)]">
         {slot.place}
       </span>
