@@ -202,9 +202,8 @@ const CATEGORIAS = [
 ];
 
 const MODOS_RESERVA = [
-  { value: "gratuita", label: "Gratuita", desc: "Sócios reservam sem custo; exige mensalidade da plataforma", Icon: BadgeCheck },
-  { value: "paga", label: "Paga", desc: "Sem mensalidade da plataforma; cobra só taxas das reservas", Icon: CreditCard },
-  { value: "mista", label: "Mista", desc: "Gratuita e paga; exige mensalidade da plataforma", Icon: Wallet },
+  { value: "gratuita", label: "Associação", desc: "Usuários precisam virar membro ou sócio para reservar; exige mensalidade da plataforma", Icon: BadgeCheck },
+  { value: "paga", label: "Reserva paga", desc: "Reserva avulsa paga, day use e cobranças operacionais sem mensalidade da plataforma", Icon: CreditCard },
 ];
 
 const TIPOS_UNIDADE = [
@@ -218,9 +217,8 @@ const SUPERFICIES = [
 
 const MODOS_RESERVA_UNIDADE = [
   { value: "herdar", label: "Seguir regra do espaço", desc: "Usa o modelo definido para o espaço inteiro.", Icon: ShieldCheck },
-  { value: "gratuita", label: "Só gratuitas", desc: "Apenas reservas sem cobrança para associados.", Icon: BadgeCheck },
-  { value: "paga", label: "Só pagas", desc: "Disponível apenas para reservas com cobrança.", Icon: CreditCard },
-  { value: "mista", label: "Mista", desc: "Aceita reservas gratuitas e pagas nessa quadra.", Icon: Wallet },
+  { value: "gratuita", label: "Associação", desc: "Reservas sem cobrança para associados aprovados.", Icon: BadgeCheck },
+  { value: "paga", label: "Reserva paga", desc: "Disponível apenas para reservas com cobrança.", Icon: CreditCard },
 ];
 
 const INTERVALOS_RESERVA = [30, 45, 60, 90, 120];
@@ -239,18 +237,16 @@ function modoReservaUnidadeLabel(value: string | null | undefined) {
 }
 
 function modoReservaEspacoLabel(value: string | null | undefined) {
-  if (value === "gratuita") return "Reservas gratuitas para sócios";
+  if (value === "gratuita") return "Espaço por associação";
   if (value === "paga") return "Reservas pagas";
-  if (value === "mista") return "Reservas gratuitas e pagas";
   return "Modelo de reserva ainda não definido";
 }
 
 function modoReservaEspacoDesc(value: string | null | undefined, aceitaSocios: boolean | null | undefined) {
-  if (value === "gratuita") return "O espaço opera com reservas gratuitas para associados.";
+  if (value === "gratuita") return "O espaço exige membro ou sócio aprovado para reservar e operar a agenda.";
   if (value === "paga") return aceitaSocios
-    ? "O espaço recebe reservas pagas e pode manter sócios, filas e benefícios ligados às reservas pagas."
+    ? "O espaço recebe reservas pagas e pode manter clube de benefícios opcional sem bloquear a reserva comum."
     : "O espaço recebe apenas reservas pagas.";
-  if (value === "mista") return "O espaço combina reservas gratuitas para sócios com reservas pagas para outros públicos.";
   return "Defina o modelo de reserva na primeira etapa para exibir essa informação no perfil.";
 }
 
@@ -805,7 +801,7 @@ function StepModelo({ space, onNext, onBack }: {
   space: Space; onNext: (data: { modoReserva: string; aceitaSocios: boolean }) => void; onBack?: () => void;
 }) {
   const [categoria, setCategoria] = useState(space.categoria_mensalidade ?? "quadra");
-  const [modoReserva, setModoReserva] = useState(space.modo_reserva ?? "mista");
+  const [modoReserva, setModoReserva] = useState(space.modo_reserva ?? "gratuita");
   const [aceitaSocios, setAceitaSocios] = useState(space.aceita_socios ?? true);
   const [state, action, pending] = useActionState<ActionState, FormData>(salvarModeloEspacoAction, undefined);
   const formRef = useRef<HTMLFormElement>(null);
@@ -851,10 +847,8 @@ function StepModelo({ space, onNext, onBack }: {
         <Label>Modelo de reserva</Label>
         <div className="mt-2 rounded-2xl border border-eid-primary-500/25 bg-eid-primary-500/8 p-3 text-xs leading-relaxed text-eid-text-secondary">
           <p>
-            Regra de negócio: espaços com reservas <strong className="text-eid-fg">gratuitas</strong> ou{" "}
-            <strong className="text-eid-fg">mistas</strong> pagam mensalidade da plataforma. Espaços com{" "}
-            <strong className="text-eid-fg">somente reservas pagas</strong> não pagam mensalidade da plataforma; usam filas,
-            mensalidades de usuários e recursos ligados às reservas pagas, pagando apenas as taxas/comissões das reservas.
+            Regra de negócio: espaços por <strong className="text-eid-fg">associação</strong> pagam mensalidade da plataforma e exigem membro ou sócio aprovado para reservar. Espaços com{" "}
+            <strong className="text-eid-fg">reservas pagas</strong> não pagam mensalidade da plataforma; usam reserva avulsa paga, day use e cobranças operacionais, pagando apenas as taxas/comissões dessas cobranças.
           </p>
         </div>
         <div className="mt-2 grid gap-2 sm:grid-cols-3">
@@ -2866,13 +2860,13 @@ export function EspacoOnboardingWizard({
     return Math.min(Number(localStorage.getItem(storageKey) ?? "0"), STEPS.length - 1);
   });
   const [completed, setCompleted] = useState<Set<string>>(new Set());
-  const [modoReserva, setModoReserva] = useState(space.modo_reserva ?? "mista");
+  const [modoReserva, setModoReserva] = useState(space.modo_reserva ?? "gratuita");
   const [aceitaSocios, setAceitaSocios] = useState(space.aceita_socios ?? true);
 
-  const exigePlanoPlataforma = modoReserva === "gratuita" || modoReserva === "mista";
+  const exigePlanoPlataforma = modoReserva === "gratuita";
   const skipPlanoPlataforma = !exigePlanoPlataforma;
   const skipPlanos = modoReserva === "gratuita" ? false : !aceitaSocios;
-  const skipPagamento = modoReserva === "gratuita" && !aceitaSocios;
+  const skipPagamento = modoReserva === "paga";
   const activeSteps = useMemo(
     () =>
       STEPS.filter((item) => {

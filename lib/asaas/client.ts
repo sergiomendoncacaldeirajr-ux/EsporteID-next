@@ -88,6 +88,18 @@ export async function createAsaasPayment(payload: Record<string, unknown>) {
   });
 }
 
+export async function getAsaasPaymentPixQrCode(paymentId: string) {
+  const safeId = String(paymentId ?? "").trim();
+  if (!safeId) throw new Error("Pagamento Asaas inválido para recuperar o QR Code Pix.");
+  return asaasFetch<{
+    encodedImage?: string | null;
+    payload?: string | null;
+    expirationDate?: string | null;
+  }>(`/payments/${safeId}/pixQrCode`, {
+    method: "GET",
+  });
+}
+
 export async function createAsaasSubscription(payload: Record<string, unknown>) {
   return asaasFetch<{
     id: string;

@@ -71,7 +71,7 @@ export async function processAsaasWebhookPayload(payload: AsaasWebhookPayload | 
 
   const { data: espacoPagamento } = await admin
     .from("espaco_transacoes")
-    .select("id, espaco_generico_id, usuario_id, espaco_socio_id, reserva_quadra_id, assinatura_plataforma_id, tipo")
+    .select("id, espaco_generico_id, usuario_id, espaco_socio_id, reserva_quadra_id, assinatura_plataforma_id, assinatura_socio_id, tipo")
     .eq("asaas_payment_id", paymentId)
     .maybeSingle();
 
@@ -213,7 +213,7 @@ export async function processAsaasWebhookPayload(payload: AsaasWebhookPayload | 
     if (espacoPagamento.espaco_socio_id) {
       const { data: socioAtual } = await admin
         .from("espaco_socios")
-        .select("id, status, documentos_status")
+        .select("id, status, documentos_status, membership_request_id")
         .eq("id", espacoPagamento.espaco_socio_id)
         .maybeSingle();
 
@@ -228,6 +228,31 @@ export async function processAsaasWebhookPayload(payload: AsaasWebhookPayload | 
           atualizado_em: new Date().toISOString(),
         })
         .eq("id", espacoPagamento.espaco_socio_id);
+
+      if (espacoPagamento.assinatura_socio_id) {
+        await admin
+          .from("espaco_socio_assinaturas")
+          .update({
+            status: mapped.pagamento === "received" ? "active" : mapped.pagamento === "overdue" ? "overdue" : mapped.pagamento,
+            proxima_cobranca: payload?.payment?.dueDate ?? null,
+            atualizado_em: new Date().toISOString(),
+          })
+          .eq("id", espacoPagamento.assinatura_socio_id);
+      }
+
+      if (socioAtual?.membership_request_id) {
+        await admin
+          .from("membership_requests")
+          .update({
+            dados_json: {
+              pagamento_inicial_status: mapped.pagamento,
+              pago_em: mapped.pagamento === "received" ? new Date().toISOString() : null,
+              webhook_payload: payload ?? {},
+            },
+            atualizado_em: new Date().toISOString(),
+          })
+          .eq("id", socioAtual.membership_request_id);
+      }
     }
 
     const parceiroUsuarioId = espaco?.responsavel_usuario_id ?? espaco?.criado_por_usuario_id ?? null;
@@ -273,7 +298,7 @@ export async function processAsaasWebhookPayload(payload: AsaasWebhookPayload | 
         usuario_id: espacoPagamento.usuario_id,
         mensagem:
           mapped.pagamento === "received"
-            ? "Seu pagamento do espaço foi confirmado."
+            ? "Seu pagamento foi confirmado. Agora o admin do espaço ainda precisa aprovar sua entrada."
             : `Seu pagamento do espaço foi atualizado para ${mapped.pagamento}.`,
         tipo: "espaco_pagamento",
         referencia_id: espacoPagamento.id,

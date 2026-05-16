@@ -10,9 +10,8 @@ import { normalizeEspacoReservaConfig } from "@/lib/espacos/config";
 const initialState = { ok: false, message: "" };
 
 const modoReservaLabels: Record<string, string> = {
-  paga: "Modo só reserva paga. Benefícios gratuitos ficam desativados.",
-  gratuita: "Modo com foco em reservas gratuitas. Ajuste regras e limites dos membros.",
-  mista: "Modo misto. Combine reservas pagas e benefícios gratuitos para sócios.",
+  paga: "Modo de reserva paga. A operação principal é avulsa paga, day use e cobranças do espaço.",
+  gratuita: "Modo por associação. Usuários só reservam depois de aprovação como membro ou sócio.",
 };
 
 const inputClass = "eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2.5 text-sm";
@@ -82,7 +81,7 @@ function Field({
 
 export function EspacoConfigForm({
   espaco,
-  modoReserva = "mista",
+  modoReserva = "gratuita",
 }: {
   modoReserva?: string | null;
   espaco: {
@@ -111,7 +110,7 @@ export function EspacoConfigForm({
   const [state, formAction, pending] = useActionState(salvarConfiguracoesEspacoAction, initialState);
   const cfg = normalizeEspacoReservaConfig(espaco.configuracao_reservas_json);
   const associacao = normalizeEspacoAssociacaoConfig(espaco.associacao_regra_json);
-  const modo = (modoReserva ?? "mista").toLowerCase();
+  const modo = (modoReserva ?? "gratuita").toLowerCase();
   const bloqueiaGratis = modo === "paga";
   const venueConfig = useMemo(() => parseConfigRecord(espaco.venue_config_json), [espaco.venue_config_json]);
   const [endereco, setEndereco] = useState(String(venueConfig.endereco ?? ""));

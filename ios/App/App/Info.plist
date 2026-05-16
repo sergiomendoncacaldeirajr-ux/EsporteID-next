@@ -30,8 +30,6 @@
 	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>O EsporteID usa a câmera para você atualizar sua foto de perfil e enviar imagens quando necessário.</string>
-	<key>NSFaceIDUsageDescription</key>
-	<string>O EsporteID usa o Face ID para desbloquear sua conta com segurança neste aparelho.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>O EsporteID acessa suas fotos para você escolher imagens de perfil e anexos do app.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

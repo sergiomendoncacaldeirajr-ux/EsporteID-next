@@ -1,5 +1,5 @@
 /** Texto humano para faixa de unidades do catálogo PaaS (plano mensal plataforma). */
-export type NivelPlanoPaaS = "basico" | "intermediario" | "completo";
+export type NivelPlanoPaaS = "essencial" | "premium";
 
 export type PlanoPaaSResumo = {
   id: number;
@@ -33,56 +33,37 @@ export function inferirNivelPlanoPaaS(plano: PlanoPaaSResumo, planos: PlanoPaaSR
       a.id - b.id
   );
   const index = ordenados.findIndex((item) => item.id === plano.id);
-  if (index <= 0) return "basico";
-  if (index >= ordenados.length - 1) return "completo";
-  return "intermediario";
+  if (index <= 0) return "essencial";
+  return "premium";
 }
 
 export function perfilComercialPlanoPaaS(nivel: NivelPlanoPaaS) {
-  if (nivel === "basico") {
+  if (nivel === "essencial") {
     return {
-      nome: "Básico",
-      titulo: "Reservas gratuitas",
-      resumo: "Somente reservas gratuitas para associados do local.",
+      nome: "Essencial",
+      titulo: "Espaço por associação",
+      resumo: "Mensalidade da plataforma para operar o espaço com membro ou sócio aprovado.",
       beneficios: [
-        "Reservas gratuitas para associados",
+        "Reservas liberadas só para membros ou sócios aprovados",
         "Cadastro de quadras conforme limite do plano",
-        "Sem fila de espera",
-        "Sem reservas pagas",
-        "Sem recebimento de mensalidades",
+        "Regras de associação e aprovação manual",
+        "Base para planos de sócio e benefícios do clube",
       ],
-      cta: "Escolher plano básico",
-      sociosModo: "nenhum",
-    };
-  }
-  if (nivel === "intermediario") {
-    return {
-      nome: "Intermediário",
-      titulo: "Reservas gratuitas e pagas",
-      resumo: "Reservas gratuitas e pagas com opção de fila. Por ser misto, paga mensalidade da plataforma.",
-      beneficios: [
-        "Reservas gratuitas para associados",
-        "Reservas pagas para avulsos",
-        "Fila de espera para horários cheios",
-        "Cadastro de quadras conforme limite do plano",
-        "Exige mensalidade da plataforma",
-      ],
-      cta: "Escolher plano intermediário",
+      cta: "Escolher plano essencial",
       sociosModo: "nenhum",
     };
   }
   return {
-    nome: "Completo",
-    titulo: "Gestão completa",
-    resumo: "Tudo incluso: reservas gratuitas/pagas, fila, pagamentos e mensalidades.",
+    nome: "Premium",
+    titulo: "Associação com gestão ampliada",
+    resumo: "Fluxo completo de associação com mensalidade da plataforma e suporte ampliado ao clube.",
     beneficios: [
-      "Reservas gratuitas para associados",
-      "Reservas pagas para avulsos",
-      "Fila de espera",
-      "Recebimento de mensalidades de sócios",
-      "Operação completa do espaço",
+      "Tudo do Essencial",
+      "Gestão ampliada de planos e benefícios",
+      "Melhor encaixe para clubes com recorrência de sócios",
+      "Operação completa do espaço por associação",
     ],
-    cta: "Escolher plano completo",
+    cta: "Escolher plano premium",
     sociosModo: "disponivel",
   };
 }
@@ -100,6 +81,6 @@ export function detalheValorESociosPlanoPaaS(row: {
       ? "Gestão de mensalidade de sócios disponível no plano."
       : row.socios_mensal_modo === "em_breve"
         ? "Gestão de mensalidade de sócios em evolução neste plano."
-        : "Sem gestão de mensalidade de sócios neste plano.";
-  return `Mensalidade plataforma ${valor}/mês · ${socios}`;
+        : "Associação manual sem checkout recorrente de sócio neste plano.";
+  return `Mensalidade da plataforma ${valor}/mês · ${socios}`;
 }

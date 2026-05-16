@@ -19,7 +19,6 @@ import { inferirNivelPlanoPaaS, perfilComercialPlanoPaaS } from "@/lib/espacos/p
 import {
   CLUBE_ASSINATURA_SOCIOS_LABEL,
   MODO_MONETIZACAO_LABEL,
-  MODO_RESERVA_LABEL,
   SOCIOS_MENSAL_ESPACO_LABEL,
 } from "@/lib/espacos/monetizacao-labels";
 
@@ -731,27 +730,34 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                   <details className="group border-t border-[color:var(--eid-border-subtle)]/50">
                     <summary className="cursor-pointer px-4 py-2.5 text-xs font-semibold text-eid-primary-300 hover:bg-white/[0.02] list-none flex items-center gap-1.5">
                       <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden><path d="M6 4l4 4-4 4"/></svg>
-                      Modo de reserva, monetização e taxa
+                      Operação do espaço e cobrança
                     </summary>
                     <div className="border-t border-[color:var(--eid-border-subtle)]/30 bg-eid-bg/20 px-4 pb-4 pt-3">
-                      <form action={adminUpdateEspacoModoCobranca} className="grid max-w-2xl gap-3 sm:grid-cols-2">
+                      <form action={adminUpdateEspacoModoCobranca} className="grid max-w-3xl gap-4 sm:grid-cols-2">
                         <input type="hidden" name="id" value={l.id} />
+                        <div className="sm:col-span-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-4">
+                          <p className="text-[10px] font-black uppercase tracking-[0.12em] text-eid-text-muted">Tipo operacional</p>
+                          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                            <label className="cursor-pointer rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/40 p-3 has-[:checked]:border-eid-primary-500/50 has-[:checked]:bg-eid-primary-500/10">
+                              <input type="radio" name="modo_reserva" value="gratuita" defaultChecked={(localRow.modo_reserva ?? "gratuita") === "gratuita"} className="sr-only" />
+                              <span className="block text-sm font-bold text-eid-fg">Espaço por associação</span>
+                              <span className="mt-1 block text-[11px] leading-relaxed text-eid-text-secondary">Exige mensalidade da plataforma e membro ou sócio aprovado para reservar.</span>
+                            </label>
+                            <label className="cursor-pointer rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/40 p-3 has-[:checked]:border-eid-action-500/50 has-[:checked]:bg-eid-action-500/10">
+                              <input type="radio" name="modo_reserva" value="paga" defaultChecked={(localRow.modo_reserva ?? "gratuita") === "paga"} className="sr-only" />
+                              <span className="block text-sm font-bold text-eid-fg">Espaço com reserva paga</span>
+                              <span className="mt-1 block text-[11px] leading-relaxed text-eid-text-secondary">Não paga mensalidade da plataforma. Opera com reserva avulsa paga, day use e cobranças do espaço.</span>
+                            </label>
+                          </div>
+                        </div>
                         <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
-                          Modo de reserva
-                          <select name="modo_reserva" defaultValue={localRow.modo_reserva ?? "gratuita"} className="eid-input-dark mt-1 w-full max-w-md rounded-lg px-2 py-1.5 text-sm">
-                            <option value="gratuita">{MODO_RESERVA_LABEL.gratuita}</option>
-                            <option value="paga">{MODO_RESERVA_LABEL.paga}</option>
-                            <option value="mista_pendente_escolha">Mista (pendente escolha pelo dono)</option>
-                          </select>
-                        </label>
-                        <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
-                          Monetização
+                          Monetização derivada
                           <select name="modo_monetizacao" defaultValue={localRow.modo_monetizacao ?? "mensalidade_plataforma"} className="eid-input-dark mt-1 w-full max-w-md rounded-lg px-2 py-1.5 text-sm">
                             <option value="mensalidade_plataforma">{MODO_MONETIZACAO_LABEL.mensalidade_plataforma}</option>
                             <option value="apenas_reservas">{MODO_MONETIZACAO_LABEL.apenas_reservas}</option>
                           </select>
                           <span className="mt-1 block text-[10px] leading-relaxed text-eid-text-secondary">
-                            Ao salvar, a regra é aplicada automaticamente: gratuita = mensalidade da plataforma; paga = somente taxas de reserva.
+                            Esse campo acompanha o tipo operacional: associação usa mensalidade da plataforma; reserva paga usa apenas cobranças por reserva.
                           </span>
                         </label>
                         <label className="text-[11px] text-eid-text-secondary">
@@ -789,7 +795,7 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                   <details className="group border-t border-[color:var(--eid-border-subtle)]/50">
                     <summary className="cursor-pointer px-4 py-2.5 text-xs font-semibold text-eid-primary-300 hover:bg-white/[0.02] list-none flex items-center gap-1.5">
                       <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden><path d="M6 4l4 4-4 4"/></svg>
-                      Assinatura / categoria da plataforma
+                      Plano da plataforma e ajustes manuais
                     </summary>
                     <div className="border-t border-[color:var(--eid-border-subtle)]/30 bg-eid-bg/25 px-4 pb-4 pt-3">
                       <form action={adminUpdateEspacoMensalidadePlataforma} className="grid max-w-2xl gap-3 sm:grid-cols-2">
@@ -818,7 +824,7 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                             })}
                           </select>
                           <span className="mt-1 block text-[10px] leading-relaxed text-eid-text-secondary">
-                            Gratuita e mista usam mensalidade da plataforma. Somente paga não exige mensalidade PaaS e paga apenas taxas/comissões das reservas.
+                            Este bloco só faz sentido para espaços por associação. Espaços com reserva paga devem ficar sem plano mensal da plataforma e operar por taxas/comissões das reservas.
                           </span>
                         </label>
                         <label className="text-[11px] text-eid-text-secondary">

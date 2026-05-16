@@ -8,6 +8,7 @@ import {
   createAsaasCustomer,
   createAsaasPayment,
   createAsaasSubscription,
+  getAsaasPaymentPixQrCode,
 } from "@/lib/asaas/client";
 import { isAsaasSimulationEnabledFor } from "@/lib/asaas/simulate-payments";
 import { slugifyEspaco } from "@/lib/espacos/slug";
@@ -16,6 +17,10 @@ import { normalizeEspacoReservaConfig, serializarEspacoReservaConfig } from "@/l
 import { getPaaSUnidadeGateInfo } from "@/lib/espacos/paas-unidades-gate";
 import { forcarReservasGratisLiberadasFalsas, podeCriarAgendaEUnidades } from "@/lib/espacos/operacao-gate";
 import { avaliarBeneficiosSocioEspaco } from "@/lib/espacos/eligibility";
+import {
+  espacoUsaCatalogoPaaS,
+  resolverTipoOperacaoEspaco,
+} from "@/lib/espacos/tipo-operacao";
 import {
   calcularFinanceiroEspaco,
 } from "@/lib/espacos/financeiro";
@@ -31,7 +36,20 @@ import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger"
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { createClient } from "@/lib/supabase/server";
 
-type State = { ok: true; message: string } | { ok: false; message: string };
+type State =
+  | {
+      ok: true;
+      message: string;
+      payment?: {
+        method: "pix" | "cartao";
+        status?: string | null;
+        chargeUrl?: string | null;
+        pixPayload?: string | null;
+        pixEncodedImage?: string | null;
+        pixExpirationDate?: string | null;
+      };
+    }
+  | { ok: false; message: string };
 type SupabaseAdminClient = ReturnType<typeof createServiceRoleClient>;
 
 function exigeUmaReservaAtivaPorVez(plano: { beneficios_json?: unknown } | null | undefined) {
@@ -116,6 +134,43 @@ async function getActiveSuspensaoMarcacao(
 
 function text(formData: FormData, field: string) {
   return String(formData.get(field) ?? "").trim();
+}
+
+function asaasDigits(value: FormDataEntryValue | null) {
+  return String(value ?? "").replace(/\D/g, "");
+}
+
+function readAsaasCardForm(formData: FormData, fallbackEmail: string | null | undefined) {
+  const holderName = String(formData.get("card_holder_name") ?? "").trim();
+  const cardNumber = asaasDigits(formData.get("card_number"));
+  const expiryMonth = asaasDigits(formData.get("card_expiry_month")).padStart(2, "0").slice(0, 2);
+  const expiryYear = asaasDigits(formData.get("card_expiry_year")).slice(-4);
+  const ccv = asaasDigits(formData.get("card_ccv"));
+  const cpfCnpj = asaasDigits(formData.get("holder_cpf_cnpj"));
+  const postalCode = asaasDigits(formData.get("holder_postal_code"));
+  const addressNumber = String(formData.get("holder_address_number") ?? "").trim();
+  const phone = asaasDigits(formData.get("holder_phone"));
+  const email = String(formData.get("holder_email") ?? fallbackEmail ?? "").trim();
+
+  if (!holderName || cardNumber.length < 13 || !expiryMonth || expiryYear.length < 4 || ccv.length < 3) {
+    throw new Error("Informe os dados do cartão de crédito para ativar a recorrência.");
+  }
+  if (!cpfCnpj || !postalCode || !addressNumber || !phone || !email) {
+    throw new Error("Informe os dados do titular para validar o cartão no Asaas.");
+  }
+
+  return {
+    holderName,
+    cardNumber,
+    expiryMonth,
+    expiryYear,
+    ccv,
+    cpfCnpj,
+    postalCode,
+    addressNumber,
+    phone,
+    email,
+  };
 }
 
 const HORARIO_META_PREFIX = "[eid-horario]";
@@ -1369,12 +1424,15 @@ export async function escolherPlanoMensalidadePaaSAction(formData: FormData) {
   const { supabase, user, espaco } = await requireEspacoManager(espacoId);
   const { data: eg, error: egErr } = await supabase
     .from("espacos_genericos")
-    .select("categoria_mensalidade, modo_monetizacao")
+    .select("categoria_mensalidade, modo_monetizacao, modo_reserva")
     .eq("id", espacoId)
     .maybeSingle();
   if (egErr || !eg) throw new Error(egErr?.message ?? "Espaço não encontrado.");
-  if (String((eg as { modo_monetizacao?: string }).modo_monetizacao) !== "mensalidade_plataforma") {
-    throw new Error("Este espaço não está no modo de mensalidade com a plataforma.");
+  if (!espacoUsaCatalogoPaaS({
+    modoReserva: (eg as { modo_reserva?: string | null }).modo_reserva ?? null,
+    modoMonetizacao: (eg as { modo_monetizacao?: string | null }).modo_monetizacao ?? null,
+  })) {
+    throw new Error("A mensalidade da plataforma só se aplica a espaços por associação.");
   }
   const categoria = String((eg as { categoria_mensalidade?: string | null }).categoria_mensalidade ?? "outro");
   const { data: plano, error: pErr } = await supabase
@@ -1655,7 +1713,7 @@ export async function solicitarSocioEspacoAction(
     const { data: espaco, error: espacoErr } = await supabase
       .from("espacos_genericos")
       .select(
-        "id, slug, nome_publico, aceita_socios, responsavel_usuario_id, criado_por_usuario_id, associacao_regra_json, modo_reserva, entrada_membro_modo"
+        "id, slug, nome_publico, aceita_socios, responsavel_usuario_id, criado_por_usuario_id, associacao_regra_json, modo_reserva, modo_monetizacao, entrada_membro_modo"
       )
       .eq("id", espacoId)
       .maybeSingle();
@@ -1669,8 +1727,12 @@ export async function solicitarSocioEspacoAction(
       };
     }
     const regraAssociacao = normalizeEspacoAssociacaoConfig(espaco.associacao_regra_json);
+    const tipoOperacao = resolverTipoOperacaoEspaco({
+      modoReserva: espaco.modo_reserva,
+      modoMonetizacao: (espaco as { modo_monetizacao?: string | null }).modo_monetizacao ?? null,
+    });
     const entradaModoColuna = String((espaco as Record<string, unknown>).entrada_membro_modo ?? "manual");
-    const entradaAutomatica = entradaModoColuna === "automatica";
+    const entradaAutomatica = false;
     const identificadorEntrada = text(formData, "identificador_entrada");
     if (!entradaAutomatica && regraAssociacao.modoEntrada === "matricula" && identificadorEntrada.length < 3) {
       return { ok: false, message: "Informe a matrícula/código exigido pelo espaço." };
@@ -1732,10 +1794,13 @@ export async function solicitarSocioEspacoAction(
         dados_json: {
           regra: regraAssociacao,
           entradaAutomatica,
+          tipoOperacao,
+          fluxoAssociacao: planoId ? "socio" : "membro",
+          entrada_membro_modo: entradaModoColuna,
         },
-        status: entradaAutomatica ? "aprovado" : "pendente",
-        resolvido_em: entradaAutomatica ? new Date().toISOString() : null,
-        resolvido_por_usuario_id: entradaAutomatica ? user.id : null,
+        status: "pendente",
+        resolvido_em: null,
+        resolvido_por_usuario_id: null,
       })
       .select("id")
       .single();
@@ -1752,13 +1817,13 @@ export async function solicitarSocioEspacoAction(
           membership_request_id: membership.id,
           plano_socio_id: planoId,
           matricula,
-          status: entradaAutomatica ? "ativo" : "em_analise",
-          documentos_status: entradaAutomatica ? "aprovado" : "pendente",
-          financeiro_status: entradaAutomatica ? "em_dia" : "pendente",
-          beneficios_liberados: entradaAutomatica,
-          aprovado_por_usuario_id: entradaAutomatica ? user.id : null,
-          aprovado_em: entradaAutomatica ? new Date().toISOString() : null,
-          ativo_desde: entradaAutomatica ? new Date().toISOString() : null,
+          status: "em_analise",
+          documentos_status: "pendente",
+          financeiro_status: "pendente",
+          beneficios_liberados: false,
+          aprovado_por_usuario_id: null,
+          aprovado_em: null,
+          ativo_desde: null,
         },
         { onConflict: "espaco_generico_id,usuario_id" }
       )
@@ -1786,7 +1851,7 @@ export async function solicitarSocioEspacoAction(
 
     const notifyOwnerId =
       espaco.responsavel_usuario_id ?? espaco.criado_por_usuario_id ?? null;
-    if (notifyOwnerId && !entradaAutomatica) {
+    if (notifyOwnerId) {
       const { data } = await supabase
         .from("notificacoes")
         .insert({
@@ -1810,7 +1875,7 @@ export async function solicitarSocioEspacoAction(
       p_entidade_tipo: "espaco_socio",
       p_entidade_id: socio.id,
       p_acao: "solicitacao_associacao_criada",
-      p_payload: { membershipRequestId: membership.id, planoId, entradaAutomatica },
+      p_payload: { membershipRequestId: membership.id, planoId, entradaAutomatica, tipoOperacao },
       p_autor_usuario_id: user.id,
     });
 
@@ -1818,15 +1883,321 @@ export async function solicitarSocioEspacoAction(
     revalidatePath("/comunidade");
     return {
       ok: true,
-      message: entradaAutomatica
-        ? "Você já é membro deste espaço. Agora pode reservar normalmente."
-        : "Solicitação enviada. O espaço vai revisar seus documentos.",
+      message: planoId
+        ? "Solicitação enviada. O pagamento e a aprovação do admin vão liberar seu acesso como sócio."
+        : "Solicitação enviada. O espaço vai revisar seus dados antes de liberar o acesso.",
     };
   } catch (error) {
     return {
       ok: false,
       message:
         error instanceof Error ? error.message : "Falha ao solicitar associação.",
+    };
+  }
+}
+
+export async function iniciarAssociacaoPagaEspacoAction(
+  _prev: State | undefined,
+  formData: FormData
+): Promise<State> {
+  try {
+    const { supabase, user } = await requireUser();
+    const admin = createServiceRoleClient();
+    const espacoId = Number(formData.get("espaco_id") ?? 0);
+    const planoId = intOrNull(formData, "plano_socio_id");
+    const mensagem = text(formData, "mensagem");
+    if (!espacoId || !planoId) {
+      return { ok: false, message: "Selecione um plano de sócio válido." };
+    }
+
+    const { data: espaco, error: espacoErr } = await supabase
+      .from("espacos_genericos")
+      .select(
+        "id, slug, nome_publico, aceita_socios, responsavel_usuario_id, criado_por_usuario_id, associacao_regra_json, modo_reserva, modo_monetizacao, entrada_membro_modo"
+      )
+      .eq("id", espacoId)
+      .maybeSingle();
+    if (espacoErr || !espaco) {
+      return { ok: false, message: espacoErr?.message ?? "Espaço não encontrado." };
+    }
+    if (!espaco.aceita_socios) {
+      return { ok: false, message: "Este espaço não está aceitando novos sócios no momento." };
+    }
+
+    const tipoOperacao = resolverTipoOperacaoEspaco({
+      modoReserva: espaco.modo_reserva,
+      modoMonetizacao: (espaco as { modo_monetizacao?: string | null }).modo_monetizacao ?? null,
+    });
+    if (tipoOperacao !== "associacao") {
+      return { ok: false, message: "A associação paga só está disponível para espaços por associação." };
+    }
+
+    const regraAssociacao = normalizeEspacoAssociacaoConfig(espaco.associacao_regra_json);
+    const identificadorEntrada = text(formData, "identificador_entrada");
+    if (regraAssociacao.modoEntrada === "matricula" && identificadorEntrada.length < 3) {
+      return { ok: false, message: "Informe a matrícula/código exigido pelo espaço." };
+    }
+    if (regraAssociacao.modoEntrada === "cpf") {
+      const digits = identificadorEntrada.replace(/\D/g, "");
+      if (digits.length !== 11) {
+        return { ok: false, message: "Informe um CPF válido (11 dígitos)." };
+      }
+    }
+
+    const docs: Array<{ tipo: string; file: File | null }> = [
+      { tipo: "rg", file: formData.get("documento_rg") as File | null },
+      { tipo: "cpf", file: formData.get("documento_cpf") as File | null },
+      { tipo: "comprovante_residencia", file: formData.get("documento_comprovante") as File | null },
+    ];
+    if (docs.some((item) => !(item.file instanceof File) || item.file.size <= 0)) {
+      return { ok: false, message: "Envie RG, CPF e comprovante para solicitar a associação paga." };
+    }
+
+    const { data: plano, error: planoErr } = await supabase
+      .from("espaco_planos_socio")
+      .select("id, nome, mensalidade_centavos")
+      .eq("id", planoId)
+      .eq("espaco_generico_id", espacoId)
+      .eq("ativo", true)
+      .maybeSingle();
+    if (planoErr || !plano) {
+      return { ok: false, message: planoErr?.message ?? "Plano não encontrado." };
+    }
+    const valorMensalCentavos = Math.max(0, Number(plano.mensalidade_centavos ?? 0));
+    if (valorMensalCentavos <= 0) {
+      return { ok: false, message: "Esse plano não possui mensalidade configurada." };
+    }
+
+    const { data: existente } = await supabase
+      .from("espaco_socios")
+      .select("id, status")
+      .eq("espaco_generico_id", espacoId)
+      .eq("usuario_id", user.id)
+      .maybeSingle();
+    if (existente && existente.status !== "rejeitado" && existente.status !== "cancelado") {
+      return { ok: false, message: "Você já possui uma solicitação ou vínculo de sócio com este espaço." };
+    }
+
+    const customerId = await ensureProfileAsaasCustomer(user.id);
+    const card = readAsaasCardForm(formData, user.email);
+    const hoje = new Date();
+    const primeiraCobranca = hoje.toISOString().slice(0, 10);
+    const externalRefBase = `espaco_socio_assinatura:${espacoId}:${user.id}:${Date.now()}`;
+    const subscription = await createAsaasSubscription({
+      customer: customerId,
+      billingType: "CREDIT_CARD",
+      value: valorMensalCentavos / 100,
+      nextDueDate: primeiraCobranca,
+      cycle: "MONTHLY",
+      description: `Mensalidade de sócio — ${String(plano.nome ?? "Plano")} · ${String(espaco.nome_publico ?? "Espaço")}`,
+      externalReference: externalRefBase,
+      creditCard: {
+        holderName: card.holderName,
+        number: card.cardNumber,
+        expiryMonth: card.expiryMonth,
+        expiryYear: card.expiryYear,
+        ccv: card.ccv,
+      },
+      creditCardHolderInfo: {
+        name: card.holderName,
+        email: card.email,
+        cpfCnpj: card.cpfCnpj,
+        postalCode: card.postalCode,
+        addressNumber: card.addressNumber,
+        phone: card.phone,
+      },
+    });
+
+    const payment = await createAsaasPayment({
+      customer: customerId,
+      billingType: "CREDIT_CARD",
+      value: valorMensalCentavos / 100,
+      dueDate: primeiraCobranca,
+      description: `1ª mensalidade de sócio — ${String(plano.nome ?? "Plano")}`,
+      externalReference: `${externalRefBase}:primeira`,
+    });
+
+    const matricula = `SOC-${espacoId}-${Date.now().toString().slice(-8)}`;
+    const { data: membership, error: membershipErr } = await supabase
+      .from("membership_requests")
+      .insert({
+        espaco_generico_id: espacoId,
+        usuario_id: user.id,
+        matricula,
+        plano_socio_id: planoId,
+        mensagem: mensagem || null,
+        identificador_tipo: regraAssociacao.modoEntrada === "somente_perfil" ? null : regraAssociacao.modoEntrada,
+        identificador_valor: regraAssociacao.modoEntrada === "somente_perfil" ? null : identificadorEntrada || null,
+        dados_json: {
+          regra: regraAssociacao,
+          tipoOperacao,
+          fluxoAssociacao: "socio_pago",
+          pagamento_inicial_status: "pending",
+          asaas_payment_id: payment.id,
+          asaas_subscription_id: subscription.id,
+        },
+        status: "pendente",
+        resolvido_em: null,
+        resolvido_por_usuario_id: null,
+      })
+      .select("id")
+      .single();
+    if (membershipErr) {
+      return { ok: false, message: membershipErr.message };
+    }
+
+    const { data: socio, error: socioErr } = await supabase
+      .from("espaco_socios")
+      .upsert(
+        {
+          espaco_generico_id: espacoId,
+          usuario_id: user.id,
+          membership_request_id: membership.id,
+          plano_socio_id: planoId,
+          matricula,
+          status: "em_analise",
+          documentos_status: "pendente",
+          financeiro_status: "pendente",
+          beneficios_liberados: false,
+          aprovado_por_usuario_id: null,
+          aprovado_em: null,
+          ativo_desde: null,
+        },
+        { onConflict: "espaco_generico_id,usuario_id" }
+      )
+      .select("id")
+      .single();
+    if (socioErr) {
+      return { ok: false, message: socioErr.message };
+    }
+
+    for (const item of docs) {
+      if (!(item.file instanceof File) || item.file.size <= 0) continue;
+      const path = await uploadDocumentoEspaco(item.file as File, user.id);
+      const { error } = await supabase.from("espaco_documentos_socio").insert({
+        espaco_generico_id: espacoId,
+        espaco_socio_id: socio.id,
+        membership_request_id: membership.id,
+        usuario_id: user.id,
+        tipo_documento: item.tipo,
+        arquivo_path: path,
+        mime_type: (item.file as File).type || "application/octet-stream",
+        status: "pendente",
+      });
+      if (error) return { ok: false, message: error.message };
+    }
+
+    const { data: assinaturaSocio, error: assinaturaErr } = await admin
+      .from("espaco_socio_assinaturas")
+      .upsert(
+        {
+          espaco_generico_id: espacoId,
+          espaco_socio_id: socio.id,
+          usuario_id: user.id,
+          plano_socio_id: planoId,
+          asaas_subscription_id: subscription.id,
+          status: "pending",
+          valor_mensal_centavos: valorMensalCentavos,
+          proxima_cobranca: subscription.nextDueDate ?? primeiraCobranca,
+        },
+        { onConflict: "espaco_socio_id" }
+      )
+      .select("id")
+      .single();
+    if (assinaturaErr || !assinaturaSocio) {
+      return { ok: false, message: assinaturaErr?.message ?? "Falha ao registrar assinatura do sócio." };
+    }
+
+    const { data: cfg } = await admin
+      .from("ei_financeiro_config")
+      .select(
+        "asaas_taxa_percentual, espaco_taxa_fixa, espaco_taxa_fixa_promo, espaco_plataforma_sobre_taxa_gateway, espaco_plataforma_sobre_taxa_gateway_promo, espaco_promocao_ativa, espaco_promocao_ate, espaco_socio_comissao_percentual"
+      )
+      .eq("id", 1)
+      .maybeSingle();
+    const calculo = calcularFinanceiroEspaco({
+      valorCentavos: valorMensalCentavos,
+      config: cfg,
+      comissaoPercentualPlataforma: Number(
+        (cfg as Record<string, unknown> | null)?.espaco_socio_comissao_percentual ?? 0
+      ),
+    });
+    const walletRecebedor = await buscarWalletRecebedorEspaco(
+      admin,
+      espacoId,
+      espaco.responsavel_usuario_id ?? espaco.criado_por_usuario_id ?? null
+    );
+    const split = asaasSplitDoEspaco(walletRecebedor, calculo.liquidoEspacoCentavos);
+    if (!split) {
+      return { ok: false, message: "Configure a conta Asaas de recebimentos do espaço antes de cobrar mensalidades de sócio." };
+    }
+
+    await admin.from("espaco_transacoes").insert({
+      espaco_generico_id: espacoId,
+      usuario_id: user.id,
+      espaco_socio_id: socio.id,
+      assinatura_socio_id: assinaturaSocio.id,
+      tipo: "mensalidade_socio",
+      billing_type: "cartao",
+      asaas_billing_type: "CREDIT_CARD",
+      status: "pending",
+      valor_bruto_centavos: calculo.brutoCentavos,
+      taxa_gateway_centavos: calculo.taxaGatewayCentavos,
+      comissao_plataforma_centavos: calculo.comissaoPlataformaCentavos,
+      valor_liquido_espaco_centavos: calculo.liquidoEspacoCentavos,
+      asaas_customer_id: customerId,
+      asaas_payment_id: payment.id,
+      asaas_subscription_id: subscription.id,
+      asaas_charge_url: payment.invoiceUrl ?? payment.bankSlipUrl ?? null,
+      external_reference: `${externalRefBase}:primeira`,
+      vencimento_em: primeiraCobranca,
+    });
+
+    const notifyOwnerId = espaco.responsavel_usuario_id ?? espaco.criado_por_usuario_id ?? null;
+    if (notifyOwnerId) {
+      const { data } = await supabase
+        .from("notificacoes")
+        .insert({
+          usuario_id: notifyOwnerId,
+          mensagem: "Um novo sócio iniciou pagamento e aguarda aprovação no seu espaço.",
+          tipo: "espaco_socio",
+          referencia_id: socio.id,
+          lida: false,
+          remetente_id: user.id,
+          data_criacao: new Date().toISOString(),
+        })
+        .select("id")
+        .limit(1);
+      await triggerPushForNotificationIdsBestEffort([Number((data?.[0] as { id?: number } | undefined)?.id ?? 0)], {
+        source: "espaco/actions.associacao-paga",
+      });
+    }
+
+    await supabase.rpc("espaco_criar_auditoria", {
+      p_espaco_id: espacoId,
+      p_entidade_tipo: "espaco_socio",
+      p_entidade_id: socio.id,
+      p_acao: "associacao_paga_iniciada",
+      p_payload: {
+        membershipRequestId: membership.id,
+        planoId,
+        assinaturaSocioId: assinaturaSocio.id,
+        asaasPaymentId: payment.id,
+        asaasSubscriptionId: subscription.id,
+      },
+      p_autor_usuario_id: user.id,
+    });
+
+    revalidatePath(`/espaco/${espaco.slug ?? ""}`);
+    revalidatePath("/comunidade");
+    return {
+      ok: true,
+      message: "Pagamento iniciado. O admin do espaço ainda precisa aprovar sua entrada para liberar reservas e benefícios.",
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Falha ao iniciar associação paga.",
     };
   }
 }
@@ -2209,22 +2580,27 @@ export async function criarReservaEspacoAction(
       modo_monetizacao?: string | null;
       taxa_reserva_plataforma_centavos?: number | null;
     };
-    const modoReserva = (espacoM.modo_reserva ?? "mista") as "gratuita" | "paga" | "mista";
-    const modoMonet = (espacoM.modo_monetizacao ?? "misto") as
-      | "mensalidade_plataforma"
-      | "apenas_reservas"
-      | "misto";
+    const tipoOperacao = resolverTipoOperacaoEspaco({
+      modoReserva: espacoM.modo_reserva ?? null,
+      modoMonetizacao: espacoM.modo_monetizacao ?? null,
+    });
     const isGratuitoTipo = tipoReserva === "torneio" || tipoReserva === "professor";
-    if (modoReserva === "paga" && !isGratuitoTipo && !checkbox(formData, "usar_beneficio_gratis") && valorCentavos < 1) {
+    if (tipoOperacao === "reserva_paga" && !isGratuitoTipo && !checkbox(formData, "usar_beneficio_gratis") && valorCentavos < 1) {
       return {
         ok: false,
-        message: "Este local está configurado apenas para reservas pagas, mas o dono ainda não definiu o valor padrão da reserva.",
+        message: "Este local está configurado com reservas pagas, mas o dono ainda não definiu o valor padrão da reserva.",
       };
     }
-    if (modoReserva === "gratuita" && !isGratuitoTipo && valorCentavos > 0) {
+    if (tipoOperacao === "associacao" && !isGratuitoTipo && valorCentavos > 0) {
       return {
         ok: false,
-        message: "Este local está com reservas gratuitas. O valor do horário deve ser zero (exceto usos de professor/torneio, se o espaço permitir).",
+        message: "Este local opera por associação. O valor do horário precisa ser gratuito para associados nas reservas comuns.",
+      };
+    }
+    if (tipoOperacao === "associacao" && !isGratuitoTipo && !benefit.ok) {
+      return {
+        ok: false,
+        message: benefit.motivo ?? "Você precisa estar com a associação ativa para reservar neste espaço.",
       };
     }
     const antecedenciaHoras =
@@ -2524,7 +2900,7 @@ export async function criarReservaEspacoAction(
       }
     }
     const taxaReservaPlataformaDb = Math.max(0, Math.round(Number(espacoM.taxa_reserva_plataforma_centavos ?? 0)));
-    const soMensalidadePaaS = modoMonet === "mensalidade_plataforma";
+    const soMensalidadePaaS = tipoOperacao === "associacao";
     const taxaReservaAplicar =
       !usarReservaSemCobranca &&
       !soMensalidadePaaS &&
@@ -2619,12 +2995,27 @@ export async function criarReservaEspacoAction(
     const formaValidada = ["pix", "cartao", "boleto"].includes(formaRaw) ? formaRaw : "pix";
     const asaasBillingType = FORMA_PARA_ASAAS[formaValidada] ?? "PIX";
 
-    let checkoutUrl: string | null = null;
+    let paymentResult:
+      | {
+          method: "pix" | "cartao";
+          status?: string | null;
+          chargeUrl?: string | null;
+          pixPayload?: string | null;
+          pixEncodedImage?: string | null;
+          pixExpirationDate?: string | null;
+        }
+      | undefined;
     if (calculo.brutoCentavos > 0) {
       if (!formasAceitas.includes(formaValidada)) {
         return {
           ok: false,
           message: `Este espaço não aceita ${formaValidada === "pix" ? "PIX" : formaValidada === "cartao" ? "cartão de crédito" : "boleto"} como forma de pagamento.`,
+        };
+      }
+      if (formaValidada === "boleto") {
+        return {
+          ok: false,
+          message: "Boleto ainda não está disponível no checkout interno. Use PIX ou cartão de crédito.",
         };
       }
       const customerId = await ensureProfileAsaasCustomer(user.id);
@@ -2640,7 +3031,7 @@ export async function criarReservaEspacoAction(
           message: "Configure a conta Asaas de recebimentos do espaço antes de criar reservas pagas.",
         };
       }
-      const payment = await createAsaasPayment({
+      const paymentPayload: Record<string, unknown> = {
         customer: customerId,
         billingType: asaasBillingType,
         value: calculo.brutoCentavos / 100,
@@ -2648,8 +3039,36 @@ export async function criarReservaEspacoAction(
         description: `Reserva EsporteID · ${espaco.nome_publico}`,
         externalReference: `espaco_reserva:${reserva.id}`,
         split,
-      });
-      checkoutUrl = payment.invoiceUrl ?? payment.bankSlipUrl ?? null;
+      };
+      if (formaValidada === "cartao") {
+        const card = readAsaasCardForm(formData, user.email);
+        paymentPayload.creditCard = {
+          holderName: card.holderName,
+          number: card.cardNumber,
+          expiryMonth: card.expiryMonth,
+          expiryYear: card.expiryYear,
+          ccv: card.ccv,
+        };
+        paymentPayload.creditCardHolderInfo = {
+          name: card.holderName,
+          email: card.email,
+          cpfCnpj: card.cpfCnpj,
+          postalCode: card.postalCode,
+          addressNumber: card.addressNumber,
+          phone: card.phone,
+        };
+      }
+      const payment = await createAsaasPayment(paymentPayload);
+      const chargeUrl = payment.invoiceUrl ?? payment.bankSlipUrl ?? null;
+      let pixPayload: string | null = null;
+      let pixEncodedImage: string | null = null;
+      let pixExpirationDate: string | null = null;
+      if (formaValidada === "pix") {
+        const pixQr = await getAsaasPaymentPixQrCode(payment.id);
+        pixPayload = pixQr.payload ?? null;
+        pixEncodedImage = pixQr.encodedImage ?? null;
+        pixExpirationDate = pixQr.expirationDate ?? null;
+      }
 
       await admin.from("espaco_transacoes").insert({
         espaco_generico_id: espacoId,
@@ -2666,7 +3085,7 @@ export async function criarReservaEspacoAction(
         valor_liquido_espaco_centavos: calculo.liquidoEspacoCentavos,
         asaas_customer_id: customerId,
         asaas_payment_id: payment.id,
-        asaas_charge_url: checkoutUrl,
+        asaas_charge_url: chargeUrl,
         external_reference: `espaco_reserva:${reserva.id}`,
         vencimento_em: new Date().toISOString().slice(0, 10),
       });
@@ -2679,6 +3098,15 @@ export async function criarReservaEspacoAction(
           atualizado_em: new Date().toISOString(),
         })
         .eq("id", reserva.id);
+
+      paymentResult = {
+        method: formaValidada === "cartao" ? "cartao" : "pix",
+        status: payment.status ?? null,
+        chargeUrl,
+        pixPayload,
+        pixEncodedImage,
+        pixExpirationDate,
+      };
     }
 
     const notifyOwnerId =
@@ -2708,15 +3136,15 @@ export async function criarReservaEspacoAction(
     revalidatePath(`/espaco/${espaco.slug ?? ""}`);
     revalidatePath("/comunidade");
     revalidatePath("/agenda");
-    if (checkoutUrl) {
-      redirect(checkoutUrl);
-    }
     return {
       ok: true,
       message:
         calculo.brutoCentavos > 0
-          ? "Reserva registrada, mas o link de pagamento não retornou do Asaas. Abra Financeiro do espaço ou tente de novo."
+          ? paymentResult?.method === "pix"
+            ? "Reserva criada. Finalize o pagamento por PIX abaixo para confirmar o horário."
+            : "Reserva criada. O pagamento por cartão foi iniciado dentro da plataforma."
           : "Reserva criada com benefício de sócio.",
+      payment: paymentResult,
     };
   } catch (error) {
     return {
@@ -2754,7 +3182,7 @@ export async function entrarFilaEsperaEspacoAction(
     const [{ data: espaco }, { data: socio }, { data: plano }] = await Promise.all([
       supabase
         .from("espacos_genericos")
-        .select("id, modo_reserva, configuracao_reservas_json")
+        .select("id, modo_reserva, modo_monetizacao, configuracao_reservas_json")
         .eq("id", espacoId)
         .maybeSingle(),
       supabase
@@ -2774,8 +3202,12 @@ export async function entrarFilaEsperaEspacoAction(
     if (!espaco) {
       return { ok: false, message: "Espaço não encontrado." };
     }
-    if (String(espaco.modo_reserva ?? "").toLowerCase() === "paga") {
-      return { ok: false, message: "Fila de espera só está disponível para reservas gratuitas de membro." };
+    const tipoOperacao = resolverTipoOperacaoEspaco({
+      modoReserva: espaco.modo_reserva,
+      modoMonetizacao: (espaco as { modo_monetizacao?: string | null }).modo_monetizacao ?? null,
+    });
+    if (tipoOperacao === "reserva_paga") {
+      return { ok: false, message: "Fila de espera só está disponível para espaços por associação." };
     }
 
     const benefit = avaliarBeneficiosSocioEspaco({
@@ -2985,8 +3417,11 @@ export async function adicionarEspacoReservaRapidaAction(
     if (espacoErr || !espaco) {
       return { ok: false, message: espacoErr?.message ?? "Espaço não encontrado." };
     }
-    const modoReserva = String(espaco.modo_reserva ?? "").toLowerCase();
-    if (!espaco.ativo_listagem || modoReserva !== "paga") {
+    const tipoOperacao = resolverTipoOperacaoEspaco({
+      modoReserva: espaco.modo_reserva,
+      modoMonetizacao: (espaco as { modo_monetizacao?: string | null }).modo_monetizacao ?? null,
+    });
+    if (!espaco.ativo_listagem || tipoOperacao !== "reserva_paga") {
       return {
         ok: false,
         message: "Somente espaços públicos em modo pago podem ser adicionados ao botão Reservar.",
@@ -3337,39 +3772,23 @@ export async function gerarCobrancaMensalidadePlataformaEspacoAction(
     if (simulationEnabled) {
       subscription = { id: `sim_locais_${assin.id}_${Date.now()}`, nextDueDate: primeiraCobranca, status: "ACTIVE" };
     } else {
-      const digits = (value: FormDataEntryValue | null) => String(value ?? "").replace(/\D/g, "");
-      const holderName = String(formData.get("card_holder_name") ?? "").trim();
-      const cardNumber = digits(formData.get("card_number"));
-      const expiryMonth = digits(formData.get("card_expiry_month")).padStart(2, "0").slice(0, 2);
-      const expiryYear = digits(formData.get("card_expiry_year")).slice(-4);
-      const ccv = digits(formData.get("card_ccv"));
-      const cpfCnpj = digits(formData.get("holder_cpf_cnpj"));
-      const postalCode = digits(formData.get("holder_postal_code"));
-      const addressNumber = String(formData.get("holder_address_number") ?? "").trim();
-      const phone = digits(formData.get("holder_phone"));
-      const email = String(formData.get("holder_email") ?? user.email ?? "").trim();
-      if (!holderName || cardNumber.length < 13 || !expiryMonth || expiryYear.length < 4 || ccv.length < 3) {
-        return { ok: false, message: "Informe os dados do cartão de crédito para ativar a recorrência." };
-      }
-      if (!cpfCnpj || !postalCode || !addressNumber || !phone || !email) {
-        return { ok: false, message: "Informe os dados do titular para validar o cartão no Asaas." };
-      }
+      const card = readAsaasCardForm(formData, user.email);
       subscription = await createAsaasSubscription({
         ...subscriptionPayload,
         creditCard: {
-          holderName,
-          number: cardNumber,
-          expiryMonth,
-          expiryYear,
-          ccv,
+          holderName: card.holderName,
+          number: card.cardNumber,
+          expiryMonth: card.expiryMonth,
+          expiryYear: card.expiryYear,
+          ccv: card.ccv,
         },
         creditCardHolderInfo: {
-          name: holderName,
-          email,
-          cpfCnpj,
-          postalCode,
-          addressNumber,
-          phone,
+          name: card.holderName,
+          email: card.email,
+          cpfCnpj: card.cpfCnpj,
+          postalCode: card.postalCode,
+          addressNumber: card.addressNumber,
+          phone: card.phone,
         },
       });
     }

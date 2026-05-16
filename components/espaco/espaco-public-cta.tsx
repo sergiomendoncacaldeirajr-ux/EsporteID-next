@@ -5,8 +5,10 @@ import {
   adicionarEspacoReservaRapidaAction,
   criarReservaEspacoAction,
   entrarFilaEsperaEspacoAction,
+  iniciarAssociacaoPagaEspacoAction,
   solicitarSocioEspacoAction,
 } from "@/app/espaco/actions";
+import { resolverTipoOperacaoEspaco } from "@/lib/espacos/tipo-operacao";
 
 const initial = { ok: false, message: "" };
 
@@ -112,48 +114,54 @@ export function EspacoPublicJoinForm({
     instrucoes: string;
   };
 }) {
-  const [state, action, pending] = useActionState(solicitarSocioEspacoAction, initial);
-  const entradaAutomatica = String(modoReserva ?? "").toLowerCase() === "paga";
+  const [manualState, manualAction, manualPending] = useActionState(solicitarSocioEspacoAction, initial);
+  const [paidState, paidAction, paidPending] = useActionState(iniciarAssociacaoPagaEspacoAction, initial);
+  const tipoOperacao = resolverTipoOperacaoEspaco({ modoReserva, modoMonetizacao: null });
+  const associacaoOpcional = tipoOperacao === "reserva_paga";
+  const temPlanoPago = planos.some((plano) => Number(plano.mensalidade_centavos ?? 0) > 0);
 
   return (
-    <form action={action} className="space-y-3 rounded-2xl border border-eid-action-500/25 bg-eid-card/90 p-4">
-      <input type="hidden" name="espaco_id" value={espacoId} />
-      <h3 className="text-sm font-bold text-eid-fg">{entradaAutomatica ? "Tornar-se membro" : "Solicitar entrada"}</h3>
-      <p className="text-xs text-eid-text-secondary">
-        {entradaAutomatica
-          ? "Neste local com reservas pagas, sua entrada como membro é imediata. Você continua pagando cada reserva normalmente."
-          : regraEntrada?.instrucoes ?? "Envie seus dados para o dono analisar sua entrada no espaço."}
-      </p>
-      {planos.length > 0 ? (
-        <select
-          name="plano_socio_id"
-          className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
-          defaultValue={entradaAutomatica ? "" : planos[0]?.id ?? ""}
-        >
-          <option value="">Sem mensalidade agora</option>
-          {planos.map((plano) => (
-            <option key={plano.id} value={plano.id}>
-              {plano.nome} · R$ {((Number(plano.mensalidade_centavos ?? 0) || 0) / 100).toFixed(2).replace(".", ",")}
-            </option>
-          ))}
-        </select>
-      ) : (
-        <input type="hidden" name="plano_socio_id" value="" />
-      )}
-      <textarea
-        name="mensagem"
-        rows={2}
-        placeholder="Conte ao clube o que você procura."
-        className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
-      />
-      {!entradaAutomatica && regraEntrada?.modoEntrada !== "somente_perfil" ? (
-        <input
-          name="identificador_entrada"
-          placeholder={regraEntrada?.rotuloCampo || (regraEntrada?.modoEntrada === "cpf" ? "CPF" : "Matrícula")}
+    <div className="space-y-3 rounded-2xl border border-eid-action-500/25 bg-eid-card/90 p-4">
+      <div>
+        <h3 className="text-sm font-bold text-eid-fg">{associacaoOpcional ? "Clube de benefícios e sócio" : "Solicitar entrada"}</h3>
+        <p className="text-xs text-eid-text-secondary">
+          {associacaoOpcional
+            ? "Neste espaço com reservas pagas, a associação é opcional e serve para benefícios extras, day use e clube do espaço."
+            : regraEntrada?.instrucoes ?? "Envie seus dados para o dono analisar sua entrada no espaço."}
+        </p>
+      </div>
+
+      <form action={manualAction} className="space-y-3">
+        <input type="hidden" name="espaco_id" value={espacoId} />
+        {planos.length > 0 ? (
+          <select
+            name="plano_socio_id"
+            className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
+            defaultValue=""
+          >
+            <option value="">Sem mensalidade agora</option>
+            {planos.map((plano) => (
+              <option key={plano.id} value={plano.id}>
+                {plano.nome} · R$ {((Number(plano.mensalidade_centavos ?? 0) || 0) / 100).toFixed(2).replace(".", ",")}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input type="hidden" name="plano_socio_id" value="" />
+        )}
+        <textarea
+          name="mensagem"
+          rows={2}
+          placeholder="Conte ao clube o que você procura."
           className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
         />
-      ) : null}
-      {!entradaAutomatica ? (
+        {regraEntrada?.modoEntrada !== "somente_perfil" ? (
+          <input
+            name="identificador_entrada"
+            placeholder={regraEntrada?.rotuloCampo || (regraEntrada?.modoEntrada === "cpf" ? "CPF" : "Matrícula")}
+            className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
+          />
+        ) : null}
         <div className="grid gap-2 sm:grid-cols-3">
           <input
             type="file"
@@ -174,20 +182,85 @@ export function EspacoPublicJoinForm({
             className="eid-input-dark rounded-xl px-3 py-2 text-xs"
           />
         </div>
+        <button
+          type="submit"
+          disabled={manualPending}
+          className="eid-btn-primary w-full rounded-xl px-4 py-3 text-sm font-bold"
+        >
+          {manualPending ? "Enviando..." : "Solicitar associação"}
+        </button>
+        {manualState.message ? (
+          <p className={`text-xs ${manualState.ok ? "text-eid-primary-300" : "text-red-300"}`}>
+            {manualState.message}
+          </p>
+        ) : null}
+      </form>
+
+      {temPlanoPago ? (
+        <form action={paidAction} className="space-y-3 rounded-2xl border border-eid-primary-500/20 bg-eid-primary-500/6 p-4">
+          <input type="hidden" name="espaco_id" value={espacoId} />
+          <p className="text-sm font-bold text-eid-fg">Virar sócio com mensalidade</p>
+          <select
+            name="plano_socio_id"
+            className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
+            defaultValue={String(planos.find((plano) => Number(plano.mensalidade_centavos ?? 0) > 0)?.id ?? "")}
+          >
+            {planos.filter((plano) => Number(plano.mensalidade_centavos ?? 0) > 0).map((plano) => (
+              <option key={plano.id} value={plano.id}>
+                {plano.nome} · R$ {((Number(plano.mensalidade_centavos ?? 0) || 0) / 100).toFixed(2).replace(".", ",")}
+              </option>
+            ))}
+          </select>
+          <textarea
+            name="mensagem"
+            rows={2}
+            placeholder="Explique o que você busca como sócio."
+            className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
+          />
+          {regraEntrada?.modoEntrada !== "somente_perfil" ? (
+            <input
+              name="identificador_entrada"
+              placeholder={regraEntrada?.rotuloCampo || (regraEntrada?.modoEntrada === "cpf" ? "CPF" : "Matrícula")}
+              className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
+            />
+          ) : null}
+          <div className="grid gap-2 sm:grid-cols-3">
+            <input type="file" name="documento_rg" accept=".pdf,image/*" className="eid-input-dark rounded-xl px-3 py-2 text-xs" />
+            <input type="file" name="documento_cpf" accept=".pdf,image/*" className="eid-input-dark rounded-xl px-3 py-2 text-xs" />
+            <input type="file" name="documento_comprovante" accept=".pdf,image/*" className="eid-input-dark rounded-xl px-3 py-2 text-xs" />
+          </div>
+          <input name="card_holder_name" autoComplete="cc-name" className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm" placeholder="Nome impresso no cartão" required />
+          <div className="grid gap-2 sm:grid-cols-2">
+            <input name="card_number" inputMode="numeric" autoComplete="cc-number" className="eid-input-dark rounded-xl px-3 py-2 text-sm" placeholder="Número do cartão" required />
+            <input name="card_ccv" inputMode="numeric" autoComplete="cc-csc" className="eid-input-dark rounded-xl px-3 py-2 text-sm" placeholder="CVV" required />
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <input name="card_expiry_month" inputMode="numeric" className="eid-input-dark rounded-xl px-3 py-2 text-sm" placeholder="Mês (MM)" required />
+            <input name="card_expiry_year" inputMode="numeric" className="eid-input-dark rounded-xl px-3 py-2 text-sm" placeholder="Ano (AAAA)" required />
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <input name="holder_cpf_cnpj" inputMode="numeric" className="eid-input-dark rounded-xl px-3 py-2 text-sm" placeholder="CPF/CNPJ do titular" required />
+            <input name="holder_email" type="email" className="eid-input-dark rounded-xl px-3 py-2 text-sm" placeholder="E-mail do titular" required />
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <input name="holder_phone" inputMode="tel" className="eid-input-dark rounded-xl px-3 py-2 text-sm" placeholder="Telefone do titular" required />
+            <input name="holder_postal_code" inputMode="numeric" className="eid-input-dark rounded-xl px-3 py-2 text-sm" placeholder="CEP" required />
+          </div>
+          <input name="holder_address_number" inputMode="numeric" className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm" placeholder="Número do endereço" required />
+          <p className="text-[11px] leading-relaxed text-eid-text-secondary">
+            O pagamento da mensalidade não libera acesso automático. O admin do espaço ainda precisa aprovar sua entrada.
+          </p>
+          <button type="submit" disabled={paidPending} className="eid-btn-primary w-full rounded-xl px-4 py-3 text-sm font-bold">
+            {paidPending ? "Iniciando pagamento..." : "Pagar mensalidade e solicitar aprovação"}
+          </button>
+          {paidState.message ? (
+            <p className={`text-xs ${paidState.ok ? "text-eid-primary-300" : "text-red-300"}`}>
+              {paidState.message}
+            </p>
+          ) : null}
+        </form>
       ) : null}
-      <button
-        type="submit"
-        disabled={pending}
-        className="eid-btn-primary w-full rounded-xl px-4 py-3 text-sm font-bold"
-      >
-        {pending ? "Enviando..." : entradaAutomatica ? "Virar membro" : "Solicitar associação"}
-      </button>
-      {state.message ? (
-        <p className={`text-xs ${state.ok ? "text-eid-primary-300" : "text-red-300"}`}>
-          {state.message}
-        </p>
-      ) : null}
-    </form>
+    </div>
   );
 }
 

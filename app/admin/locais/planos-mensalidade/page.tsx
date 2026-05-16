@@ -28,9 +28,8 @@ const LIB = [
 ];
 
 const GUIA_PLANOS = [
-  perfilComercialPlanoPaaS("basico"),
-  perfilComercialPlanoPaaS("intermediario"),
-  perfilComercialPlanoPaaS("completo"),
+  perfilComercialPlanoPaaS("essencial"),
+  perfilComercialPlanoPaaS("premium"),
 ];
 
 function brlDeCentavos(c: number) {
@@ -77,9 +76,8 @@ export default async function AdminPlanoMensalPlataformaPage() {
         </p>
         <h1 className="text-lg font-bold text-eid-fg">Planos de mensalidade (catálogo PaaS)</h1>
         <p className="mt-1 text-sm text-eid-text-secondary">
-          Catálogo global por categoria de espaço. A ordem comercial esperada é: Básico para reservas gratuitas,
-          Intermediário para reservas gratuitas/pagas com fila, e Completo com recebimento de mensalidades. Espaços somente pagos
-          não usam estes planos: pagam apenas taxas/comissões das reservas.
+          Catálogo global da mensalidade da plataforma para espaços por associação. Espaços com reservas pagas não usam estes planos:
+          pagam apenas taxas e comissões das reservas e cobranças operacionais.
         </p>
       </div>
 
@@ -88,12 +86,12 @@ export default async function AdminPlanoMensalPlataformaPage() {
           <div
             key={plano.nome}
             className={`rounded-2xl border p-4 ${
-              plano.nome === "Completo"
+              plano.nome === "Premium"
                 ? "border-eid-action-500/35 bg-eid-action-500/10"
                 : "border-[color:var(--eid-border-subtle)] bg-eid-card/45"
             }`}
           >
-            <p className={`text-[10px] font-black uppercase tracking-[0.14em] ${plano.nome === "Completo" ? "text-eid-action-400" : "text-eid-primary-300"}`}>
+            <p className={`text-[10px] font-black uppercase tracking-[0.14em] ${plano.nome === "Premium" ? "text-eid-action-400" : "text-eid-primary-300"}`}>
               {plano.nome}
             </p>
             <h2 className="mt-1 text-base font-black text-eid-fg">{plano.titulo}</h2>

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { resolverTipoOperacaoEspaco } from "@/lib/espacos/tipo-operacao";
 
 export type MensalidadeNivel =
   | "ok"
@@ -90,11 +91,14 @@ export function computeMensalidadePainelState(
   const avisoDias = Math.max(0, Math.min(60, Math.floor(Number(ei.espaco_mensalidade_dias_aviso_antes ?? 7))));
   const bloqueioDias = Math.max(0, Math.min(90, Math.floor(Number(ei.espaco_mensalidade_dias_bloqueio_apos ?? 10))));
   const hoje = agora;
-  const modoR = String(ctx.modoReserva ?? "mista").toLowerCase();
-  const modoMonet = String(ctx.modoMonetizacao ?? "misto").toLowerCase();
+  const tipoOperacao = resolverTipoOperacaoEspaco({
+    modoReserva: ctx.modoReserva,
+    modoMonetizacao: ctx.modoMonetizacao,
+  });
+  const modoR = tipoOperacao === "reserva_paga" ? "paga" : "gratuita";
 
   if (
-    modoMonet === "mensalidade_plataforma" &&
+    tipoOperacao === "associacao" &&
     !ctx.paasAprovadoOperacaoSemGateway &&
     !ctx.paasPrimeiroPagamentoMensalRecebidoEm
   ) {
@@ -104,7 +108,7 @@ export function computeMensalidadePainelState(
       valorMensalCentavos:
         assinRow?.valor_mensal_centavos ?? valorMensalEsperadoCentavos(categoriaMensalidade, ei),
       mensagem:
-        "Você pode concluir o cadastro do espaço normalmente. Para ele aparecer para os usuários, escolha o plano da plataforma, cadastre a mensalidade no cartão e aguarde a aprovação do admin.",
+        "Espaço por associação: escolha o plano da plataforma, cadastre a mensalidade no cartão e aguarde a aprovação do admin para liberar a operação pública.",
       diasAteVencimento: null,
       diasEmAtraso: 0,
       categoria: categoriaMensalidade,
@@ -112,35 +116,17 @@ export function computeMensalidadePainelState(
     };
   }
 
-  if (modoR === "paga" && modoMonet !== "mensalidade_plataforma") {
+  if (tipoOperacao === "reserva_paga") {
     return {
       nivel: "isento",
       proximaCobranca: assinRow?.proxima_cobranca ?? null,
       valorMensalCentavos: 0,
       mensagem:
-        "Reservas somente pagas: sem mensalidade da plataforma. O espaço usa recursos ligados a reservas pagas e paga apenas as taxas/comissões das reservas.",
+        "Reservas pagas: sem mensalidade da plataforma. O espaço paga apenas as taxas e comissões das reservas e cobranças operacionais.",
       diasAteVencimento: null,
       diasEmAtraso: 0,
       categoria: categoriaMensalidade,
       modoReserva: "paga",
-    };
-  }
-
-  if (
-    modoR === "gratuita" &&
-    !ctx.paasAprovadoOperacaoSemGateway &&
-    !ctx.paasPrimeiroPagamentoMensalRecebidoEm
-  ) {
-    return {
-      nivel: "inativo_agenda",
-      proximaCobranca: assinRow?.proxima_cobranca ?? null,
-      valorMensalCentavos: assinRow?.valor_mensal_centavos ?? valorMensalEsperadoCentavos(categoriaMensalidade, ei),
-      mensagem:
-        "Reservas 100% gratuitas: pague a primeira mensalidade PaaS em Financeiro (recorrência) e conclua a integração. Depois, a grade é liberada. A equipe EsporteID pode aprovar manualmente, se for o caso.",
-      diasAteVencimento: null,
-      diasEmAtraso: 0,
-      categoria: categoriaMensalidade,
-      modoReserva: "gratuita",
     };
   }
 

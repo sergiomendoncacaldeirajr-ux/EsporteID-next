@@ -351,15 +351,32 @@ function drawCanvasSetCell(
   fontPx: number,
   color: string,
   subColor: string,
+  options?: { shadow?: boolean },
 ) {
+  if (options?.shadow) {
+    ctx.shadowColor = "rgba(2, 6, 12, 0.82)";
+    ctx.shadowBlur = fontPx * 0.18;
+    ctx.shadowOffsetY = fontPx * 0.08;
+  }
   ctx.fillStyle = color;
   ctx.font = `900 ${fontPx}px Arial, sans-serif`;
   ctx.fillText(String(value), x, y);
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
   if (!hasTiebreak) return;
   const mainW = ctx.measureText(String(value)).width;
+  if (options?.shadow) {
+    ctx.shadowColor = "rgba(2, 6, 12, 0.82)";
+    ctx.shadowBlur = fontPx * 0.12;
+    ctx.shadowOffsetY = fontPx * 0.06;
+  }
   ctx.fillStyle = subColor;
   ctx.font = `900 ${fontPx * 0.46}px Arial, sans-serif`;
   ctx.fillText(String(tiebreak), x + mainW / 2 + fontPx * 0.2, y - fontPx * 0.36);
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
 }
 
 function drawShareSetsTable(
@@ -381,25 +398,37 @@ function drawShareSetsTable(
   const tableH = headH + rowH * 2;
   const colW = (width - nameW) / cols;
   const isLight = text === colors.ink;
+  const isStrongContrast = !isLight;
+  const setText = isStrongContrast ? "rgba(248, 250, 252, 0.99)" : "rgba(11, 29, 46, 0.96)";
+  const setMuted = isStrongContrast ? "rgba(191, 219, 254, 0.98)" : "rgba(37, 99, 235, 0.82)";
+  const setAccent = isStrongContrast ? "rgba(219, 234, 254, 0.99)" : "rgba(37, 99, 235, 0.92)";
 
   ctx.beginPath();
-  ctx.fillStyle = isLight ? "rgba(11,29,46,0.10)" : "rgba(255,255,255,0.08)";
+  ctx.fillStyle = isLight ? "rgba(11,29,46,0.16)" : "rgba(2, 6, 12, 0.96)";
   ctx.roundRect(x, y, width, tableH, 22 * scale);
   ctx.fill();
-  ctx.strokeStyle = isLight ? "rgba(37,99,235,0.18)" : "rgba(255,255,255,0.15)";
+  ctx.strokeStyle = isLight ? "rgba(37,99,235,0.22)" : "rgba(191,219,254,0.28)";
   ctx.lineWidth = 1.5 * scale;
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.fillStyle = isLight ? "rgba(37, 99, 235, 0.14)" : "rgba(37, 99, 235, 0.18)";
+  ctx.fillStyle = isLight ? "rgba(37, 99, 235, 0.16)" : "rgba(37, 99, 235, 0.26)";
   ctx.roundRect(x, y, width, headH, 22 * scale);
   ctx.fill();
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillStyle = muted;
+  ctx.fillStyle = setMuted;
+  if (isStrongContrast) {
+    ctx.shadowColor = "rgba(2, 6, 12, 0.72)";
+    ctx.shadowBlur = 4 * scale;
+    ctx.shadowOffsetY = 1 * scale;
+  }
   ctx.font = `900 ${15 * scale}px Arial, sans-serif`;
   sets.forEach((_, idx) => ctx.fillText(`S${idx + 1}`, x + nameW + colW * idx + colW / 2, y + headH / 2));
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
 
   const names = [shareFirstName(payload.ladoA), shareFirstName(payload.ladoB)];
   names.forEach((name, rowIdx) => {
@@ -407,28 +436,36 @@ function drawShareSetsTable(
     ctx.fillStyle =
       isLight
         ? rowIdx === 0
-          ? "rgba(255,255,255,0.18)"
-          : "rgba(37,99,235,0.07)"
+          ? "rgba(255,255,255,0.28)"
+          : "rgba(37,99,235,0.12)"
         : rowIdx === 0
-          ? "rgba(255,255,255,0.045)"
-          : "rgba(0,0,0,0.08)";
+          ? "rgba(255,255,255,0.12)"
+          : "rgba(255,255,255,0.08)";
     ctx.fillRect(x, rowY, width, rowH);
     ctx.textAlign = "left";
-    ctx.fillStyle = text;
+    ctx.fillStyle = setText;
+    if (isStrongContrast) {
+      ctx.shadowColor = "rgba(2, 6, 12, 0.82)";
+      ctx.shadowBlur = 5 * scale;
+      ctx.shadowOffsetY = 1.5 * scale;
+    }
     ctx.font = `900 ${19 * scale}px Arial, sans-serif`;
     ctx.fillText(name, x + 22 * scale, rowY + rowH / 2 + 1 * scale);
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
   });
 
   ctx.textAlign = "center";
   sets.forEach((set, idx) => {
     const cx = x + nameW + colW * idx + colW / 2;
-    ctx.strokeStyle = isLight ? "rgba(11,29,46,0.12)" : "rgba(255,255,255,0.10)";
+    ctx.strokeStyle = isLight ? "rgba(11,29,46,0.12)" : "rgba(191,219,254,0.14)";
     ctx.beginPath();
     ctx.moveTo(x + nameW + colW * idx, y);
     ctx.lineTo(x + nameW + colW * idx, y + tableH);
     ctx.stroke();
-    drawCanvasSetCell(ctx, set.a, set.tiebreakA, set.hasTiebreak, cx, y + headH + rowH / 2 + 2 * scale, 27 * scale, text, colors.primarySoft);
-    drawCanvasSetCell(ctx, set.b, set.tiebreakB, set.hasTiebreak, cx, y + headH + rowH + rowH / 2 + 2 * scale, 27 * scale, text, colors.primarySoft);
+    drawCanvasSetCell(ctx, set.a, set.tiebreakA, set.hasTiebreak, cx, y + headH + rowH / 2 + 2 * scale, 27 * scale, setText, setAccent, { shadow: isStrongContrast });
+    drawCanvasSetCell(ctx, set.b, set.tiebreakB, set.hasTiebreak, cx, y + headH + rowH + rowH / 2 + 2 * scale, 27 * scale, setText, setAccent, { shadow: isStrongContrast });
   });
 }
 
@@ -506,23 +543,40 @@ function drawShareSlimResultCard(
   const center = x + cardWidth / 2;
   const text = overlayTextColor(payload.cardVariant, colors);
   const muted = payload.cardVariant === "light" ? "rgba(11, 29, 46, 0.70)" : colors.muted;
+  const isStrongSetContrast = isSets && payload.cardVariant !== "light";
+  const setText = isStrongSetContrast ? "rgba(248, 250, 252, 0.98)" : text;
+  const setMuted = isStrongSetContrast ? "rgba(191, 219, 254, 0.96)" : muted;
+  const setAccent = isStrongSetContrast ? "rgba(219, 234, 254, 0.98)" : colors.primarySoft;
 
   ctx.beginPath();
   ctx.fillStyle = "rgba(5, 14, 25, 0.36)";
   ctx.roundRect(x + 12 * scale, y + 16 * scale, cardWidth, cardHeight, 40 * scale);
   ctx.fill();
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(x, y, cardWidth, cardHeight, 40 * scale);
+  ctx.clip();
+
   ctx.beginPath();
   ctx.fillStyle =
     payload.cardVariant === "light"
-      ? "rgba(226, 239, 255, 0.82)"
-      : payload.cardVariant === "glass"
-        ? "rgba(11, 29, 46, 0.54)"
-        : "rgba(11, 29, 46, 0.86)";
+      ? "rgba(226, 239, 255, 0.92)"
+      : isStrongSetContrast
+        ? "rgba(3, 10, 19, 0.96)"
+        : payload.cardVariant === "glass"
+          ? "rgba(11, 29, 46, 0.54)"
+          : "rgba(11, 29, 46, 0.86)";
   ctx.roundRect(x, y, cardWidth, cardHeight, 40 * scale);
   ctx.fill();
-  ctx.strokeStyle = payload.cardVariant === "light" ? "rgba(37, 99, 235, 0.26)" : "rgba(255, 255, 255, 0.18)";
-  ctx.lineWidth = 2 * scale;
-  ctx.stroke();
+
+  if (isStrongSetContrast) {
+    const topGlow = ctx.createLinearGradient(x, y, x, y + cardHeight);
+    topGlow.addColorStop(0, "rgba(37, 99, 235, 0.18)");
+    topGlow.addColorStop(1, "rgba(37, 99, 235, 0)");
+    ctx.fillStyle = topGlow;
+    ctx.fillRect(x, y, cardWidth, cardHeight);
+  }
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -559,10 +613,10 @@ function drawShareSlimResultCard(
   const scoreW = cardWidth - 60 * scale;
   const scoreH = isSets ? 148 * scale : 92 * scale;
   ctx.beginPath();
-  ctx.fillStyle = payload.cardVariant === "light" ? "rgba(11, 29, 46, 0.12)" : "rgba(8, 15, 24, 0.86)";
+  ctx.fillStyle = payload.cardVariant === "light" ? "rgba(11, 29, 46, 0.18)" : isStrongSetContrast ? "rgba(2, 6, 12, 0.96)" : "rgba(8, 15, 24, 0.86)";
   ctx.roundRect(scoreX, scoreTop, scoreW, scoreH, 16 * scale);
   ctx.fill();
-  ctx.strokeStyle = payload.cardVariant === "light" ? "rgba(37,99,235,0.18)" : "rgba(255,255,255,0.12)";
+  ctx.strokeStyle = payload.cardVariant === "light" ? "rgba(37,99,235,0.22)" : isStrongSetContrast ? "rgba(191,219,254,0.26)" : "rgba(255,255,255,0.12)";
   ctx.lineWidth = 1.5 * scale;
   ctx.stroke();
 
@@ -572,10 +626,10 @@ function drawShareSlimResultCard(
     const rowH = 55 * scale;
     const colW = (scoreW - nameW) / Math.max(1, setRows.length);
     ctx.beginPath();
-    ctx.fillStyle = payload.cardVariant === "light" ? "rgba(37,99,235,0.10)" : "rgba(255,255,255,0.035)";
+    ctx.fillStyle = payload.cardVariant === "light" ? "rgba(37,99,235,0.16)" : isStrongSetContrast ? "rgba(37,99,235,0.24)" : "rgba(255,255,255,0.035)";
     ctx.roundRect(scoreX, scoreTop, scoreW, headerH, 16 * scale);
     ctx.fill();
-    ctx.fillStyle = muted;
+    ctx.fillStyle = setMuted;
     ctx.font = `900 ${13 * scale}px Arial, sans-serif`;
     setRows.forEach((_, idx) => ctx.fillText(`S${idx + 1}`, scoreX + nameW + colW * idx + colW / 2, scoreTop + headerH / 2));
     [payload.ladoA, payload.ladoB].forEach((name, rowIdx) => {
@@ -583,15 +637,19 @@ function drawShareSlimResultCard(
       ctx.fillStyle =
         payload.cardVariant === "light"
           ? rowIdx === 0
-            ? "rgba(255,255,255,0.20)"
-            : "rgba(37,99,235,0.08)"
-          : rowIdx === 0
-            ? "rgba(255,255,255,0.04)"
-            : "rgba(0,0,0,0.08)";
+            ? "rgba(255,255,255,0.28)"
+            : "rgba(37,99,235,0.12)"
+          : isStrongSetContrast
+            ? rowIdx === 0
+              ? "rgba(255,255,255,0.12)"
+              : "rgba(255,255,255,0.08)"
+            : rowIdx === 0
+              ? "rgba(255,255,255,0.04)"
+              : "rgba(0,0,0,0.08)";
       ctx.fillRect(scoreX, rowY, scoreW, rowH);
       drawTinyAvatar(rowIdx === 0 ? avatars?.a : avatars?.b, name, scoreX + 42 * scale, rowY + rowH / 2);
       ctx.textAlign = "left";
-      ctx.fillStyle = text;
+      ctx.fillStyle = setText;
       ctx.font = `900 ${16 * scale}px Arial, sans-serif`;
       ctx.fillText(shareFirstName(name), scoreX + 76 * scale, rowY + rowH / 2 + 1 * scale);
       ctx.textAlign = "center";
@@ -604,8 +662,8 @@ function drawShareSlimResultCard(
           scoreX + nameW + colW * idx + colW / 2,
           rowY + rowH / 2 + 2 * scale,
           24 * scale,
-          text,
-          colors.primarySoft,
+          setText,
+          setAccent,
         );
       });
     });
@@ -621,6 +679,8 @@ function drawShareSlimResultCard(
     }
     ctx.fillText(slimHeadline, center, scoreTop + scoreH / 2 + 2 * scale);
   }
+
+  ctx.restore();
 }
 
 function drawDefaultSportBackground(ctx: CanvasRenderingContext2D, payload: ResultadoSharePayload, colors: { ink: string; surface: string; primary: string; action: string }) {
@@ -724,6 +784,9 @@ function drawShareResultCard(
   const y = Math.min(1920 - cardHeight - 120, Math.max(120, payload.overlayPosition.y * 1920 - cardHeight / 2));
   const text = overlayTextColor(payload.cardVariant, colors);
   const muted = payload.cardVariant === "light" ? "rgba(11, 29, 46, 0.72)" : colors.muted;
+  const isStrongSetContrast = isSets && payload.cardVariant !== "light";
+  const setTitle = isStrongSetContrast ? "rgba(219, 234, 254, 0.98)" : "rgba(37, 99, 235, 0.92)";
+  const nameText = isStrongSetContrast ? "rgba(248, 250, 252, 0.99)" : "rgba(11, 29, 46, 0.96)";
 
   ctx.beginPath();
   ctx.fillStyle = "rgba(5, 14, 25, 0.42)";
@@ -733,12 +796,21 @@ function drawShareResultCard(
   ctx.fillStyle =
     payload.cardVariant === "light"
       ? "rgba(226, 239, 255, 0.80)"
-      : payload.cardVariant === "glass"
-        ? "rgba(11, 29, 46, 0.48)"
-        : "rgba(11, 29, 46, 0.82)";
+      : isStrongSetContrast
+        ? "rgba(3, 10, 19, 0.94)"
+        : payload.cardVariant === "glass"
+          ? "rgba(11, 29, 46, 0.48)"
+          : "rgba(11, 29, 46, 0.82)";
   ctx.roundRect(x, y, cardWidth, cardHeight, 54);
   ctx.fill();
-  ctx.strokeStyle = payload.cardVariant === "light" ? "rgba(37, 99, 235, 0.28)" : "rgba(255, 255, 255, 0.18)";
+  if (isStrongSetContrast) {
+    const glow = ctx.createLinearGradient(x, y, x, y + cardHeight);
+    glow.addColorStop(0, "rgba(37, 99, 235, 0.16)");
+    glow.addColorStop(1, "rgba(37, 99, 235, 0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(x, y, cardWidth, cardHeight);
+  }
+  ctx.strokeStyle = payload.cardVariant === "light" ? "rgba(37, 99, 235, 0.28)" : isStrongSetContrast ? "rgba(191, 219, 254, 0.24)" : "rgba(255, 255, 255, 0.18)";
   ctx.lineWidth = 2;
   ctx.stroke();
 
@@ -792,10 +864,10 @@ function drawShareResultCard(
   }
 
   ctx.beginPath();
-  ctx.fillStyle = payload.cardVariant === "light" ? "rgba(37, 99, 235, 0.12)" : "rgba(37, 99, 235, 0.20)";
+  ctx.fillStyle = payload.cardVariant === "light" ? "rgba(37, 99, 235, 0.16)" : "rgba(37, 99, 235, 0.20)";
   ctx.roundRect(center - 225 * scale, y + (payload.showBrand ? 126 : 52) * scale, 450 * scale, 52 * scale, 26 * scale);
   ctx.fill();
-  ctx.fillStyle = colors.primarySoft;
+  ctx.fillStyle = payload.cardVariant === "light" ? "rgba(11, 29, 46, 0.96)" : colors.primarySoft;
   ctx.font = `900 ${22 * scale}px Arial, sans-serif`;
   ctx.fillText(
     `${sportShareIconText(payload.sportLabel)} ${cleanShareText(payload.sportLabel, "Resultado oficial").toUpperCase()}`,
@@ -803,22 +875,46 @@ function drawShareResultCard(
     y + (payload.showBrand ? 153 : 79) * scale,
   );
 
-  ctx.fillStyle = text;
+  ctx.fillStyle = nameText;
   const namesY = y + (payload.cardVariant === "compact" ? 228 : 254) * scale;
   drawAvatar(avatars?.a, payload.ladoA, center - 210 * scale, namesY);
   drawAvatar(avatars?.b, payload.ladoB, center + 210 * scale, namesY);
+  if (payload.cardVariant === "light" && isSets) {
+    ctx.shadowColor = "rgba(255, 255, 255, 0.62)";
+    ctx.shadowBlur = 3 * scale;
+    ctx.shadowOffsetY = 0;
+  } else if (isStrongSetContrast) {
+    ctx.shadowColor = "rgba(2, 6, 12, 0.82)";
+    ctx.shadowBlur = 8 * scale;
+    ctx.shadowOffsetY = 2 * scale;
+  }
   ctx.font = `900 ${28 * scale}px Arial, sans-serif`;
   ctx.fillText(firstA, center - 210 * scale, namesY + 64 * scale);
   ctx.fillText(firstB, center + 210 * scale, namesY + 64 * scale);
-  ctx.fillStyle = colors.primarySoft;
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+  ctx.fillStyle = setTitle;
   ctx.font = `900 ${20 * scale}px Arial, sans-serif`;
   ctx.fillText("VS", center, namesY + 15 * scale);
 
   const scoreY = y + (payload.cardVariant === "compact" ? 395 : 450) * scale;
   if (isSets) {
-    ctx.fillStyle = colors.primarySoft;
+    ctx.fillStyle = setTitle;
+    if (payload.cardVariant === "light") {
+      ctx.shadowColor = "rgba(255, 255, 255, 0.58)";
+      ctx.shadowBlur = 3 * scale;
+      ctx.shadowOffsetY = 0;
+    } else if (isStrongSetContrast) {
+      ctx.shadowColor = "rgba(2, 6, 12, 0.82)";
+      ctx.shadowBlur = 6 * scale;
+      ctx.shadowOffsetY = 1.5 * scale;
+    }
     ctx.font = `900 ${18 * scale}px Arial, sans-serif`;
     ctx.fillText("PLACAR POR SETS", center, scoreY - 34 * scale);
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
     drawShareSetsTable(ctx, payload, setRows, center - 315 * scale, scoreY - 12 * scale, 630 * scale, scale, colors, text, muted);
   } else if (isGoals) {
     drawShareGoalsTvScore(ctx, payload, center - 300 * scale, scoreY - 70 * scale, 600 * scale, scale, colors, text, muted);
@@ -1352,16 +1448,16 @@ export function EidConfrontoResumoModal({
     let cancelled = false;
     const id = window.setTimeout(() => {
       if (cancelled) return;
-    try {
-      const raw = window.localStorage.getItem(RESULT_SHARE_STORAGE_KEY);
-      if (!raw) return;
-      const saved = JSON.parse(raw) as Partial<ResultadoSharePayload>;
-      if (saved.overlayPosition) setShareOverlayPosition(saved.overlayPosition);
-      if (typeof saved.overlayScale === "number") setShareOverlayScale(Math.min(1.18, Math.max(0.74, saved.overlayScale)));
-      if (saved.cardVariant) setShareCardVariant(saved.cardVariant);
-    } catch {
-      /* ignore */
-    }
+      try {
+        const raw = window.localStorage.getItem(RESULT_SHARE_STORAGE_KEY);
+        if (!raw) return;
+        const saved = JSON.parse(raw) as Partial<ResultadoSharePayload>;
+        if (saved.overlayPosition) setShareOverlayPosition(saved.overlayPosition);
+        if (typeof saved.overlayScale === "number") setShareOverlayScale(Math.min(1.18, Math.max(0.74, saved.overlayScale)));
+        if (saved.cardVariant) setShareCardVariant(saved.cardVariant);
+      } catch {
+        /* ignore */
+      }
     }, 0);
     return () => {
       cancelled = true;

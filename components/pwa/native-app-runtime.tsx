@@ -7,7 +7,6 @@ import type { ActiveAppContext } from "@/lib/auth/active-context";
 import { EID_SYSTEM_UI_THEME_COLOR_DARK, EID_SYSTEM_UI_THEME_COLOR_LIGHT } from "@/lib/branding";
 import { listNativeOfflineOutbox } from "@/lib/native/offline-outbox";
 import { getNativeLocalStore, listNativeLocalStore, pruneNativeLocalStore, setNativeLocalStore } from "@/lib/native/local-store";
-import { authenticateNativeUser, getNativeBiometricLogin } from "@/lib/native/secure-session";
 import {
   EID_NATIVE_APP_VERSION,
   getAndroidNativePushOptOut,
@@ -453,8 +452,6 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
   const [isOffline, setIsOffline] = useState(false);
   const [showStartup, setShowStartup] = useState(false);
   const [permissionPrompt, setPermissionPrompt] = useState<NativePermissionPrompt | null>(null);
-  const [nativeLocked, setNativeLocked] = useState(false);
-  const [nativeUnlocking, setNativeUnlocking] = useState(false);
   const [nativeTransitioning, setNativeTransitioning] = useState(false);
   const [nativeUploadBusy, setNativeUploadBusy] = useState(false);
   const [offlineCacheAt, setOfflineCacheAt] = useState(0);
@@ -1024,63 +1021,6 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
   }, []);
 
   useEffect(() => {
-    if (!isCapacitorNativeApp() || !userId) return;
-    let disposed = false;
-    let backgroundAt = 0;
-    let authenticating = false;
-    let lastPromptAt = 0;
-
-    async function lockIfNeeded() {
-      if (disposed || authenticating || nativeLocked || nativeUnlocking) return;
-      const saved = await getNativeBiometricLogin();
-      if (!saved) return;
-      const awayMs = backgroundAt ? Date.now() - backgroundAt : 0;
-      if (awayMs < 10 * 60_000) return;
-      if (Date.now() - lastPromptAt < 30_000) return;
-
-      authenticating = true;
-      lastPromptAt = Date.now();
-      backgroundAt = 0;
-      setNativeLocked(true);
-      setNativeUnlocking(true);
-      try {
-        await authenticateNativeUser("Desbloqueie o EsporteID para continuar.");
-        if (!disposed) setNativeLocked(false);
-      } catch {
-        if (!disposed) setNativeLocked(true);
-      } finally {
-        authenticating = false;
-        if (!disposed) setNativeUnlocking(false);
-      }
-    }
-
-    async function installResumeLock() {
-      const { App } = await import("@capacitor/app");
-      const handle = await App.addListener("appStateChange", (state) => {
-        if (!state.isActive) {
-          backgroundAt = Date.now();
-          return;
-        }
-        void lockIfNeeded();
-      });
-      return () => {
-        void handle.remove();
-      };
-    }
-
-    let dispose: void | (() => void);
-    void installResumeLock().then((fn) => {
-      dispose = fn;
-      if (disposed) dispose?.();
-    });
-
-    return () => {
-      disposed = true;
-      dispose?.();
-    };
-  }, [nativeLocked, nativeUnlocking, userId]);
-
-  useEffect(() => {
     if (!isAnyNativeApp()) return;
     let lastWarmAt = 0;
     const run = () => {
@@ -1373,18 +1313,6 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
     setPermissionPrompt(null);
   }, [permissionPrompt]);
 
-  const handleNativeUnlock = useCallback(async () => {
-    setNativeUnlocking(true);
-    try {
-      await authenticateNativeUser("Desbloqueie o EsporteID para continuar.");
-      setNativeLocked(false);
-    } catch {
-      setNativeLocked(true);
-    } finally {
-      setNativeUnlocking(false);
-    }
-  }, []);
-
   const nativeDiagnostics = {
     versao: EID_NATIVE_APP_VERSION,
     plataforma: isCapacitorNativeApp() ? Capacitor.getPlatform() : isNativeAndroidApp() ? "android-twa" : "web",
@@ -1493,26 +1421,6 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
                 {permissionCopy.action}
               </button>
             </div>
-          </div>
-        </div>
-      ) : null}
-      {nativeLocked ? (
-        <div className="fixed inset-0 z-[2147483646] flex items-center justify-center bg-[color:var(--eid-brand-ink)] px-5 text-eid-fg">
-          <div className="w-full max-w-xs text-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/pwa-splash-open-mark.png" alt="" className="mx-auto h-16 w-16 object-contain" />
-            <p className="mt-5 text-[15px] font-black uppercase tracking-[0.1em]">EsporteID bloqueado</p>
-            <p className="mt-2 text-[13px] leading-relaxed text-eid-text-muted">
-              Confirme sua identidade para continuar usando o app.
-            </p>
-            <button
-              type="button"
-              onClick={handleNativeUnlock}
-              disabled={nativeUnlocking}
-              className="mt-5 h-12 w-full rounded-xl bg-eid-action-500 text-[13px] font-black uppercase tracking-wide text-white disabled:opacity-70"
-            >
-              {nativeUnlocking ? "Desbloqueando..." : "Desbloquear"}
-            </button>
           </div>
         </div>
       ) : null}

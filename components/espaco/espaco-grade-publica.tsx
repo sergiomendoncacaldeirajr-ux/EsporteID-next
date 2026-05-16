@@ -220,9 +220,9 @@ function SlotPopup({ popup, onClose }: { popup: PopupState; onClose: () => void 
 
 const FORMA_LABEL: Record<string, string> = { pix: "PIX", cartao: "Cartão de crédito", boleto: "Boleto bancário" };
 const FORMA_DESC: Record<string, string> = {
-  pix: "Aprovação imediata",
-  cartao: "Link seguro Asaas",
-  boleto: "Até 3 dias úteis",
+  pix: "Pague com QR Code dentro da plataforma",
+  cartao: "Pagamento transparente dentro da plataforma",
+  boleto: "Em breve no checkout interno",
 };
 
 function ReservarDrawer({
@@ -242,7 +242,8 @@ function ReservarDrawer({
   formasPagamento: string[];
   onClose: () => void;
 }) {
-  const [formaPagamento, setFormaPagamento] = useState<string>(formasPagamento[0] ?? "pix");
+  const formasInternas = formasPagamento.filter((forma) => forma !== "boleto");
+  const [formaPagamento, setFormaPagamento] = useState<string>(formasInternas[0] ?? "pix");
   const [state, formAction, pending] = useActionState(criarReservaEspacoAction, undefined);
 
   if (state?.ok) {
@@ -254,6 +255,26 @@ function ReservarDrawer({
           onClick={(e) => e.stopPropagation()}
         >
           <p className="text-base font-black text-emerald-300">{state.message}</p>
+          {state.payment?.method === "pix" && state.payment.pixEncodedImage ? (
+            <div className="mt-4 space-y-3 rounded-xl border border-eid-primary-500/20 bg-eid-surface/45 p-4">
+              <img
+                src={`data:image/png;base64,${state.payment.pixEncodedImage}`}
+                alt="QR Code Pix"
+                className="mx-auto h-48 w-48 rounded-xl bg-white p-2"
+              />
+              {state.payment.pixPayload ? (
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-wide text-eid-text-secondary">Pix copia e cola</p>
+                  <textarea readOnly value={state.payment.pixPayload} className="eid-input-dark mt-1 h-24 w-full rounded-xl px-3 py-2 text-xs" />
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          {state.payment?.method === "cartao" ? (
+            <div className="mt-4 rounded-xl border border-eid-primary-500/20 bg-eid-surface/45 p-4 text-sm text-eid-text-secondary">
+              O cartão foi processado no checkout interno. A reserva fica em atualização até a confirmação do Asaas.
+            </div>
+          ) : null}
           <button onClick={onClose} className="mt-4 w-full rounded-xl bg-eid-surface px-4 py-3 text-sm font-bold text-eid-fg">
             Fechar
           </button>
@@ -289,13 +310,13 @@ function ReservarDrawer({
           <p className="mt-2 text-xl font-black text-eid-action-300 eid-light:text-eid-action-600">{valorFmt}</p>
         )}
 
-        {ehPago && formasPagamento.length > 0 && (
+        {ehPago && formasInternas.length > 0 && (
           <div className="mt-4">
             <p className="mb-2 text-[10px] font-black uppercase tracking-wide text-eid-text-secondary">
               Forma de pagamento
             </p>
             <div className="space-y-2">
-              {formasPagamento.map((forma) => (
+              {formasInternas.map((forma) => (
                 <label
                   key={forma}
                   className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition ${
@@ -417,7 +438,7 @@ function MembroEntryDrawer({
         {tab === "entrar" ? (
           <div className="mt-4">
             <p className="text-sm text-eid-text-secondary">
-              Solicite entrada como membro. O dono do espaço revisará sua solicitação.
+              Solicite entrada como membro ou sócio. O dono do espaço revisará sua solicitação e só depois libera o acesso.
             </p>
             <form action={`/espaco/${slug}/entrar`} method="POST" className="mt-4">
               <input type="hidden" name="espaco_id" value={espacoId} />
@@ -429,7 +450,7 @@ function MembroEntryDrawer({
         ) : (
           <div className="mt-4 space-y-2">
             <p className="mb-3 text-sm text-eid-text-secondary">
-              Vire sócio e tenha acesso completo com reservas e benefícios.
+              Escolha um plano de sócio. O pagamento e a aprovação do admin precisam ser concluídos antes de liberar reservas e benefícios.
             </p>
             {planos.map((plano) => (
               <form key={plano.id} action={`/espaco/${slug}/assinar`} method="POST">
@@ -616,7 +637,7 @@ export function EspacoGradePublica({
       return;
     }
     if (!isLogado) {
-      window.location.href = `/login?next=${encodeURIComponent(`/espaco/${slug}`)}`;
+      window.location.assign(`/login?next=${encodeURIComponent(`/espaco/${slug}`)}`);
       return;
     }
     if (modoReserva === "paga") {

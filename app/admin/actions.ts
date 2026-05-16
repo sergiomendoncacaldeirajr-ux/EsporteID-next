@@ -946,8 +946,8 @@ export async function adminUpdateEspacoModoCobranca(formData: FormData) {
     const taxaBrl = Number(formData.get("taxa_reserva_plataforma_brl"));
     const socios_esp = String(formData.get("socios_mensalidade_espaco") ?? "em_breve").trim();
     const clube_ass = String(formData.get("clube_assinaturas_socios") ?? "em_breve").trim();
-    if (!new Set(["gratuita", "paga", "mista"]).has(modo_reserva)) return;
-    if (!new Set(["mensalidade_plataforma", "apenas_reservas", "misto"]).has(modoMonetizacaoRaw)) return;
+    if (!new Set(["gratuita", "paga"]).has(modo_reserva)) return;
+    if (!new Set(["mensalidade_plataforma", "apenas_reservas"]).has(modoMonetizacaoRaw)) return;
     if (!new Set(["off", "em_breve", "on"]).has(socios_esp)) return;
     if (!new Set(["off", "em_breve", "on"]).has(clube_ass)) return;
     if (!Number.isFinite(taxaBrl) || taxaBrl < 0) return;
