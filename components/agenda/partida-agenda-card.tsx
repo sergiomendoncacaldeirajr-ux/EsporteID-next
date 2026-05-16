@@ -336,7 +336,7 @@ export function PartidaAgendaCard({
                     fill
                     unoptimized
                     className={`h-full w-full border-0 !object-cover object-center shadow-none ${
-                      isTime ? "rounded-xl ring-1 ring-[color:var(--eid-border-subtle)]" : "rounded-full"
+                      isTime ? "rounded-xl" : "rounded-full"
                     }`}
                   />
                 ) : !formacao && userId && avatarUrl ? (
@@ -349,7 +349,7 @@ export function PartidaAgendaCard({
                   />
                 ) : (
                   <div
-                    className={`flex h-full w-full items-center justify-center border-[3px] border-eid-card bg-gradient-to-br from-eid-primary-700 to-eid-primary-900 text-[8px] font-black tracking-widest text-eid-primary-200 shadow-[0_0_0_2px_rgba(249,115,22,0.55),0_6px_20px_rgba(0,0,0,0.5)] ${
+                    className={`flex h-full w-full items-center justify-center bg-eid-surface text-[8px] font-black tracking-widest text-eid-primary-200 shadow-none ${
                       isTime ? "rounded-xl" : "rounded-full"
                     }`}
                   >
