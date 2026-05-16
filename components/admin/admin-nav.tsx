@@ -19,6 +19,7 @@ import {
   Menu,
   Settings2,
   ShieldCheck,
+  Shuffle,
   Swords,
   Target,
   ToggleRight,
@@ -95,6 +96,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/eid", label: "Motor EID", Icon: Activity },
       { href: "/admin/funcionalidades-do-app", label: "Funcionalidades", Icon: ToggleRight },
       { href: "/admin/regras", label: "Regras & Ranking", Icon: Settings2 },
+      { href: "/admin/sorteio-rank", label: "Sorteio de Ranking", Icon: Shuffle },
     ],
   },
 ];

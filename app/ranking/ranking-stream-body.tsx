@@ -51,6 +51,38 @@ export type RankingStreamBodyProps = {
   esportePrincipalId: number | null;
 };
 
+function RankingConfrontosVsMark() {
+  return (
+    <svg viewBox="0 0 72 72" className="h-16 w-16 drop-shadow-[0_10px_18px_rgba(249,115,22,0.28)]" aria-hidden>
+      <defs>
+        <linearGradient id="ranking-vs-card-bg" x1="10" y1="9" x2="64" y2="63" gradientUnits="userSpaceOnUse">
+          <stop stopColor="var(--eid-action-500)" stopOpacity="0.24" />
+          <stop offset="1" stopColor="var(--eid-primary-500)" stopOpacity="0.16" />
+        </linearGradient>
+        <linearGradient id="ranking-vs-orange" x1="22" y1="13" x2="55" y2="58" gradientUnits="userSpaceOnUse">
+          <stop stopColor="var(--eid-action-300)" />
+          <stop offset="1" stopColor="var(--eid-action-600)" />
+        </linearGradient>
+        <linearGradient id="ranking-vs-blue" x1="14" y1="18" x2="45" y2="55" gradientUnits="userSpaceOnUse">
+          <stop stopColor="var(--eid-primary-300)" />
+          <stop offset="1" stopColor="var(--eid-primary-600)" />
+        </linearGradient>
+      </defs>
+      <path d="M36 5 63 17v24c0 13-9 22-27 27C18 63 9 54 9 41V17L36 5Z" fill="url(#ranking-vs-card-bg)" />
+      <path d="M21 25h12M39 47h12" stroke="var(--eid-primary-500)" strokeWidth="4" strokeLinecap="round" opacity="0.32" />
+      <circle cx="23" cy="36" r="13" fill="url(#ranking-vs-blue)" />
+      <circle cx="49" cy="36" r="13" fill="url(#ranking-vs-orange)" />
+      <path d="M18 36h10M49 31v10M44 36h10" stroke="white" strokeWidth="3.2" strokeLinecap="round" opacity="0.92" />
+      <rect x="26" y="25" width="20" height="22" rx="10" fill="var(--eid-card)" />
+      <rect x="28.5" y="27.5" width="15" height="17" rx="7.5" fill="var(--eid-surface)" opacity="0.86" />
+      <text x="36" y="39.5" textAnchor="middle" fill="var(--eid-action-500)" className="text-[9px] font-black">
+        VS
+      </text>
+      <path d="M22 55h28" stroke="var(--eid-action-500)" strokeWidth="3" strokeLinecap="round" opacity="0.45" />
+    </svg>
+  );
+}
+
 export async function RankingStreamBody({
   supabase,
   viewerId,
@@ -448,17 +480,18 @@ export async function RankingStreamBody({
               topMode="backOnly"
               openingDelayMs={0}
               title="Central de confrontos"
-              className="group relative grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 overflow-hidden rounded-2xl border border-eid-action-500/22 bg-[radial-gradient(ellipse_at_88%_50%,color-mix(in_srgb,var(--eid-action-500)_22%,transparent),transparent_52%),linear-gradient(155deg,color-mix(in_srgb,var(--eid-card)_93%,var(--eid-primary-700)_7%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] px-3.5 py-3.5 text-left shadow-[0_16px_38px_-22px_rgba(15,23,42,0.8),inset_0_1px_0_rgba(255,255,255,0.055)] transition hover:border-eid-action-500/45 hover:shadow-[0_18px_38px_-20px_rgba(249,115,22,0.45),inset_0_1px_0_rgba(255,255,255,0.07)] active:scale-[0.997]"
+              className="group relative grid w-full grid-cols-[minmax(0,1fr)_72px] items-center gap-2 overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-action-500)_28%,var(--eid-border-subtle))] bg-[radial-gradient(ellipse_at_89%_50%,color-mix(in_srgb,var(--eid-action-500)_18%,transparent),transparent_55%),linear-gradient(150deg,color-mix(in_srgb,var(--eid-card)_96%,var(--eid-primary-500)_4%),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] px-3.5 py-3 text-left shadow-[0_16px_38px_-26px_rgba(15,23,42,0.82),inset_0_1px_0_rgba(255,255,255,0.055)] transition hover:border-eid-action-500/45 hover:shadow-[0_18px_40px_-24px_rgba(249,115,22,0.55),inset_0_1px_0_rgba(255,255,255,0.075)] active:scale-[0.997]"
             >
               {/* Shine sweep */}
               <span className="pointer-events-none absolute inset-y-0 -left-16 w-24 rotate-12 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.09),transparent)] opacity-0 blur-sm transition duration-500 group-hover:translate-x-[22rem] group-hover:opacity-100" aria-hidden />
               {/* Bottom accent glow */}
               <span className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-[linear-gradient(to_right,transparent,color-mix(in_srgb,var(--eid-action-500)_55%,transparent),transparent)] opacity-60" aria-hidden />
+              <span className="pointer-events-none absolute left-0 top-4 h-12 w-1 rounded-r-full bg-[linear-gradient(to_bottom,var(--eid-primary-500),var(--eid-action-500))] opacity-75" aria-hidden />
               <span className="min-w-0">
                 <span className="inline-flex items-center rounded-full border border-eid-action-500/30 bg-eid-action-500/10 px-2 py-0.5 text-[7.5px] font-black uppercase tracking-[0.12em] text-eid-action-300 shadow-[0_0_12px_-6px_rgba(249,115,22,0.6)]">
                   Central de confrontos
                 </span>
-                <span className="mt-1.5 block truncate text-[13px] font-black leading-tight text-eid-fg">
+                <span className="mt-1.5 block truncate text-[13px] font-black leading-tight tracking-normal text-eid-fg">
                   Jogos e resultados perto de você
                 </span>
                 <span className="mt-0.5 block text-[9.5px] font-semibold text-eid-text-secondary">
@@ -466,10 +499,8 @@ export async function RankingStreamBody({
                   {esporteNomeAtual ? ` · ${esporteNomeAtual}` : ""}
                 </span>
               </span>
-              <span className="relative flex h-14 w-14 shrink-0 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-2xl border border-eid-action-500/40 bg-[linear-gradient(145deg,#ff8d1c,#ef6c00)] text-white shadow-[0_12px_26px_-14px_rgba(249,115,22,0.9),inset_0_1px_0_rgba(255,255,255,0.18)] transition group-hover:shadow-[0_14px_28px_-12px_rgba(249,115,22,1)] group-hover:brightness-105">
-                <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.28),transparent_55%)] opacity-80" aria-hidden />
-                <span className="relative text-[13px] font-black leading-none tracking-wide">VS</span>
-                <span className="relative text-[9px] font-black leading-none opacity-80">›</span>
+              <span className="relative flex h-16 w-16 shrink-0 items-center justify-center transition duration-200 group-hover:scale-[1.04]">
+                <RankingConfrontosVsMark />
               </span>
             </ProfileEditDrawerTrigger>
           </section>
