@@ -139,6 +139,7 @@ type Props = {
   agendamentoJanelaHoras: number;
   /** Na Agenda: cancelamento e disputa ficam no Painel social; contato e reagendamento continuam disponíveis. */
   somenteInformativo?: boolean;
+  ocultarPedidoReagendamento?: boolean;
   /** Base para `return_to` ao cadastrar local no fluxo de recusar cancelamento (ex.: `/comunidade`). */
   cadastrarLocalReturnBase?: string;
 };
@@ -147,6 +148,7 @@ export function AgendaAceitosCancelaveis({
   items,
   agendamentoJanelaHoras,
   somenteInformativo = false,
+  ocultarPedidoReagendamento = false,
   cadastrarLocalReturnBase = "/agenda",
 }: Props) {
   const [state, formAction, pending] = useActionState(gerenciarCancelamentoMatch, initial);
@@ -222,7 +224,7 @@ export function AgendaAceitosCancelaveis({
           </p>
         ) : null}
         {items.map((m) => {
-          const podeReagendar = m.status === "Aceito" && !m.gestaoSomenteLeitura;
+          const podeReagendar = !ocultarPedidoReagendamento && m.status === "Aceito" && !m.gestaoSomenteLeitura;
           const modalidadeKey = String(m.modalidade ?? "")
             .trim()
             .toLowerCase();

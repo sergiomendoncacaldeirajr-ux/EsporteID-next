@@ -366,20 +366,30 @@ export async function ComunidadeStreamPartidas({
     })
     .filter((row) => usuarioPodeGerenciarPartidaPainel(row as AgendaPartidaCardRow));
 
+  const matchIdsEmPartidasVisiveis = new Set(
+    [...painelPlacarPendente, ...painelAgendadasVisiveis]
+      .map((row) => Number((row as AgendaPartidaCardRow).match_id ?? 0))
+      .filter((id) => Number.isFinite(id) && id > 0),
+  );
+  const painelAceitosSemPartidaDuplicada = painelAceitosCancelaveisItems.filter(
+    (item) => !matchIdsEmPartidasVisiveis.has(Number(item.id)),
+  );
+
   const hasPartidasAcoes =
     painelPlacarPendente.length > 0 ||
     painelAgendadasVisiveis.length > 0 ||
-    painelAceitosCancelaveisItems.length > 0;
+    painelAceitosSemPartidaDuplicada.length > 0;
 
   if (!hasPartidasAcoes) return null;
 
   return (
     <>
-      {painelAceitosCancelaveisItems.length > 0 ? (
+      {painelAceitosSemPartidaDuplicada.length > 0 ? (
         <div id="desafios-aceitos-gestao" className="scroll-mt-4 md:scroll-mt-6">
           <AgendaAceitosCancelaveis
-            items={painelAceitosCancelaveisItems}
+            items={painelAceitosSemPartidaDuplicada}
             agendamentoJanelaHoras={agendamentoJanelaHoras}
+            ocultarPedidoReagendamento
             cadastrarLocalReturnBase="/comunidade"
           />
         </div>
