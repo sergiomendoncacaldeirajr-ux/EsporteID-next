@@ -6,39 +6,19 @@ import {
 } from "@/app/espaco/actions";
 import { getEspacoSelecionado } from "@/lib/espacos/server";
 
+const DIAS_SEMANA = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"] as const;
 const DIAS_SEMANA_CURTO = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"] as const;
-const HORARIO_META_PREFIX = "[eid-horario]";
 
 type Props = {
   searchParams?: Promise<{ espaco?: string }>;
 };
 
-function parseHorarioObservacoes(raw: unknown) {
+function parseObservacoes(raw: unknown): string {
   const linhas = String(raw ?? "")
     .split("\n")
-    .map((linha) => linha.trimEnd());
-  let modoReserva = "mista" as "mista" | "paga" | "gratuita";
-  const texto = linhas
-    .filter((linha) => {
-      if (!linha.trim().startsWith(HORARIO_META_PREFIX)) return true;
-      try {
-        const parsed = JSON.parse(linha.trim().slice(HORARIO_META_PREFIX.length));
-        const modo = String(parsed?.modoReserva ?? "");
-        if (modo === "paga" || modo === "gratuita" || modo === "mista") modoReserva = modo;
-      } catch {
-        return false;
-      }
-      return false;
-    })
-    .join("\n")
-    .trim();
-  return { texto, modoReserva };
-}
-
-function modoLabel(modo: "mista" | "paga" | "gratuita") {
-  if (modo === "paga") return "Somente paga";
-  if (modo === "gratuita") return "Somente gratuita";
-  return "Paga ou grátis";
+    .map((l) => l.trimEnd())
+    .filter((l) => !l.trim().startsWith("[eid-horario]"));
+  return linhas.join("\n").trim();
 }
 
 export default async function EspacoGradePage({ searchParams }: Props) {
@@ -63,199 +43,252 @@ export default async function EspacoGradePage({ searchParams }: Props) {
       .order("hora_inicio", { ascending: true }),
   ]);
 
-  const gradeAgrupada = new Map<
-    string,
-    { unidadeNome: string; total: number; dias: Map<number, { titulo: string; itens: NonNullable<typeof grade> }> }
-  >();
+  // Agrupar por unidade → dia da semana
+  type SlotItem = NonNullable<typeof grade>[number];
+  type DiaGrupo = { dia: number; itens: SlotItem[] };
+  type UnidadeGrupo = { id: number | null; nome: string; dias: DiaGrupo[] };
+
+  const unidadeMap = new Map<string, UnidadeGrupo>();
   for (const item of grade ?? []) {
     const diaIdx = Math.min(6, Math.max(0, Number(item.dia_semana)));
-    const unidade = (unidades ?? []).find((u) => u.id === item.espaco_unidade_id);
     const key = String(item.espaco_unidade_id ?? "geral");
-    let grupo = gradeAgrupada.get(key);
-    if (!grupo) {
-      grupo = { unidadeNome: unidade?.nome ?? "Unidade", total: 0, dias: new Map() };
-      gradeAgrupada.set(key, grupo);
+    if (!unidadeMap.has(key)) {
+      const u = (unidades ?? []).find((u) => u.id === item.espaco_unidade_id);
+      unidadeMap.set(key, { id: item.espaco_unidade_id ?? null, nome: u?.nome ?? "Sem quadra", dias: [] });
     }
-    let diaGrupo = grupo.dias.get(diaIdx);
+    const grupo = unidadeMap.get(key)!;
+    let diaGrupo = grupo.dias.find((d) => d.dia === diaIdx);
     if (!diaGrupo) {
-      diaGrupo = { titulo: DIAS_SEMANA_CURTO[diaIdx] ?? `Dia ${item.dia_semana}`, itens: [] };
-      grupo.dias.set(diaIdx, diaGrupo);
+      diaGrupo = { dia: diaIdx, itens: [] };
+      grupo.dias.push(diaGrupo);
     }
     diaGrupo.itens.push(item);
-    grupo.total += 1;
   }
+  const grupos = Array.from(unidadeMap.values());
+
+  const modoEspaco = selectedSpace.modo_reserva === "paga" ? "Pagas" : "Gratuitas";
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      {/* Header */}
       <section className="rounded-2xl border border-eid-primary-500/20 bg-eid-card/95 p-4 sm:p-5">
         <p className="text-[11px] font-bold uppercase tracking-wide text-eid-primary-300">Grade fixa</p>
-        <h2 className="mt-1 text-xl font-black text-eid-fg">Horários padrão por dia da semana</h2>
+        <h2 className="mt-1 text-xl font-black text-eid-fg">Horários por quadra e dia da semana</h2>
         <p className="mt-1 max-w-3xl text-sm leading-relaxed text-eid-text-secondary">
-          Configure aqui o que se repete toda semana. A agenda real de reservas fica separada em Agenda.
+          Configure o que se repete toda semana. O tipo de reserva (<strong>{modoEspaco}</strong>) é definido pelo plano do espaço.
         </p>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
+      <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+        {/* Painel de criação */}
         <div className="space-y-4">
+          {/* Gerador automático */}
           <details open className="group overflow-hidden rounded-2xl border border-eid-primary-500/25 bg-eid-primary-500/5">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 marker:hidden">
               <span>
-                <span className="block text-base font-black text-eid-fg">Adicionar nova quadra ou grade</span>
-                <span className="mt-1 block text-xs text-eid-text-secondary">
-                  Gere vários horários de uma vez ou crie um horário avulso.
+                <span className="block text-base font-black text-eid-fg">Gerar grade automática</span>
+                <span className="mt-0.5 block text-xs text-eid-text-secondary">
+                  Cria vários horários de uma vez por intervalo.
                 </span>
               </span>
-              <span className="grid h-9 w-9 place-items-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 text-lg font-black text-eid-primary-300 transition group-open:rotate-45">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 text-lg font-black text-eid-primary-300 transition group-open:rotate-45">
                 +
               </span>
             </summary>
-            <div className="space-y-5 border-t border-eid-primary-500/20 p-4">
-              <form action={criarGradeAutomaticaEspacoAction} className="grid gap-3">
-                <h3 className="text-sm font-black text-eid-fg">Assistente automático</h3>
-                <input type="hidden" name="espaco_id" value={selectedSpace.id} />
-                <select name="espaco_unidade_id" defaultValue={unidades?.[0]?.id ?? ""} className="eid-input-dark rounded-xl px-3 py-3 text-sm">
-                  {(unidades ?? []).map((unidade) => (
-                    <option key={unidade.id} value={unidade.id}>
-                      {unidade.nome}
-                    </option>
+            <form action={criarGradeAutomaticaEspacoAction} className="space-y-3 border-t border-eid-primary-500/20 p-4">
+              <input type="hidden" name="espaco_id" value={selectedSpace.id} />
+
+              <div>
+                <label className="mb-1 block text-xs font-bold text-eid-text-secondary">Quadra</label>
+                <select name="espaco_unidade_id" defaultValue={unidades?.[0]?.id ?? ""} className="eid-input-dark w-full rounded-xl px-3 py-2.5 text-sm">
+                  {(unidades ?? []).map((u) => (
+                    <option key={u.id} value={u.id}>{u.nome}</option>
                   ))}
                 </select>
-                <select name="modo_reserva_horario" defaultValue="mista" className="eid-input-dark rounded-xl px-3 py-3 text-sm">
-                  <option value="mista">Aceita paga ou grátis</option>
-                  <option value="paga">Somente reserva paga</option>
-                  <option value="gratuita">Somente reserva gratuita</option>
-                </select>
-                <div className="grid gap-2 sm:grid-cols-3">
-                  <input type="time" name="segsex_hora_inicio" defaultValue="08:00" className="eid-input-dark rounded-xl px-3 py-3 text-sm" />
-                  <input type="time" name="segsex_hora_fim" defaultValue="18:00" className="eid-input-dark rounded-xl px-3 py-3 text-sm" />
-                  <input type="number" name="intervalo_minutos" defaultValue={60} min={15} max={240} className="eid-input-dark rounded-xl px-3 py-3 text-sm" />
-                </div>
-                <div className="grid gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-3 text-xs text-eid-text-secondary">
-                  <label className="inline-flex items-center gap-2 text-eid-fg">
-                    <input type="checkbox" name="sabado_diferente" />
-                    Sábado com horário diferente
-                  </label>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <input type="time" name="sabado_hora_inicio" defaultValue="08:00" className="eid-input-dark rounded-xl px-3 py-3 text-sm" />
-                    <input type="time" name="sabado_hora_fim" defaultValue="12:00" className="eid-input-dark rounded-xl px-3 py-3 text-sm" />
-                  </div>
-                  <label className="inline-flex items-center gap-2 text-eid-fg">
-                    <input type="checkbox" name="domingo_diferente" />
-                    Domingo com horário diferente
-                  </label>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <input type="time" name="domingo_hora_inicio" defaultValue="08:00" className="eid-input-dark rounded-xl px-3 py-3 text-sm" />
-                    <input type="time" name="domingo_hora_fim" defaultValue="12:00" className="eid-input-dark rounded-xl px-3 py-3 text-sm" />
-                  </div>
-                  <label className="inline-flex items-center gap-2 text-eid-fg">
-                    <input type="checkbox" name="limpar_grade_existente" />
-                    Limpar grade existente nos dias gerados
-                  </label>
-                </div>
-                <button className="eid-btn-primary rounded-xl px-4 py-3 text-sm font-bold">Gerar grade automática</button>
-              </form>
+              </div>
 
-              <div className="border-t border-[color:var(--eid-border-subtle)]" />
+              <div>
+                <label className="mb-1 block text-xs font-bold text-eid-text-secondary">Seg–Sex</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <input type="time" name="segsex_hora_inicio" defaultValue="08:00" className="eid-input-dark rounded-xl px-3 py-2.5 text-sm" />
+                  <input type="time" name="segsex_hora_fim" defaultValue="18:00" className="eid-input-dark rounded-xl px-3 py-2.5 text-sm" />
+                  <div>
+                    <input type="number" name="intervalo_minutos" defaultValue={60} min={15} max={240} className="eid-input-dark w-full rounded-xl px-3 py-2.5 text-sm" />
+                    <p className="mt-0.5 text-[10px] text-eid-text-secondary">min/slot</p>
+                  </div>
+                </div>
+              </div>
 
-              <form action={criarHorarioSemanalEspacoAction} className="grid gap-3">
-                <h3 className="text-sm font-black text-eid-fg">Horário avulso</h3>
-                <input type="hidden" name="espaco_id" value={selectedSpace.id} />
-                <select name="espaco_unidade_id" defaultValue={unidades?.[0]?.id ?? ""} className="eid-input-dark rounded-xl px-3 py-3 text-sm">
-                  {(unidades ?? []).map((unidade) => (
-                    <option key={unidade.id} value={unidade.id}>
-                      {unidade.nome}
-                    </option>
+              <div className="space-y-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-3">
+                <label className="flex items-center gap-2 text-sm text-eid-fg">
+                  <input type="checkbox" name="sabado_diferente" className="accent-eid-primary-500" />
+                  Sábado com horário diferente
+                </label>
+                <div className="grid grid-cols-2 gap-2 pl-5">
+                  <input type="time" name="sabado_hora_inicio" defaultValue="08:00" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
+                  <input type="time" name="sabado_hora_fim" defaultValue="12:00" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
+                </div>
+                <label className="flex items-center gap-2 text-sm text-eid-fg">
+                  <input type="checkbox" name="domingo_diferente" className="accent-eid-primary-500" />
+                  Domingo com horário diferente
+                </label>
+                <div className="grid grid-cols-2 gap-2 pl-5">
+                  <input type="time" name="domingo_hora_inicio" defaultValue="08:00" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
+                  <input type="time" name="domingo_hora_fim" defaultValue="12:00" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
+                </div>
+                <label className="flex items-center gap-2 text-sm text-eid-text-secondary">
+                  <input type="checkbox" name="limpar_grade_existente" className="accent-red-500" />
+                  Apagar slots existentes nos dias gerados
+                </label>
+              </div>
+
+              <button className="eid-btn-primary w-full rounded-xl px-4 py-3 text-sm font-bold">
+                Gerar grade
+              </button>
+            </form>
+          </details>
+
+          {/* Horário avulso */}
+          <details className="group overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 marker:hidden">
+              <span>
+                <span className="block text-base font-black text-eid-fg">Adicionar horário avulso</span>
+                <span className="mt-0.5 block text-xs text-eid-text-secondary">
+                  Um slot específico em um dia da semana.
+                </span>
+              </span>
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 text-lg font-black text-eid-fg/50 transition group-open:rotate-45">
+                +
+              </span>
+            </summary>
+            <form action={criarHorarioSemanalEspacoAction} className="space-y-3 border-t border-[color:var(--eid-border-subtle)] p-4">
+              <input type="hidden" name="espaco_id" value={selectedSpace.id} />
+
+              <div>
+                <label className="mb-1 block text-xs font-bold text-eid-text-secondary">Quadra</label>
+                <select name="espaco_unidade_id" defaultValue={unidades?.[0]?.id ?? ""} className="eid-input-dark w-full rounded-xl px-3 py-2.5 text-sm">
+                  {(unidades ?? []).map((u) => (
+                    <option key={u.id} value={u.id}>{u.nome}</option>
                   ))}
                 </select>
-                <div className="grid gap-2 sm:grid-cols-3">
-                  <select name="dia_semana" defaultValue="1" className="eid-input-dark rounded-xl px-3 py-3 text-sm">
-                    <option value="0">Domingo</option>
-                    <option value="1">Segunda</option>
-                    <option value="2">Terça</option>
-                    <option value="3">Quarta</option>
-                    <option value="4">Quinta</option>
-                    <option value="5">Sexta</option>
-                    <option value="6">Sábado</option>
-                  </select>
-                  <input type="time" name="hora_inicio" className="eid-input-dark rounded-xl px-3 py-3 text-sm" />
-                  <input type="time" name="hora_fim" className="eid-input-dark rounded-xl px-3 py-3 text-sm" />
-                </div>
-                <select name="modo_reserva_horario" defaultValue="mista" className="eid-input-dark rounded-xl px-3 py-3 text-sm">
-                  <option value="mista">Aceita reserva paga ou grátis</option>
-                  <option value="paga">Somente reserva paga</option>
-                  <option value="gratuita">Somente reserva gratuita</option>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-bold text-eid-text-secondary">Dia da semana</label>
+                <select name="dia_semana" defaultValue="1" className="eid-input-dark w-full rounded-xl px-3 py-2.5 text-sm">
+                  {DIAS_SEMANA.map((nome, idx) => (
+                    <option key={idx} value={idx}>{nome}</option>
+                  ))}
                 </select>
-                <textarea name="observacoes" rows={2} placeholder="Observação interna" className="eid-input-dark rounded-xl px-3 py-3 text-sm" />
-                <button className="eid-btn-primary rounded-xl px-4 py-3 text-sm font-bold">Adicionar horário</button>
-              </form>
-            </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-bold text-eid-text-secondary">Faixa de horário</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <input type="time" name="hora_inicio" className="eid-input-dark rounded-xl px-3 py-2.5 text-sm" />
+                  <input type="time" name="hora_fim" className="eid-input-dark rounded-xl px-3 py-2.5 text-sm" />
+                </div>
+              </div>
+
+              <div className="space-y-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-3">
+                <label className="flex items-center gap-2 text-sm text-eid-fg">
+                  <input type="checkbox" name="liberar_professor" className="accent-eid-primary-500" />
+                  Liberar para professores
+                </label>
+                <label className="flex items-center gap-2 text-sm text-eid-fg">
+                  <input type="checkbox" name="liberar_torneio" className="accent-eid-primary-500" />
+                  Liberar para torneios
+                </label>
+              </div>
+
+              <textarea name="observacoes" rows={2} placeholder="Observação interna (opcional)" className="eid-input-dark w-full rounded-xl px-3 py-2.5 text-sm" />
+
+              <button className="w-full rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 px-4 py-3 text-sm font-bold text-eid-primary-300 transition hover:bg-eid-primary-500/15">
+                Adicionar horário
+              </button>
+            </form>
           </details>
         </div>
 
+        {/* Grade por quadra */}
         <div className="space-y-3">
-          {Array.from(gradeAgrupada.values()).length ? (
-            Array.from(gradeAgrupada.values()).map((grupo, grupoIndex) => (
-              <details key={grupo.unidadeNome} open={grupoIndex === 0} className="group overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90">
+          {grupos.length ? (
+            grupos.map((grupo, gi) => (
+              <details key={String(grupo.id ?? "geral")} open={gi === 0} className="group overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 marker:hidden">
-                  <span>
-                    <span className="block text-base font-black text-eid-fg">{grupo.unidadeNome}</span>
-                    <span className="mt-1 block text-xs text-eid-text-secondary">{grupo.total} horário(s) configurado(s)</span>
-                  </span>
+                  <div>
+                    <p className="text-base font-black text-eid-fg">{grupo.nome}</p>
+                    <p className="mt-0.5 text-xs text-eid-text-secondary">
+                      {grupo.dias.reduce((s, d) => s + d.itens.length, 0)} horário(s) configurado(s)
+                    </p>
+                  </div>
                   <span className="text-lg font-black text-eid-primary-300 transition group-open:rotate-45">+</span>
                 </summary>
-                <div className="space-y-2 border-t border-[color:var(--eid-border-subtle)] p-3">
-                  {Array.from(grupo.dias.entries()).map(([dia, diaGrupo]) => (
-                    <details key={dia} className="group/dia overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45">
-                      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 marker:hidden">
-                        <span className="text-sm font-black text-eid-fg">{diaGrupo.titulo}</span>
-                        <span className="text-xs font-bold text-eid-text-secondary">{diaGrupo.itens.length} horário(s)</span>
-                      </summary>
-                      <div className="grid gap-2 border-t border-[color:var(--eid-border-subtle)] p-3">
+
+                <div className="divide-y divide-[color:var(--eid-border-subtle)] border-t border-[color:var(--eid-border-subtle)]">
+                  {grupo.dias.map((diaGrupo) => (
+                    <div key={diaGrupo.dia} className="p-3">
+                      <p className="mb-2 text-[11px] font-black uppercase tracking-wide text-eid-primary-300">
+                        {DIAS_SEMANA_CURTO[diaGrupo.dia]}
+                      </p>
+                      <div className="space-y-2">
                         {diaGrupo.itens.map((item) => {
-                          const meta = parseHorarioObservacoes(item.observacoes);
+                          const notaTexto = parseObservacoes(item.observacoes);
                           return (
-                            <article key={item.id} className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3">
-                              <div className="flex items-start justify-between gap-3">
-                                <div>
-                                  <p className="text-sm font-black text-eid-fg">
-                                    {String(item.hora_inicio).slice(0, 5)} às {String(item.hora_fim).slice(0, 5)}
-                                  </p>
-                                  <p className="mt-1 text-xs text-eid-text-secondary">
-                                    {item.ativo ? "Ativo" : "Desativado"} · {modoLabel(meta.modoReserva)}
-                                  </p>
+                            <article key={item.id} className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40">
+                              {/* Header do slot */}
+                              <div className="flex items-center justify-between gap-2 px-3 py-2.5">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-black text-eid-fg tabular-nums">
+                                    {String(item.hora_inicio).slice(0, 5)}–{String(item.hora_fim).slice(0, 5)}
+                                  </span>
+                                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${item.ativo ? "bg-emerald-500/15 text-emerald-300" : "bg-eid-surface/60 text-eid-text-secondary"}`}>
+                                    {item.ativo ? "Ativo" : "Inativo"}
+                                  </span>
+                                  {item.liberar_professor && (
+                                    <span className="rounded-full bg-eid-primary-500/15 px-1.5 py-0.5 text-[10px] font-bold text-eid-primary-300">Prof</span>
+                                  )}
+                                  {item.liberar_torneio && (
+                                    <span className="rounded-full bg-eid-action-500/15 px-1.5 py-0.5 text-[10px] font-bold text-eid-action-300">Torneio</span>
+                                  )}
                                 </div>
                                 <form action={removerHorarioSemanalEspacoAction}>
                                   <input type="hidden" name="espaco_id" value={selectedSpace.id} />
                                   <input type="hidden" name="horario_id" value={item.id} />
-                                  <button className="rounded-lg border border-red-500/35 bg-red-500/10 px-3 py-1.5 text-[11px] font-bold text-red-300">
-                                    Remover
+                                  <button className="rounded-lg border border-red-500/30 bg-red-500/10 px-2.5 py-1 text-[11px] font-bold text-red-300 transition hover:bg-red-500/20">
+                                    ✕
                                   </button>
                                 </form>
                               </div>
-                              <form action={atualizarHorarioSemanalEspacoAction} className="mt-3 grid gap-2 sm:grid-cols-2">
+
+                              {/* Edição inline */}
+                              <form action={atualizarHorarioSemanalEspacoAction} className="border-t border-[color:var(--eid-border-subtle)] px-3 pb-3 pt-2.5">
                                 <input type="hidden" name="espaco_id" value={selectedSpace.id} />
                                 <input type="hidden" name="horario_id" value={item.id} />
-                                <select name="modo_reserva_horario" defaultValue={meta.modoReserva} className="eid-input-dark rounded-xl px-3 py-2 text-sm">
-                                  <option value="mista">Paga ou grátis</option>
-                                  <option value="paga">Somente paga</option>
-                                  <option value="gratuita">Somente gratuita</option>
-                                </select>
-                                <select name="ativo" defaultValue={item.ativo ? "true" : "false"} className="eid-input-dark rounded-xl px-3 py-2 text-sm">
-                                  <option value="true">Ativo</option>
-                                  <option value="false">Desativado</option>
-                                </select>
-                                <textarea name="observacoes" rows={2} defaultValue={meta.texto} className="eid-input-dark rounded-xl px-3 py-2 text-sm sm:col-span-2" />
-                                <div className="grid gap-2 text-xs text-eid-text-secondary sm:col-span-2 sm:grid-cols-2">
-                                  <label className="inline-flex items-center gap-2">
-                                    <input type="checkbox" name="liberar_professor" defaultChecked={Boolean(item.liberar_professor)} />
-                                    Professor
-                                  </label>
-                                  <label className="inline-flex items-center gap-2">
-                                    <input type="checkbox" name="liberar_torneio" defaultChecked={Boolean(item.liberar_torneio)} />
-                                    Torneio
-                                  </label>
+                                <div className="grid gap-2 sm:grid-cols-2">
+                                  <select name="ativo" defaultValue={item.ativo ? "true" : "false"} className="eid-input-dark rounded-lg px-3 py-2 text-xs">
+                                    <option value="true">Ativo</option>
+                                    <option value="false">Inativo</option>
+                                  </select>
+                                  <div className="flex gap-3">
+                                    <label className="flex items-center gap-1.5 text-xs text-eid-text-secondary">
+                                      <input type="checkbox" name="liberar_professor" defaultChecked={Boolean(item.liberar_professor)} className="accent-eid-primary-500" />
+                                      Prof
+                                    </label>
+                                    <label className="flex items-center gap-1.5 text-xs text-eid-text-secondary">
+                                      <input type="checkbox" name="liberar_torneio" defaultChecked={Boolean(item.liberar_torneio)} className="accent-eid-primary-500" />
+                                      Torneio
+                                    </label>
+                                  </div>
+                                  <textarea
+                                    name="observacoes"
+                                    rows={2}
+                                    defaultValue={notaTexto}
+                                    placeholder="Nota interna"
+                                    className="eid-input-dark rounded-lg px-2.5 py-2 text-xs sm:col-span-2"
+                                  />
                                 </div>
-                                <button className="rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-2 text-xs font-bold text-eid-primary-300 sm:col-span-2">
+                                <button className="mt-2 w-full rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/10 px-3 py-2 text-xs font-bold text-eid-primary-300 transition hover:bg-eid-primary-500/15">
                                   Salvar
                                 </button>
                               </form>
@@ -263,18 +296,19 @@ export default async function EspacoGradePage({ searchParams }: Props) {
                           );
                         })}
                       </div>
-                    </details>
+                    </div>
                   ))}
                 </div>
               </details>
             ))
           ) : (
-            <p className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4 text-sm text-eid-text-secondary">
-              Nenhum horário fixo cadastrado.
-            </p>
+            <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-8 text-center">
+              <p className="text-sm font-bold text-eid-fg">Nenhum horário configurado</p>
+              <p className="mt-1 text-xs text-eid-text-secondary">Use o assistente ao lado para gerar a grade da semana.</p>
+            </div>
           )}
         </div>
-      </section>
+      </div>
     </div>
   );
 }

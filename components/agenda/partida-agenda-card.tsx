@@ -387,7 +387,7 @@ export function PartidaAgendaCard({
       <div className="relative mt-2.5 flex items-start justify-between gap-2 md:mt-4">
         {renderLadoCol(formacaoJ1, j1Nome, j1Id ?? null, j1AvatarUrl, Number(j1NotaEid ?? 0))}
         <div className="shrink-0 self-center px-0.5 text-center">
-          <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-eid-action-500/45 bg-[radial-gradient(circle_at_35%_28%,rgba(255,255,255,0.42),transparent_28%),linear-gradient(145deg,var(--eid-action-300),var(--eid-action-600))] text-[9px] font-black uppercase tracking-[0.03em] text-white shadow-[0_8px_18px_-10px_rgba(249,115,22,0.72),inset_0_1px_0_rgba(255,255,255,0.38)] ring-2 ring-eid-card md:h-9 md:w-9 md:text-[10px]">
+          <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-eid-action-500/45 bg-[radial-gradient(circle_at_35%_28%,rgba(255,255,255,0.42),transparent_28%),linear-gradient(145deg,var(--eid-action-400),var(--eid-action-600))] text-[9px] font-black uppercase tracking-[0.03em] text-white shadow-[0_0_0_2.5px_var(--eid-card),0_0_0_4.5px_color-mix(in_srgb,var(--eid-action-500)_55%,transparent),0_8px_18px_-10px_rgba(249,115,22,0.65),inset_0_1px_0_rgba(255,255,255,0.38)] md:h-9 md:w-9 md:text-[10px]">
             <span className="absolute inset-[5px] rounded-full border border-white/25" aria-hidden />
             <span className="relative leading-none drop-shadow-[0_1px_1px_rgba(124,45,18,0.45)]">VS</span>
           </span>
@@ -415,29 +415,29 @@ export function PartidaAgendaCard({
       ) : null}
 
       {canAddNativeCalendar || (nativeToolsAvailable && localLabel?.trim()) ? (
-        <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+        <div className="mt-2 grid gap-1.5" style={{ gridTemplateColumns: `repeat(${[canAddNativeCalendar, canAddNativeCalendar && nativeToolsAvailable, nativeToolsAvailable && Boolean(localLabel?.trim())].filter(Boolean).length}, minmax(0,1fr))` }}>
           {canAddNativeCalendar ? (
-          <button
-            type="button"
-            onClick={handleAddNativeCalendar}
-            data-eid-compact-chip-btn="true"
-            className="inline-flex min-h-[24px] items-center justify-center gap-1 rounded-full border border-eid-primary-500/25 bg-eid-primary-500/10 px-2.5 text-[7px] font-black uppercase leading-none tracking-[0.06em] text-eid-primary-300 transition active:scale-[0.98] md:min-h-[26px] md:text-[8px]"
-            aria-label="Adicionar este compromisso na agenda do celular"
-          >
-            <CalendarPlus className="h-3 w-3" aria-hidden />
-            <span>{nativeCalendarPlatform === "ios" ? "Adicionar à agenda do iPhone" : "Adicionar à agenda do Android"}</span>
-          </button>
+            <button
+              type="button"
+              onClick={handleAddNativeCalendar}
+              data-eid-compact-chip-btn="true"
+              className="inline-flex min-h-[28px] items-center justify-center gap-1 rounded-lg border border-eid-primary-500/25 bg-eid-primary-500/10 px-2 text-[8px] font-black uppercase leading-none tracking-[0.04em] text-eid-primary-300 transition active:scale-[0.98]"
+              aria-label="Adicionar este compromisso na agenda do celular"
+            >
+              <CalendarPlus className="h-3 w-3 shrink-0" aria-hidden />
+              <span className="truncate">{nativeCalendarPlatform === "ios" ? "Agenda iPhone" : "Agenda"}</span>
+            </button>
           ) : null}
           {canAddNativeCalendar && nativeToolsAvailable ? (
             <button
               type="button"
               onClick={handleNativeReminder}
               data-eid-compact-chip-btn="true"
-              className="inline-flex min-h-[24px] items-center justify-center gap-1 rounded-full border border-eid-action-500/25 bg-eid-action-500/10 px-2.5 text-[7px] font-black uppercase leading-none tracking-[0.06em] text-eid-action-300 transition active:scale-[0.98] md:min-h-[26px] md:text-[8px]"
+              className="inline-flex min-h-[28px] items-center justify-center gap-1 rounded-lg border border-eid-action-500/25 bg-eid-action-500/10 px-2 text-[8px] font-black uppercase leading-none tracking-[0.04em] text-eid-action-400 transition active:scale-[0.98]"
               aria-label="Criar lembrete no celular"
             >
-              <Bell className="h-3 w-3" aria-hidden />
-              <span>Lembrete</span>
+              <Bell className="h-3 w-3 shrink-0" aria-hidden />
+              <span className="truncate">Lembrete</span>
             </button>
           ) : null}
           {nativeToolsAvailable && localLabel?.trim() ? (
@@ -445,11 +445,11 @@ export function PartidaAgendaCard({
               type="button"
               onClick={handleOpenNativeMaps}
               data-eid-compact-chip-btn="true"
-              className="inline-flex min-h-[24px] items-center justify-center gap-1 rounded-full border border-eid-primary-500/25 bg-eid-primary-500/10 px-2.5 text-[7px] font-black uppercase leading-none tracking-[0.06em] text-eid-primary-300 transition active:scale-[0.98] md:min-h-[26px] md:text-[8px]"
+              className="inline-flex min-h-[28px] items-center justify-center gap-1 rounded-lg border border-eid-primary-500/25 bg-eid-primary-500/10 px-2 text-[8px] font-black uppercase leading-none tracking-[0.04em] text-eid-primary-300 transition active:scale-[0.98]"
               aria-label="Abrir rota no aplicativo de mapas"
             >
-              <MapPin className="h-3 w-3" aria-hidden />
-              <span>Rota</span>
+              <MapPin className="h-3 w-3 shrink-0" aria-hidden />
+              <span className="truncate">Rota</span>
             </button>
           ) : null}
         </div>

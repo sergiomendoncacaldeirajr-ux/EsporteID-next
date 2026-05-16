@@ -46,6 +46,9 @@ type ManagedSpace = {
   modo_monetizacao: string | null;
   associacao_regra_json: unknown;
   clube_assinaturas_socios: string | null;
+  entrada_membro_modo: string | null;
+  entrada_membro_descricao: string | null;
+  formas_pagamento_aceitas: string[] | null;
 };
 
 const PUBLIC_ASSET_RE = /^(https?:|data:|blob:)/i;
@@ -140,7 +143,7 @@ export async function requireEspacoManagerUser(nextPath: string) {
   const { data: managedSpaces, error } = await supabase
     .from("espacos_genericos")
     .select(
-      "id, slug, nome_publico, status, localizacao, cidade, uf, lat, lng, esportes_ids, criado_por_usuario_id, responsavel_usuario_id, logo_arquivo, cover_arquivo, whatsapp_contato, email_contato, website_url, instagram_url, descricao_curta, descricao_longa, aceita_socios, permite_professores_aprovados, ativo_listagem, operacao_status, venue_config_json, configuracao_reservas_json, categoria_mensalidade, modo_reserva, modo_monetizacao, associacao_regra_json, clube_assinaturas_socios"
+      "id, slug, nome_publico, status, localizacao, cidade, uf, lat, lng, esportes_ids, criado_por_usuario_id, responsavel_usuario_id, logo_arquivo, cover_arquivo, whatsapp_contato, email_contato, website_url, instagram_url, descricao_curta, descricao_longa, aceita_socios, permite_professores_aprovados, ativo_listagem, operacao_status, venue_config_json, configuracao_reservas_json, categoria_mensalidade, modo_reserva, modo_monetizacao, associacao_regra_json, clube_assinaturas_socios, entrada_membro_modo, entrada_membro_descricao, formas_pagamento_aceitas"
     )
     .eq("responsavel_usuario_id", user.id)
     .order("id", { ascending: false })

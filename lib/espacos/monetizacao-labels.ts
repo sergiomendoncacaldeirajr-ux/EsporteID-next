@@ -8,13 +8,11 @@ import type {
 export const MODO_RESERVA_LABEL: Record<ModoReserva, string> = {
   gratuita: "Gratuita",
   paga: "Paga",
-  mista: "Mista (conforme unidade / regra interna)",
 };
 
 export const MODO_MONETIZACAO_LABEL: Record<ModoMonetizacaoEspaco, string> = {
-  mensalidade_plataforma: "Mensalidade da plataforma (reservas gratuitas ou mistas)",
-  apenas_reservas: "Só taxas de reserva (somente reservas pagas)",
-  misto: "Legado: mensalidade + taxas de reserva",
+  mensalidade_plataforma: "Mensalidade da plataforma (reservas gratuitas)",
+  apenas_reservas: "Só taxas de reserva (reservas pagas)",
 };
 
 export const SOCIOS_MENSAL_ESPACO_LABEL: Record<SociosMensalidadeEspacoFlag, string> = {

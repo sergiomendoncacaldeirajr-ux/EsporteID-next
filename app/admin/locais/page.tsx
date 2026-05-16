@@ -738,21 +738,20 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                         <input type="hidden" name="id" value={l.id} />
                         <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
                           Modo de reserva
-                          <select name="modo_reserva" defaultValue={localRow.modo_reserva ?? "mista"} className="eid-input-dark mt-1 w-full max-w-md rounded-lg px-2 py-1.5 text-sm">
+                          <select name="modo_reserva" defaultValue={localRow.modo_reserva ?? "gratuita"} className="eid-input-dark mt-1 w-full max-w-md rounded-lg px-2 py-1.5 text-sm">
                             <option value="gratuita">{MODO_RESERVA_LABEL.gratuita}</option>
                             <option value="paga">{MODO_RESERVA_LABEL.paga}</option>
-                            <option value="mista">{MODO_RESERVA_LABEL.mista}</option>
+                            <option value="mista_pendente_escolha">Mista (pendente escolha pelo dono)</option>
                           </select>
                         </label>
                         <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
                           Monetização
-                          <select name="modo_monetizacao" defaultValue={localRow.modo_monetizacao ?? "misto"} className="eid-input-dark mt-1 w-full max-w-md rounded-lg px-2 py-1.5 text-sm">
+                          <select name="modo_monetizacao" defaultValue={localRow.modo_monetizacao ?? "mensalidade_plataforma"} className="eid-input-dark mt-1 w-full max-w-md rounded-lg px-2 py-1.5 text-sm">
                             <option value="mensalidade_plataforma">{MODO_MONETIZACAO_LABEL.mensalidade_plataforma}</option>
                             <option value="apenas_reservas">{MODO_MONETIZACAO_LABEL.apenas_reservas}</option>
-                            <option value="misto">{MODO_MONETIZACAO_LABEL.misto}</option>
                           </select>
                           <span className="mt-1 block text-[10px] leading-relaxed text-eid-text-secondary">
-                            Ao salvar, a regra é aplicada automaticamente: gratuita/mista = mensalidade da plataforma; paga = somente taxas de reserva.
+                            Ao salvar, a regra é aplicada automaticamente: gratuita = mensalidade da plataforma; paga = somente taxas de reserva.
                           </span>
                         </label>
                         <label className="text-[11px] text-eid-text-secondary">

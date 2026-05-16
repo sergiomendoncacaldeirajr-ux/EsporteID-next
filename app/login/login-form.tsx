@@ -2,19 +2,20 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { EmailCorrectionInline } from "@/components/auth/email-correction-inline";
 import { EMAIL_CODE_MESSAGES } from "@/lib/auth/messages";
 import { useResendEmailCode } from "@/components/auth/use-resend-email-code";
 import { LogoFull } from "@/components/brand/logo-full";
 import { entrarComSenha } from "@/app/login/actions";
 import { loginActionInitial } from "@/app/login/login-state";
-import { createClient } from "@/lib/supabase/client";
-import {
-  authenticateNativeBiometricLogin,
-  enableNativeBiometricLoginAfterPassword,
-  getNativeBiometricLogin,
-} from "@/lib/native/secure-session";
+// import { createClient } from "@/lib/supabase/client"; // usado pela biometria (desabilitada)
+// Biometria/facial desabilitada — manter imports comentados para reativar futuramente
+// import {
+//   authenticateNativeBiometricLogin,
+//   enableNativeBiometricLoginAfterPassword,
+//   getNativeBiometricLogin,
+// } from "@/lib/native/secure-session";
 
 function IconEnvelope({ className }: { className?: string }) {
   return (
@@ -93,8 +94,9 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk, bootstrapError = nul
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const [nativeBiometricEmail, setNativeBiometricEmail] = useState<string | null>(null);
-  const [nativeBiometricBusy, setNativeBiometricBusy] = useState(false);
+  // Biometria desabilitada
+  // const [nativeBiometricEmail, setNativeBiometricEmail] = useState<string | null>(null);
+  // const [nativeBiometricBusy, setNativeBiometricBusy] = useState(false);
   const [correctedPendingEmail, setCorrectedPendingEmail] = useState<string | null>(null);
   const { resending, resend } = useResendEmailCode({ mode: "signup" });
 
@@ -106,15 +108,14 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk, bootstrapError = nul
     .trim()
     .toLowerCase();
 
-  useEffect(() => {
-    let cancelled = false;
-    void getNativeBiometricLogin().then((saved) => {
-      if (!cancelled) setNativeBiometricEmail(saved?.email ?? null);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // Biometria desabilitada
+  // useEffect(() => {
+  //   let cancelled = false;
+  //   void getNativeBiometricLogin().then((saved) => {
+  //     if (!cancelled) setNativeBiometricEmail(saved?.email ?? null);
+  //   });
+  //   return () => { cancelled = true; };
+  // }, []);
 
   const handleLoginSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
@@ -125,8 +126,9 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk, bootstrapError = nul
         const fd = new FormData(e.currentTarget);
         const result = await entrarComSenha(fd);
         if (result.redirectTo) {
-          const loginEmail = String(fd.get("email") ?? "").trim().toLowerCase();
-          await enableNativeBiometricLoginAfterPassword(loginEmail);
+          // Biometria desabilitada
+          // const loginEmail = String(fd.get("email") ?? "").trim().toLowerCase();
+          // await enableNativeBiometricLoginAfterPassword(loginEmail);
           window.location.assign(result.redirectTo);
           return;
         }
@@ -141,32 +143,8 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk, bootstrapError = nul
     []
   );
 
-  async function handleNativeBiometricLogin() {
-    setLocalError(null);
-    setInfo(null);
-    setNativeBiometricBusy(true);
-    try {
-      const result = await authenticateNativeBiometricLogin();
-      if (!result.ok) {
-        setLocalError("Não foi possível desbloquear com biometria agora.");
-        return;
-      }
-
-      const supabase = createClient();
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        setEmail(result.email ?? nativeBiometricEmail ?? "");
-        setLocalError("Entre com sua senha uma vez para renovar a sessão deste aparelho.");
-        return;
-      }
-
-      window.location.assign(next);
-    } catch {
-      setLocalError("Não foi possível entrar com biometria agora.");
-    } finally {
-      setNativeBiometricBusy(false);
-    }
-  }
+  // Biometria desabilitada
+  // async function handleNativeBiometricLogin() { ... }
 
   const focusWithinBg = "focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]";
 
@@ -396,16 +374,7 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk, bootstrapError = nul
               )}
             </button>
 
-            {nativeBiometricEmail ? (
-              <button
-                type="button"
-                onClick={handleNativeBiometricLogin}
-                disabled={nativeBiometricBusy || Boolean(bootstrapError)}
-                className="mt-2.5 flex h-[46px] w-full items-center justify-center rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 text-[13px] font-bold text-eid-primary-300 transition hover:border-eid-primary-500/50 hover:bg-eid-primary-500/18 disabled:opacity-60"
-              >
-                {nativeBiometricBusy ? "Desbloqueando..." : "Entrar com biometria"}
-              </button>
-            ) : null}
+            {/* Biometria desabilitada */}
 
             <p className="mt-4 text-center text-[12px] text-eid-text-muted">
               <Link

@@ -1,13 +1,16 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Banknote, CalendarDays, CheckCircle2, DoorOpen, Dumbbell, ImageIcon, LayoutGrid, ListChecks, Pencil, ShieldCheck, Tag, Users } from "lucide-react";
+import { Banknote, CalendarDays, CheckCircle2, CreditCard, DoorOpen, Dumbbell, ImageIcon, LayoutGrid, ListChecks, Pencil, ShieldCheck, Tag, Users } from "lucide-react";
 import {
   alternarAtivoUnidadeEspacoAction,
+  atualizarConfiguracaoMembrosAction,
+  atualizarFormasPagamentoAction,
   atualizarPlanoSocioEspacoAction,
   atualizarUnidadeEspacoAction,
   criarPlanoSocioEspacoAction,
   criarUnidadeEspacoAction,
 } from "@/app/espaco/actions";
+import { FORMA_PAGAMENTO_LABEL } from "@/lib/espacos/espaco-constants";
 import { EspacoConfigForm } from "@/components/espaco/espaco-config-form";
 import { EspacoOperadoresPermissoes } from "@/components/espaco/espaco-operadores-permissoes";
 import { EspacoUnidadeLogoControl } from "@/components/espaco/espaco-unidade-logo-control";
@@ -506,6 +509,121 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
           permissoes={permissoesOperadores}
         />
       </SettingsSection>
+
+      {/* Formas de pagamento — só para espaços pagos */}
+      {selectedSpace.modo_reserva === "paga" && (
+        <SettingsSection
+          Icon={CreditCard}
+          title="Formas de pagamento"
+          description="Quais métodos de pagamento você aceita para reservas avulsas no seu espaço."
+          meta={(() => {
+            const formas = (selectedSpace.formas_pagamento_aceitas ?? ["pix", "cartao", "boleto"]) as string[];
+            return formas.map((f) => FORMA_PAGAMENTO_LABEL[f as keyof typeof FORMA_PAGAMENTO_LABEL] ?? f).join(", ");
+          })()}
+        >
+          <form action={atualizarFormasPagamentoAction} className="space-y-4">
+            <input type="hidden" name="espaco_id" value={selectedSpace.id} />
+
+            <p className="text-xs text-eid-text-secondary">
+              Selecione ao menos uma forma. As opções marcadas aparecerão no checkout do jogador ao reservar um horário.
+            </p>
+
+            <div className="space-y-2">
+              {(["pix", "cartao", "boleto"] as const).map((forma) => {
+                const formasAtuais = (selectedSpace.formas_pagamento_aceitas ?? ["pix", "cartao", "boleto"]) as string[];
+                const checked = formasAtuais.includes(forma);
+                const descricoes: Record<string, string> = {
+                  pix: "Pagamento instantâneo, confirmação imediata.",
+                  cartao: "Cartão de crédito via link seguro do Asaas.",
+                  boleto: "Boleto bancário, compensação em até 3 dias úteis.",
+                };
+                return (
+                  <label
+                    key={forma}
+                    className="flex cursor-pointer items-start gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-3 transition has-[:checked]:border-eid-primary-500/40 has-[:checked]:bg-eid-primary-500/8"
+                  >
+                    <input
+                      type="checkbox"
+                      name={`forma_${forma}`}
+                      defaultChecked={checked}
+                      className="mt-0.5 accent-eid-primary-500"
+                    />
+                    <div>
+                      <p className="text-sm font-bold text-eid-fg">{FORMA_PAGAMENTO_LABEL[forma]}</p>
+                      <p className="text-xs text-eid-text-secondary">{descricoes[forma]}</p>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+
+            <button className="eid-btn-primary rounded-xl px-4 py-3 text-sm font-bold">
+              Salvar formas de pagamento
+            </button>
+          </form>
+        </SettingsSection>
+      )}
+
+      {/* Controle de entrada de membros — só relevante para espaços gratuitos */}
+      {selectedSpace.modo_reserva !== "paga" && (
+        <SettingsSection
+          title="Controle de membros"
+          Icon={DoorOpen}
+          description="Como novos membros entram no seu espaço gratuito."
+          meta={selectedSpace.entrada_membro_modo === "automatica" ? "Automático" : "Aprovação manual"}
+        >
+          <form action={atualizarConfiguracaoMembrosAction} className="space-y-4">
+            <input type="hidden" name="espaco_id" value={selectedSpace.id} />
+
+            <div>
+              <p className="mb-2 text-xs font-bold text-eid-fg">Modo de aprovação</p>
+              <div className="space-y-2">
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-3 transition has-[:checked]:border-eid-primary-500/40 has-[:checked]:bg-eid-primary-500/8">
+                  <input
+                    type="radio"
+                    name="entrada_membro_modo"
+                    value="manual"
+                    defaultChecked={selectedSpace.entrada_membro_modo !== "automatica"}
+                    className="mt-0.5 accent-eid-primary-500"
+                  />
+                  <div>
+                    <p className="text-sm font-bold text-eid-fg">Aprovação manual</p>
+                    <p className="text-xs text-eid-text-secondary">Você revisa e aprova cada pedido de entrada no painel.</p>
+                  </div>
+                </label>
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-3 transition has-[:checked]:border-emerald-500/40 has-[:checked]:bg-emerald-500/8">
+                  <input
+                    type="radio"
+                    name="entrada_membro_modo"
+                    value="automatica"
+                    defaultChecked={selectedSpace.entrada_membro_modo === "automatica"}
+                    className="mt-0.5 accent-emerald-500"
+                  />
+                  <div>
+                    <p className="text-sm font-bold text-eid-fg">Aprovação automática</p>
+                    <p className="text-xs text-eid-text-secondary">Qualquer membro do EsporteID pode entrar imediatamente sem esperar.</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-bold text-eid-text-secondary">
+                Mensagem de boas-vindas (aparece no drawer de entrada)
+              </label>
+              <textarea
+                name="entrada_membro_descricao"
+                rows={3}
+                defaultValue={selectedSpace.entrada_membro_descricao ?? ""}
+                placeholder="Ex.: Seja bem-vindo! Após aprovação você pode reservar horários normalmente."
+                className="eid-input-dark w-full rounded-xl px-3 py-2.5 text-sm"
+              />
+            </div>
+
+            <button className="eid-btn-primary rounded-xl px-4 py-3 text-sm font-bold">Salvar configuração</button>
+          </form>
+        </SettingsSection>
+      )}
 
       <SettingsSection
         title="Planos de sócio"

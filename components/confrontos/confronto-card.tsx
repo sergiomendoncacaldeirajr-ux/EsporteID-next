@@ -97,7 +97,7 @@ export function ConfrontoCard({ item }: { item: PublicConfronto }) {
         <div className="mt-3 grid grid-cols-[minmax(0,1fr)_4.25rem_minmax(0,1fr)] items-start gap-2">
           <SideFace side={item.ladoA} variant={formacao ? "formacao" : "individual"} interactive={isEncerrado} showEid={isEncerrado} />
           <div className="flex flex-col items-center pt-2">
-            <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/12 px-2 py-1 text-[10px] font-black text-eid-action-300">
+            <span className="rounded-full border border-eid-action-500/45 bg-eid-action-500/15 px-2 py-1 text-[10px] font-black text-[color:color-mix(in_srgb,var(--eid-fg)_50%,var(--eid-action-500)_50%)]">
               {item.placar ?? "VS"}
             </span>
             <span className="mt-1 text-[8px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">

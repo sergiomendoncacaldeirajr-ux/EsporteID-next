@@ -142,15 +142,8 @@ function parseHorarioObservacoes(raw: unknown) {
   return { texto, modoReserva };
 }
 
-function horarioModoFromForm(formData: FormData) {
-  const modo = text(formData, "modo_reserva_horario");
-  return modo === "paga" || modo === "gratuita" || modo === "mista" ? modo : "mista";
-}
-
-function montarHorarioObservacoes(raw: unknown, modoReserva: "mista" | "paga" | "gratuita") {
-  const textoLimpo = parseHorarioObservacoes(raw).texto;
-  const meta = `${HORARIO_META_PREFIX}${JSON.stringify({ modoReserva })}`;
-  return [textoLimpo, meta].filter(Boolean).join("\n");
+function montarHorarioObservacoes(raw: unknown) {
+  return parseHorarioObservacoes(raw).texto || null;
 }
 
 function parseRecord(raw: unknown): Record<string, unknown> {
@@ -713,7 +706,6 @@ export async function criarHorarioSemanalEspacoAction(formData: FormData) {
   const horaFim = text(formData, "hora_fim");
   const liberarProfessor = checkbox(formData, "liberar_professor");
   const liberarTorneio = checkbox(formData, "liberar_torneio");
-  const modoReservaHorario = horarioModoFromForm(formData);
   const liberarParaUsername = text(formData, "liberar_para_username").replace(/^@/, "");
   if (diaSemana < 0 || diaSemana > 6 || !horaInicio || !horaFim) {
     throw new Error("Preencha dia e faixa horária válidos.");
@@ -740,7 +732,7 @@ export async function criarHorarioSemanalEspacoAction(formData: FormData) {
       liberar_professor: liberarProfessor,
       liberar_torneio: liberarTorneio,
       liberar_para_usuario_id: liberarParaUsuarioId,
-      observacoes: montarHorarioObservacoes(text(formData, "observacoes"), modoReservaHorario),
+      observacoes: montarHorarioObservacoes(text(formData, "observacoes")),
     })
     .select("id")
     .single();
@@ -751,7 +743,7 @@ export async function criarHorarioSemanalEspacoAction(formData: FormData) {
     p_entidade_tipo: "espaco_horario",
     p_entidade_id: data.id,
     p_acao: "grade_criada",
-    p_payload: { diaSemana, horaInicio, horaFim, modoReservaHorario },
+    p_payload: { diaSemana, horaInicio, horaFim },
     p_autor_usuario_id: user.id,
   });
 
@@ -767,10 +759,9 @@ export async function atualizarHorarioSemanalEspacoAction(formData: FormData) {
 
   const { supabase, user } = await requireEspacoManager(espacoId);
   const ativo = text(formData, "ativo") === "true";
-  const modoReservaHorario = horarioModoFromForm(formData);
   const liberarProfessor = checkbox(formData, "liberar_professor");
   const liberarTorneio = checkbox(formData, "liberar_torneio");
-  const observacoes = montarHorarioObservacoes(text(formData, "observacoes"), modoReservaHorario);
+  const observacoes = montarHorarioObservacoes(text(formData, "observacoes"));
 
   const { error } = await supabase
     .from("espaco_horarios_semanais")
@@ -789,7 +780,7 @@ export async function atualizarHorarioSemanalEspacoAction(formData: FormData) {
     p_entidade_tipo: "espaco_horario",
     p_entidade_id: horarioId,
     p_acao: "grade_atualizada",
-    p_payload: { ativo, modoReservaHorario, liberarProfessor, liberarTorneio },
+    p_payload: { ativo, liberarProfessor, liberarTorneio },
     p_autor_usuario_id: user.id,
   });
 
@@ -1022,7 +1013,6 @@ export async function criarGradeAutomaticaEspacoAction(formData: FormData) {
   const domingoInicio = text(formData, "domingo_hora_inicio");
   const domingoFim = text(formData, "domingo_hora_fim");
   const limparExistente = checkbox(formData, "limpar_grade_existente");
-  const modoReservaHorario = horarioModoFromForm(formData);
   const aplicarRegrasAgora = checkbox(formData, "aplicar_regras_agora");
   const feriadosAutomaticosAtivos = checkbox(formData, "feriados_automaticos_ativos");
   const feriadoOperacaoPadrao = text(formData, "feriado_operacao_padrao") === "aberto" ? "aberto" : "fechado";
@@ -1071,7 +1061,7 @@ export async function criarGradeAutomaticaEspacoAction(formData: FormData) {
         dia_semana: day.dia,
         hora_inicio: minutesToTime(cursor),
         hora_fim: minutesToTime(cursor + intervaloMin),
-        observacoes: montarHorarioObservacoes(`Gerado automaticamente (${intervaloMin} min)`, modoReservaHorario),
+        observacoes: `Gerado automaticamente (${intervaloMin} min)`,
       });
     }
   }
@@ -1665,7 +1655,7 @@ export async function solicitarSocioEspacoAction(
     const { data: espaco, error: espacoErr } = await supabase
       .from("espacos_genericos")
       .select(
-        "id, slug, nome_publico, aceita_socios, responsavel_usuario_id, criado_por_usuario_id, associacao_regra_json, modo_reserva"
+        "id, slug, nome_publico, aceita_socios, responsavel_usuario_id, criado_por_usuario_id, associacao_regra_json, modo_reserva, entrada_membro_modo"
       )
       .eq("id", espacoId)
       .maybeSingle();
@@ -1679,7 +1669,8 @@ export async function solicitarSocioEspacoAction(
       };
     }
     const regraAssociacao = normalizeEspacoAssociacaoConfig(espaco.associacao_regra_json);
-    const entradaAutomatica = String(espaco.modo_reserva ?? "").toLowerCase() === "paga";
+    const entradaModoColuna = String((espaco as Record<string, unknown>).entrada_membro_modo ?? "manual");
+    const entradaAutomatica = entradaModoColuna === "automatica";
     const identificadorEntrada = text(formData, "identificador_entrada");
     if (!entradaAutomatica && regraAssociacao.modoEntrada === "matricula" && identificadorEntrada.length < 3) {
       return { ok: false, message: "Informe a matrícula/código exigido pelo espaço." };
@@ -2040,6 +2031,7 @@ export async function criarReservaEspacoAction(
     const inicio = text(formData, "inicio");
     const fim = text(formData, "fim");
     const tipoReserva = text(formData, "tipo_reserva") || "paga";
+    const formaRaw = text(formData, "forma_pagamento") || "pix";
     const esporteId = intOrNull(formData, "esporte_id");
     const partidaId = intOrNull(formData, "partida_id");
     const torneioJogoId = intOrNull(formData, "torneio_jogo_id");
@@ -2052,7 +2044,7 @@ export async function criarReservaEspacoAction(
         supabase
           .from("espacos_genericos")
           .select(
-            "id, slug, nome_publico, configuracao_reservas_json, uf, codigo_ibge, responsavel_usuario_id, criado_por_usuario_id, modo_reserva, modo_monetizacao, taxa_reserva_plataforma_centavos"
+            "id, slug, nome_publico, configuracao_reservas_json, uf, codigo_ibge, responsavel_usuario_id, criado_por_usuario_id, modo_reserva, modo_monetizacao, taxa_reserva_plataforma_centavos, formas_pagamento_aceitas"
           )
           .eq("id", espacoId)
           .maybeSingle(),
@@ -2620,8 +2612,21 @@ export async function criarReservaEspacoAction(
       p_autor_usuario_id: user.id,
     });
 
+    const FORMA_PARA_ASAAS: Record<string, string> = { pix: "PIX", cartao: "CREDIT_CARD", boleto: "BOLETO" };
+    const formasAceitas = Array.isArray((espaco as Record<string, unknown>).formas_pagamento_aceitas)
+      ? (espaco as Record<string, unknown>).formas_pagamento_aceitas as string[]
+      : ["pix", "cartao", "boleto"];
+    const formaValidada = ["pix", "cartao", "boleto"].includes(formaRaw) ? formaRaw : "pix";
+    const asaasBillingType = FORMA_PARA_ASAAS[formaValidada] ?? "PIX";
+
     let checkoutUrl: string | null = null;
     if (calculo.brutoCentavos > 0) {
+      if (!formasAceitas.includes(formaValidada)) {
+        return {
+          ok: false,
+          message: `Este espaço não aceita ${formaValidada === "pix" ? "PIX" : formaValidada === "cartao" ? "cartão de crédito" : "boleto"} como forma de pagamento.`,
+        };
+      }
       const customerId = await ensureProfileAsaasCustomer(user.id);
       const walletRecebedor = await buscarWalletRecebedorEspaco(
         admin,
@@ -2637,7 +2642,7 @@ export async function criarReservaEspacoAction(
       }
       const payment = await createAsaasPayment({
         customer: customerId,
-        billingType: "PIX",
+        billingType: asaasBillingType,
         value: calculo.brutoCentavos / 100,
         dueDate: new Date().toISOString().slice(0, 10),
         description: `Reserva EsporteID · ${espaco.nome_publico}`,
@@ -2652,8 +2657,8 @@ export async function criarReservaEspacoAction(
         espaco_socio_id: socio?.id ?? null,
         reserva_quadra_id: reserva.id,
         tipo: "reserva_avulsa",
-        billing_type: "PIX",
-        asaas_billing_type: "PIX",
+        billing_type: formaValidada,
+        asaas_billing_type: asaasBillingType,
         status: "pending",
         valor_bruto_centavos: calculo.brutoCentavos,
         taxa_gateway_centavos: calculo.taxaGatewayCentavos,
@@ -3764,4 +3769,172 @@ export async function solicitarNotaFiscalEspacoClienteAction(formData: FormData)
   if (error) throw new Error(error.message);
   if (notaCriada?.id) await emitirNotaFiscalNfeioSeConfigurada(admin, Number(notaCriada.id));
   revalidatePath("/espaco/notas-fiscais");
+}
+
+export async function atualizarConfiguracaoMembrosAction(formData: FormData) {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const { supabase } = await requireEspacoManager(espacoId);
+  const modo = String(formData.get("entrada_membro_modo") ?? "");
+  if (modo !== "automatica" && modo !== "manual") throw new Error("Modo inválido.");
+  const descricao = String(formData.get("entrada_membro_descricao") ?? "").trim() || null;
+  const { error } = await supabase
+    .from("espacos_genericos")
+    .update({ entrada_membro_modo: modo, entrada_membro_descricao: descricao })
+    .eq("id", espacoId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/espaco/configuracao");
+  revalidatePath(`/espaco`);
+}
+
+export async function atualizarFormasPagamentoAction(
+  _prev: State | undefined,
+  formData: FormData
+): Promise<State> {
+  try {
+    const espacoId = Number(formData.get("espaco_id") ?? 0);
+    const { supabase, espaco } = await requireEspacoManager(espacoId);
+
+    const formas: string[] = [];
+    if (checkbox(formData, "forma_pix")) formas.push("pix");
+    if (checkbox(formData, "forma_cartao")) formas.push("cartao");
+    if (checkbox(formData, "forma_boleto")) formas.push("boleto");
+
+    if (formas.length === 0) {
+      return { ok: false, message: "Selecione ao menos uma forma de pagamento." };
+    }
+
+    const { error } = await supabase
+      .from("espacos_genericos")
+      .update({ formas_pagamento_aceitas: formas })
+      .eq("id", espacoId);
+
+    if (error) return { ok: false, message: error.message };
+    revalidatePath("/espaco/configuracao");
+    if (espaco.slug) revalidatePath(`/espaco/${espaco.slug}`);
+    return { ok: true, message: "Formas de pagamento atualizadas." };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "Erro ao salvar." };
+  }
+}
+
+export async function escolherModoReservaEspacoAction(formData: FormData) {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const { supabase } = await requireEspacoManager(espacoId);
+  const modo = String(formData.get("modo") ?? "");
+  if (modo !== "paga" && modo !== "gratuita") throw new Error("Modo inválido.");
+  const { error } = await supabase
+    .from("espacos_genericos")
+    .update({ modo_reserva: modo })
+    .eq("id", espacoId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/espaco");
+  redirect("/espaco");
+}
+
+export async function reservarQuadraParaPartidaAction(
+  _prev: State | undefined,
+  formData: FormData
+): Promise<State> {
+  try {
+    const { supabase, user } = await requireUser();
+    const admin = createServiceRoleClient();
+    const partidaId = Number(formData.get("partida_id") ?? 0);
+    const espacoId = Number(formData.get("espaco_id") ?? 0);
+    const unidadeId = intOrNull(formData, "espaco_unidade_id");
+    const inicio = text(formData, "inicio");
+    const fim = text(formData, "fim");
+    if (!partidaId || !espacoId || !inicio || !fim) {
+      return { ok: false, message: "Dados incompletos para a reserva." };
+    }
+    const inicioDate = new Date(inicio);
+    const fimDate = new Date(fim);
+    if (Number.isNaN(inicioDate.getTime()) || Number.isNaN(fimDate.getTime()) || fimDate <= inicioDate) {
+      return { ok: false, message: "Intervalo inválido para a reserva." };
+    }
+    const { data: partida } = await supabase
+      .from("partidas")
+      .select("id, jogador1_id, jogador2_id, desafiante_id, desafiado_id, status")
+      .eq("id", partidaId)
+      .maybeSingle();
+    if (!partida) return { ok: false, message: "Partida não encontrada." };
+    const isParticipant = [
+      (partida as Record<string, unknown>).jogador1_id,
+      (partida as Record<string, unknown>).jogador2_id,
+      (partida as Record<string, unknown>).desafiante_id,
+      (partida as Record<string, unknown>).desafiado_id,
+    ]
+      .filter(Boolean)
+      .some((id) => String(id) === user.id);
+    if (!isParticipant) {
+      return { ok: false, message: "Você não é participante desta partida." };
+    }
+    const { data: socio } = await supabase
+      .from("espaco_socios")
+      .select("id, status")
+      .eq("espaco_generico_id", espacoId)
+      .eq("usuario_id", user.id)
+      .eq("status", "ativo")
+      .maybeSingle();
+    if (!socio) {
+      return { ok: false, message: "Você precisa ser membro ativo deste espaço para reservar como rank." };
+    }
+    const { data: reservaExistente } = await supabase
+      .from("reservas_quadra")
+      .select("id")
+      .eq("partida_id", partidaId)
+      .neq("status_reserva", "cancelada")
+      .maybeSingle();
+    if (reservaExistente) {
+      return { ok: false, message: "Esta partida já tem uma quadra reservada." };
+    }
+    const conflictQuery = supabase
+      .from("reservas_quadra")
+      .select("id")
+      .eq("espaco_generico_id", espacoId)
+      .neq("status_reserva", "cancelada")
+      .lt("inicio", fim)
+      .gt("fim", inicio);
+    if (unidadeId) {
+      conflictQuery.eq("espaco_unidade_id", unidadeId);
+    }
+    const { data: conflitos } = await conflictQuery;
+    if ((conflitos ?? []).length > 0) {
+      return { ok: false, message: "Já existe uma reserva para este horário na quadra selecionada." };
+    }
+    const { data: reserva, error } = await admin
+      .from("reservas_quadra")
+      .insert({
+        espaco_generico_id: espacoId,
+        espaco_unidade_id: unidadeId,
+        usuario_solicitante_id: user.id,
+        valor_total: 0,
+        payment_status: "isento",
+        status_reserva: "confirmada",
+        taxa_gateway: 0,
+        comissao_plataforma: 0,
+        valor_liquido_local: 0,
+        inicio,
+        fim,
+        tipo_reserva: "rank",
+        origem_reserva: "socio",
+        partida_id: partidaId,
+        reserva_gratuita: true,
+        espaco_socio_id: socio.id,
+        detalhes_json: { contexto: "rank", pagamento: "isento", jogo_vinculado_id: partidaId },
+        atualizado_por: user.id,
+      })
+      .select("id")
+      .single();
+    if (error) return { ok: false, message: error.message };
+    await admin.from("espaco_reserva_participantes").insert({
+      reserva_quadra_id: reserva.id,
+      usuario_id: user.id,
+      papel: "titular",
+      status: "confirmado",
+    });
+    revalidatePath(`/confrontos/${partidaId}`);
+    return { ok: true, message: "Quadra reservada com sucesso para a partida de rank!" };
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Falha ao reservar quadra." };
+  }
 }

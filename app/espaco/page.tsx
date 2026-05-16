@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getEspacoSelecionado } from "@/lib/espacos/server";
+import { MistaEscolhaBanner } from "@/components/espaco/mista-escolha-banner";
 import {
   ArrowRight,
   CalendarDays,
@@ -60,6 +61,8 @@ export default async function EspacoHomePage() {
     .select("id, isento_total, recorrencia_cartao_confirmada_em")
     .eq("espaco_generico_id", selectedSpace.id)
     .maybeSingle();
+  const precisaEscolherModo = selectedSpace.modo_reserva === "mista" || selectedSpace.modo_reserva === "mista_pendente_escolha";
+
   const onboardingPagamentoConcluido =
     selectedSpace.modo_reserva === "paga" ||
     selectedSpace.modo_monetizacao === "apenas_reservas" ||
@@ -115,7 +118,7 @@ export default async function EspacoHomePage() {
     {
       href: "/espaco/grade",
       title: "Grade fixa",
-      desc: "Horários semanais, pagos, grátis ou ambos.",
+      desc: "Horários semanais por quadra e dia da semana.",
       Icon: Grid3X3,
       accent: "text-eid-primary-200",
     },
@@ -151,6 +154,7 @@ export default async function EspacoHomePage() {
 
   return (
     <div className="space-y-5">
+      {precisaEscolherModo && <MistaEscolhaBanner espacoId={selectedSpace.id} />}
       <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
         <section className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
