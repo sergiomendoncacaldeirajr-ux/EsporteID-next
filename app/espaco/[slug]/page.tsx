@@ -72,7 +72,7 @@ export default async function EspacoPublicLandingPage({ params, searchParams }: 
   const { data: espaco } = await supabase
     .from("espacos_genericos")
     .select(
-      "id, slug, nome_publico, descricao_curta, descricao_longa, localizacao, cidade, uf, logo_arquivo, cover_arquivo, whatsapp_contato, email_contato, website_url, instagram_url, aceita_socios, ativo_listagem, tipo_quadra, aceita_reserva, esportes_ids, configuracao_reservas_json, modo_reserva, lat, lng, venue_config_json, entrada_membro_modo, entrada_membro_descricao"
+      "id, slug, nome_publico, descricao_curta, descricao_longa, localizacao, cidade, uf, logo_arquivo, cover_arquivo, whatsapp_contato, email_contato, website_url, instagram_url, aceita_socios, ativo_listagem, tipo_quadra, aceita_reserva, esportes_ids, configuracao_reservas_json, modo_reserva, lat, lng, venue_config_json, entrada_membro_modo, entrada_membro_descricao, formas_pagamento_aceitas"
     )
     .eq("slug", slug)
     .eq("ativo_listagem", true)
@@ -345,6 +345,11 @@ export default async function EspacoPublicLandingPage({ params, searchParams }: 
           planos={planos}
           valorPadraoCentavos={reservaConfig.valorReservaPadraoCentavos ?? 0}
           semanaOffset={0}
+          formasPagamentoAceitas={
+            Array.isArray((espaco as Record<string, unknown>).formas_pagamento_aceitas)
+              ? (espaco as Record<string, unknown>).formas_pagamento_aceitas as string[]
+              : ["pix", "cartao", "boleto"]
+          }
         />
       </section>
 

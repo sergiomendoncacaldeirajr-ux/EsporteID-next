@@ -3786,35 +3786,25 @@ export async function atualizarConfiguracaoMembrosAction(formData: FormData) {
   revalidatePath(`/espaco`);
 }
 
-export async function atualizarFormasPagamentoAction(
-  _prev: State | undefined,
-  formData: FormData
-): Promise<State> {
-  try {
-    const espacoId = Number(formData.get("espaco_id") ?? 0);
-    const { supabase, espaco } = await requireEspacoManager(espacoId);
+export async function atualizarFormasPagamentoAction(formData: FormData): Promise<void> {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const { supabase, espaco } = await requireEspacoManager(espacoId);
 
-    const formas: string[] = [];
-    if (checkbox(formData, "forma_pix")) formas.push("pix");
-    if (checkbox(formData, "forma_cartao")) formas.push("cartao");
-    if (checkbox(formData, "forma_boleto")) formas.push("boleto");
+  const formas: string[] = [];
+  if (checkbox(formData, "forma_pix")) formas.push("pix");
+  if (checkbox(formData, "forma_cartao")) formas.push("cartao");
+  if (checkbox(formData, "forma_boleto")) formas.push("boleto");
 
-    if (formas.length === 0) {
-      return { ok: false, message: "Selecione ao menos uma forma de pagamento." };
-    }
+  if (formas.length === 0) throw new Error("Selecione ao menos uma forma de pagamento.");
 
-    const { error } = await supabase
-      .from("espacos_genericos")
-      .update({ formas_pagamento_aceitas: formas })
-      .eq("id", espacoId);
+  const { error } = await supabase
+    .from("espacos_genericos")
+    .update({ formas_pagamento_aceitas: formas })
+    .eq("id", espacoId);
 
-    if (error) return { ok: false, message: error.message };
-    revalidatePath("/espaco/configuracao");
-    if (espaco.slug) revalidatePath(`/espaco/${espaco.slug}`);
-    return { ok: true, message: "Formas de pagamento atualizadas." };
-  } catch (e) {
-    return { ok: false, message: e instanceof Error ? e.message : "Erro ao salvar." };
-  }
+  if (error) throw new Error(error.message);
+  revalidatePath("/espaco/configuracao");
+  if (espaco.slug) revalidatePath(`/espaco/${espaco.slug}`);
 }
 
 export async function escolherModoReservaEspacoAction(formData: FormData) {
