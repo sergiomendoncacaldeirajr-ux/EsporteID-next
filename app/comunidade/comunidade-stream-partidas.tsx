@@ -374,6 +374,7 @@ export async function ComunidadeStreamPartidas({
   const painelAceitosSemPartidaDuplicada = painelAceitosCancelaveisItems.filter(
     (item) => !matchIdsEmPartidasVisiveis.has(Number(item.id)),
   );
+  const painelAceitosByMatchId = new Map(painelAceitosCancelaveisItems.map((item) => [Number(item.id), item]));
 
   const hasPartidasAcoes =
     painelPlacarPendente.length > 0 ||
@@ -494,6 +495,8 @@ export async function ComunidadeStreamPartidas({
                       const rescheduleAceito =
                         (Number.isFinite(midPartida) && midPartida > 0 && rescheduleAcceptedMatchIdSetPainel.has(midPartida)) ||
                         (dueloKeyCard ? rescheduleAcceptedByDueloPainel.has(dueloKeyCard) : false);
+                      const aceitoItem =
+                        Number.isFinite(midPartida) && midPartida > 0 ? painelAceitosByMatchId.get(midPartida) ?? null : null;
                       return (
                         <PartidaAgendaCard
                           key={pr.id}
@@ -530,6 +533,8 @@ export async function ComunidadeStreamPartidas({
                           ctaFullscreen
                           cancelMatchId={cancelMatchIdResolved}
                           desistMatchId={rescheduleAceito ? cancelMatchIdResolved : null}
+                          whatsappContato={aceitoItem?.whatsappContato ?? null}
+                          whatsappContatoNome={aceitoItem?.whatsappContatoNome ?? null}
                           href={`/registrar-placar/${pr.id}?from=/comunidade`}
                           ctaLabel={
                             partidaPainelEhRelancamentoPosContestacao(pr, userId)

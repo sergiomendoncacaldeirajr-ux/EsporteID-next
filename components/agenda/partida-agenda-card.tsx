@@ -248,6 +248,7 @@ export function PartidaAgendaCard({
   const defaultOption3 = addMinutesToDatetimeLocal(minDateTimeLocal, 120);
   const canRequestReschedule = Boolean(reagendamentoMatchId && !somenteLeituraElenco && !isPlacar);
   const hasScheduleActions = Boolean((whatsappContato || canRequestReschedule) && !agendamentoPendente && !somenteLeituraElenco);
+  const showFooterWhatsApp = Boolean(whatsappContato && !hasScheduleActions);
 
   function tituloLado(formacao: PartidaAgendaFormacaoLado | undefined, nomePerfil: string | null) {
     if (formacao?.nome) return formacao.nome;
@@ -699,29 +700,44 @@ export function PartidaAgendaCard({
 
       {!isPlacar &&
       !ocultarFluxoCancelamento &&
-      (cancelMatchId || desistMatchId) &&
+      (showFooterWhatsApp || cancelMatchId || desistMatchId) &&
       !somenteLeituraElenco ? (
         <div className="mt-3 border-t border-transparent pt-2">
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            {cancelMatchId && !desistMatchId ? (
-              <EidCancelButton
-                type="button"
-                compact
-                inline
-                label="Cancelar"
-                className="shrink-0 active:scale-[0.98]"
-                onClick={() => setOpenCancel(true)}
-              />
-            ) : null}
-            {desistMatchId ? (
-              <button
-                type="button"
-                onClick={() => setOpenDesist(true)}
-                className="inline-flex min-h-[28px] w-auto max-w-[11rem] shrink-0 items-center justify-center rounded-lg border border-amber-700/95 bg-amber-700 px-2.5 text-[8px] font-black uppercase leading-tight tracking-[0.05em] text-white shadow-sm transition hover:bg-amber-800 active:scale-[0.98] sm:text-[9px]"
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            {showFooterWhatsApp && whatsappContato ? (
+              <a
+                href={whatsappContato}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-eid-aceitos-acao-btn="true"
+                className="inline-flex min-h-[28px] max-w-[9rem] shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-2.5 text-[8px] font-black uppercase tracking-[0.05em] text-eid-fg transition hover:bg-eid-surface active:scale-[0.98] sm:text-[9px]"
+                aria-label={`Chamar ${whatsappContatoNome?.split(" ")[0] ?? "oponente"} no WhatsApp`}
               >
-                Cancelar e desistir
-              </button>
+                {whatsappIcon}
+                <span>WhatsApp</span>
+              </a>
             ) : null}
+            <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+              {cancelMatchId && !desistMatchId ? (
+                <EidCancelButton
+                  type="button"
+                  compact
+                  inline
+                  label="Cancelar"
+                  className="shrink-0 active:scale-[0.98]"
+                  onClick={() => setOpenCancel(true)}
+                />
+              ) : null}
+              {desistMatchId ? (
+                <button
+                  type="button"
+                  onClick={() => setOpenDesist(true)}
+                  className="inline-flex min-h-[28px] w-auto max-w-[11rem] shrink-0 items-center justify-center rounded-lg border border-amber-700/95 bg-amber-700 px-2.5 text-[8px] font-black uppercase leading-tight tracking-[0.05em] text-white shadow-sm transition hover:bg-amber-800 active:scale-[0.98] sm:text-[9px]"
+                >
+                  Cancelar e desistir
+                </button>
+              ) : null}
+            </div>
           </div>
         </div>
       ) : null}
