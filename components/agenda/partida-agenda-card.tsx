@@ -248,7 +248,7 @@ export function PartidaAgendaCard({
   const defaultOption3 = addMinutesToDatetimeLocal(minDateTimeLocal, 120);
   const canRequestReschedule = Boolean(reagendamentoMatchId && !somenteLeituraElenco && !isPlacar);
   const hasScheduleActions = Boolean((whatsappContato || canRequestReschedule) && !agendamentoPendente && !somenteLeituraElenco);
-  const showFooterWhatsApp = Boolean(whatsappContato && !hasScheduleActions);
+  const showFooterWhatsApp = Boolean(whatsappContato && (!ctaHidden || !hasScheduleActions));
 
   function tituloLado(formacao: PartidaAgendaFormacaoLado | undefined, nomePerfil: string | null) {
     if (formacao?.nome) return formacao.nome;

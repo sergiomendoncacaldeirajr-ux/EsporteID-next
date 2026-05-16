@@ -496,7 +496,10 @@ export async function ComunidadeStreamPartidas({
                         (Number.isFinite(midPartida) && midPartida > 0 && rescheduleAcceptedMatchIdSetPainel.has(midPartida)) ||
                         (dueloKeyCard ? rescheduleAcceptedByDueloPainel.has(dueloKeyCard) : false);
                       const aceitoItem =
-                        Number.isFinite(midPartida) && midPartida > 0 ? painelAceitosByMatchId.get(midPartida) ?? null : null;
+                        (Number.isFinite(midPartida) && midPartida > 0
+                          ? painelAceitosByMatchId.get(midPartida) ?? null
+                          : null) ??
+                        (cancelMatchIdResolved ? painelAceitosByMatchId.get(cancelMatchIdResolved) ?? null : null);
                       return (
                         <PartidaAgendaCard
                           key={pr.id}
