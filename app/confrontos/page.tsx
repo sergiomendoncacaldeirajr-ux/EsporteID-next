@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import { ArrowLeft, CalendarDays } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { ConfrontoCard } from "@/components/confrontos/confronto-card";
 import {
   confrontoPage,
@@ -80,23 +80,50 @@ export default async function ConfrontosPage({
 
   return (
     <main data-eid-confrontos-page className="mx-auto flex w-full max-w-lg flex-col px-3 pb-[calc(var(--eid-shell-content-bottom-pad)+4.75rem)] pt-3 sm:max-w-2xl sm:px-6 sm:pb-[var(--eid-shell-content-bottom-pad)]">
-      <div className={`mb-3 flex items-center gap-2 ${embed ? "justify-end" : "justify-between"}`}>
-        {!embed ? (
+      {!embed ? (
+        <div className="mb-3 flex items-center">
           <Link href="/ranking" className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 text-eid-primary-300">
             <ArrowLeft className="h-4 w-4" aria-hidden />
           </Link>
-        ) : null}
-        <span className="inline-flex items-center gap-1 rounded-full border border-eid-action-500/30 bg-eid-action-500/12 px-3 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-eid-action-300">
-          <CalendarDays className="h-3 w-3" aria-hidden />
-          Central
-        </span>
-      </div>
+        </div>
+      ) : null}
 
       <section className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(160deg,color-mix(in_srgb,var(--eid-card)_96%,var(--eid-primary-500)_4%),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-4 shadow-[0_18px_42px_-34px_rgba(15,23,42,0.8)]">
-        <h1 className="text-xl font-black tracking-normal text-eid-fg">Confrontos</h1>
-        <p className="mt-1 text-xs leading-relaxed text-eid-text-secondary">
-          Próximos jogos e resultados recentes por modalidade, priorizando horário e localização.
-        </p>
+        <div className="grid grid-cols-[minmax(0,1fr)_84px] items-center gap-3 sm:grid-cols-[minmax(0,1fr)_112px]">
+          <div className="min-w-0">
+            <h1 className="text-xl font-black tracking-normal text-eid-fg">Confrontos</h1>
+            <p className="mt-1 text-xs leading-relaxed text-eid-text-secondary">
+              Próximos jogos e resultados recentes por modalidade, priorizando horário e localização.
+            </p>
+          </div>
+          <svg
+            viewBox="0 0 96 82"
+            className="h-[74px] w-[84px] justify-self-end drop-shadow-[0_10px_18px_rgba(37,99,235,0.18)] sm:h-[92px] sm:w-[112px]"
+            aria-hidden
+          >
+            <defs>
+              <linearGradient id="conf-card-blue" x1="10" y1="13" x2="76" y2="69" gradientUnits="userSpaceOnUse">
+                <stop stopColor="var(--eid-primary-300)" />
+                <stop offset="1" stopColor="var(--eid-primary-600)" />
+              </linearGradient>
+              <linearGradient id="conf-card-orange" x1="24" y1="5" x2="88" y2="70" gradientUnits="userSpaceOnUse">
+                <stop stopColor="var(--eid-action-300)" />
+                <stop offset="1" stopColor="var(--eid-action-600)" />
+              </linearGradient>
+            </defs>
+            <rect x="8" y="15" width="58" height="45" rx="13" fill="url(#conf-card-blue)" opacity="0.16" />
+            <rect x="31" y="9" width="57" height="52" rx="15" fill="url(#conf-card-orange)" opacity="0.2" />
+            <path d="M26 35h14m30 0H56" stroke="var(--eid-primary-500)" strokeWidth="4" strokeLinecap="round" opacity="0.5" />
+            <circle cx="24" cy="35" r="13" fill="var(--eid-primary-500)" />
+            <circle cx="72" cy="35" r="13" fill="var(--eid-action-500)" />
+            <path d="M20 35h8m44-4v8m-4-4h8" stroke="white" strokeWidth="3.2" strokeLinecap="round" />
+            <rect x="34" y="27" width="28" height="16" rx="8" fill="var(--eid-card)" />
+            <text x="48" y="38" textAnchor="middle" fill="var(--eid-action-500)" className="text-[8px] font-black">VS</text>
+            <rect x="21" y="56" width="54" height="10" rx="5" fill="var(--eid-surface)" opacity="0.92" />
+            <path d="M31 61h34" stroke="var(--eid-primary-500)" strokeWidth="3" strokeLinecap="round" opacity="0.65" />
+            <path d="M48 46v10" stroke="var(--eid-action-500)" strokeWidth="3" strokeLinecap="round" />
+          </svg>
+        </div>
         <div className="mt-4 grid grid-cols-2 gap-1 rounded-2xl bg-eid-surface/55 p-1">
           <SegLink active={view === "proximos"} href={href({ view: "proximos", tipo, esporte: esporteId, embed })}>
             Próximos

@@ -4,7 +4,6 @@ import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, CalendarClock, ChevronRight, MapPin, Trophy } from "lucide-react";
 import { ConfrontoDetalheResultado } from "@/components/confrontos/confronto-detalhe-resultado";
-import { ConfrontoDetalheCompartilhar } from "@/components/confrontos/confronto-detalhe-compartilhar";
 import { loadPublicConfrontos, normalizeConfrontoTipo, sideInitial, type ConfrontoTipo, type ConfrontoSide, type PublicConfronto } from "@/lib/confrontos/public-feed";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
@@ -140,25 +139,6 @@ function ResumoCard({ item }: { item: PublicConfronto }) {
           </div>
         ) : null}
 
-        {/* Share button — Arte para Stories */}
-        {scoreText ? (
-          <ConfrontoDetalheCompartilhar
-            ladoA={item.ladoA.name}
-            ladoB={item.ladoB.name}
-            ladoAAvatarUrl={item.ladoA.avatarUrl}
-            ladoBAvatarUrl={item.ladoB.avatarUrl}
-            ladoAProfileHref={item.ladoA.eidHref}
-            ladoBProfileHref={item.ladoB.eidHref}
-            placar={scoreText}
-            esporteNome={item.esporteNome}
-            modalidadeLabel={item.tipo === "dupla" ? "Duplas" : item.tipo === "time" ? "Times" : "Individual"}
-            mensagem={item.mensagem}
-            dataHora={item.dataHora}
-            local={item.local}
-            localLogoUrl={item.localLogoUrl}
-            origem={item.origem}
-          />
-        ) : null}
       </div>
     </div>
   );

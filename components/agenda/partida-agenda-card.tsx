@@ -386,9 +386,10 @@ export function PartidaAgendaCard({
 
       <div className="relative mt-2.5 flex items-start justify-between gap-2 md:mt-4">
         {renderLadoCol(formacaoJ1, j1Nome, j1Id ?? null, j1AvatarUrl, Number(j1NotaEid ?? 0))}
-        <div className="shrink-0 self-end pb-0.5 text-center">
-          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-eid-action-500/35 bg-eid-action-500/12 text-[9px] font-black uppercase tracking-[0.08em] text-eid-action-300 shadow-[0_6px_16px_-10px_rgba(249,115,22,0.6)] md:h-8 md:w-8 md:text-[10px]">
-            VS
+        <div className="shrink-0 self-center px-0.5 text-center">
+          <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-eid-action-500/45 bg-[radial-gradient(circle_at_35%_28%,rgba(255,255,255,0.42),transparent_28%),linear-gradient(145deg,var(--eid-action-300),var(--eid-action-600))] text-[9px] font-black uppercase tracking-[0.03em] text-white shadow-[0_8px_18px_-10px_rgba(249,115,22,0.72),inset_0_1px_0_rgba(255,255,255,0.38)] ring-2 ring-eid-card md:h-9 md:w-9 md:text-[10px]">
+            <span className="absolute inset-[5px] rounded-full border border-white/25" aria-hidden />
+            <span className="relative leading-none drop-shadow-[0_1px_1px_rgba(124,45,18,0.45)]">VS</span>
           </span>
         </div>
         {renderLadoCol(formacaoJ2, j2Nome, j2Id ?? null, j2AvatarUrl, Number(j2NotaEid ?? 0))}

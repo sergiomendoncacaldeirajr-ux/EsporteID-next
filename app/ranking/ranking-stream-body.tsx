@@ -528,10 +528,10 @@ export async function RankingStreamBody({
           </section>
 
           {hasMore ? (
-            <div className="mt-0">
+            <div className="-mt-1 flex justify-center">
               <RankingLoadMoreButton
                 href={rankingHref({ page: state.page + 1 }, stateComGenero, esportePrincipalId)}
-                className="eid-ranking-cta inline-flex min-h-10 w-full items-center justify-center gap-1.5 border-t border-transparent px-5 text-[11px] font-black uppercase tracking-[0.02em] text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] transition-all duration-200 ease-out motion-safe:transform-gpu hover:bg-eid-primary-500/10 active:scale-[0.995]"
+                className="inline-flex min-h-[26px] items-center justify-center gap-1 rounded-full border border-transparent px-3 text-[9px] font-black uppercase tracking-[0.04em] text-[color:color-mix(in_srgb,var(--eid-fg)_62%,var(--eid-primary-500)_38%)] transition hover:border-eid-primary-500/25 hover:text-eid-primary-300 active:scale-[0.98] disabled:opacity-60"
               />
             </div>
           ) : null}

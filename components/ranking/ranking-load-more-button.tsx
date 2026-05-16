@@ -19,7 +19,8 @@ export function RankingLoadMoreButton({ href, className = "" }: Props) {
   // Quando href muda, a navegação completou e o servidor entregou a nova página —
   // resetar o estado de loading para liberar o botão novamente.
   useEffect(() => {
-    setLoading(false);
+    const id = window.setTimeout(() => setLoading(false), 0);
+    return () => window.clearTimeout(id);
   }, [href]);
 
   return (

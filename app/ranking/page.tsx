@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import Image from "next/image";
 import { LocationPermissionBanner } from "@/components/location/location-permission-banner";
 import { NativeShareButton } from "@/components/native/native-share-button";
 import { RankingFilterBar } from "@/components/ranking/ranking-compact";
@@ -133,12 +132,62 @@ export default async function RankingPage({ searchParams }: Props) {
                 Posições por esporte, modalidade e período. Compare desafios (pontos) ou nota EID.
               </p>
             </div>
-            <div className="block justify-self-end" aria-hidden>
-              <div className="relative h-[82px] w-[132px] overflow-hidden rounded-2xl sm:h-[165px] sm:w-[320px]">
-                <Image src="/ranking-podio-alpha.png" alt="" fill unoptimized className="object-contain object-center eid-light:mix-blend-multiply" />
-                {/* Vinheta: mascara as bordas brancas no tema escuro */}
-                <span className="pointer-events-none absolute inset-0 rounded-2xl shadow-[inset_0_0_18px_6px_var(--eid-card)] eid-light:hidden" aria-hidden />
-              </div>
+            <div className="justify-self-end" aria-hidden>
+              <svg
+                viewBox="0 0 160 104"
+                className="h-[82px] w-[132px] drop-shadow-[0_8px_18px_rgba(249,115,22,0.26)] sm:h-[165px] sm:w-[320px]"
+              >
+                <defs>
+                  <linearGradient id="rank-panel" x1="14" y1="16" x2="146" y2="92" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="var(--eid-primary-500)" stopOpacity="0.14" />
+                    <stop offset="1" stopColor="var(--eid-action-500)" stopOpacity="0.18" />
+                  </linearGradient>
+                  <linearGradient id="rank-gold" x1="76" y1="18" x2="103" y2="76" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="var(--eid-action-200)" />
+                    <stop offset="0.52" stopColor="var(--eid-action-400)" />
+                    <stop offset="1" stopColor="var(--eid-action-600)" />
+                  </linearGradient>
+                  <linearGradient id="rank-blue" x1="36" y1="62" x2="74" y2="90" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="var(--eid-primary-300)" />
+                    <stop offset="1" stopColor="var(--eid-primary-600)" />
+                  </linearGradient>
+                  <filter id="rank-soft-shadow" x="-20%" y="-20%" width="140%" height="150%">
+                    <feDropShadow dx="0" dy="8" stdDeviation="6" floodColor="rgb(15 23 42)" floodOpacity="0.22" />
+                  </filter>
+                </defs>
+                <rect x="14" y="16" width="132" height="76" rx="18" fill="url(#rank-panel)" />
+                <path
+                  d="M96 24h17v5c0 10-6 18-16 20M64 24H47v5c0 10 6 18 16 20"
+                  fill="none"
+                  stroke="var(--eid-action-400)"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  opacity="0.82"
+                />
+                <g filter="url(#rank-soft-shadow)">
+                  <rect x="42" y="68" width="34" height="18" rx="6" fill="url(#rank-blue)" />
+                  <rect x="73" y="56" width="36" height="30" rx="7" fill="url(#rank-gold)" />
+                  <rect x="106" y="72" width="30" height="14" rx="6" fill="var(--eid-action-600)" opacity="0.92" />
+                  <path
+                    d="M69 22h32v8c0 13-7 24-16 24s-16-11-16-24v-8Z"
+                    fill="url(#rank-gold)"
+                  />
+                  <rect x="80" y="51" width="10" height="12" rx="3" fill="var(--eid-action-500)" />
+                  <path d="M72 64h26l4 8H68l4-8Z" fill="var(--eid-action-500)" />
+                  <ellipse cx="85" cy="22" rx="18" ry="5" fill="var(--eid-action-200)" />
+                  <path
+                    d="M78 31c4 2 10 2 14 0"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.72)"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                </g>
+                <text x="59" y="81" textAnchor="middle" className="fill-white text-[10px] font-black">2</text>
+                <text x="91" y="77" textAnchor="middle" className="fill-white text-[12px] font-black">1</text>
+                <text x="121" y="82" textAnchor="middle" className="fill-white text-[9px] font-black">3</text>
+              </svg>
             </div>
           </div>
         </div>
