@@ -33,6 +33,7 @@ import {
   IconUsers,
 } from "./dashboard-icons";
 import { LocationPermissionBanner } from "@/components/location/location-permission-banner";
+import { SorteioRankBanner } from "@/components/sorteio-rank/sorteio-rank-banner";
 import { DashboardStreamLocais } from "./dashboard-stream-locais";
 import { DashboardStreamConfrontosProximos } from "./dashboard-stream-confrontos-proximos";
 import { DashboardStreamTorneios } from "./dashboard-stream-torneios";
@@ -81,7 +82,7 @@ export default async function DashboardPage({ searchParams }: Props) {
     supabase
       .from("profiles")
       .select(
-        "nome, avatar_url, localizacao, lat, lng, match_idade_gate, disponivel_amistoso, disponivel_amistoso_ate, perfil_completo"
+        "nome, avatar_url, localizacao, lat, lng, match_idade_gate, disponivel_amistoso, disponivel_amistoso_ate, perfil_completo, sorteio_rank_ativo"
       )
       .eq("id", user.id)
       .maybeSingle(),
@@ -90,6 +91,7 @@ export default async function DashboardPage({ searchParams }: Props) {
   const canSeeTorneios = canAccessSystemFeature(featureCfg, "torneios", user.id, false);
   const canSeeProfessores = canAccessSystemFeature(featureCfg, "professores", user.id, false);
   const canSeeMarketplace = canAccessSystemFeature(featureCfg, "marketplace", user.id, false);
+  const canSeeSorteio = canAccessSystemFeature(featureCfg, "sorteio_rank", user.id, false);
   const profile = profileRes.data;
 
   if (!profile) {
@@ -425,6 +427,15 @@ export default async function DashboardPage({ searchParams }: Props) {
         <div className="mt-4">
           <MatchIdadeGateBanner gate={matchIdadeGate} />
         </div>
+
+        {/* Banner do sorteio: pilotos com esportes que desativaram a participação */}
+        {canSeeSorteio &&
+          meusEsportesResumo.length > 0 &&
+          !(profile as { sorteio_rank_ativo?: boolean | null }).sorteio_rank_ativo && (
+            <div className="mt-3">
+              <SorteioRankBanner jaAtivo={false} />
+            </div>
+          )}
 
         {nuncaJogouDesafio ? (
           <div className="relative mt-3 overflow-hidden rounded-xl border border-eid-primary-500/25 bg-gradient-to-br from-eid-primary-500/[0.11] via-eid-surface/20 to-transparent sm:mt-4">

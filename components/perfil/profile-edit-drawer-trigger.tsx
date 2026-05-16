@@ -19,6 +19,8 @@ type Props = {
   topMode?: "default" | "backOnly" | "backAndClose";
   /** Quando true, o botão Voltar fecha o overlay sem usar histórico interno do iframe. */
   disableIframeBack?: boolean;
+  /** Reduz o respiro superior em overlays fullscreen que já não precisam compensar chrome externo. */
+  compactTop?: boolean;
 };
 
 export function ProfileEditDrawerTrigger({
@@ -32,6 +34,7 @@ export function ProfileEditDrawerTrigger({
   dataNoModal = false,
   topMode = "default",
   disableIframeBack = false,
+  compactTop = false,
 }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -196,9 +199,11 @@ export function ProfileEditDrawerTrigger({
                 }`}
                 style={{
                   top: chromeCompact ? "0px" : "max(0px, env(safe-area-inset-top, 0px))",
-                  paddingTop: chromeCompact
-                    ? "max(3.35rem, calc(0.35rem + env(safe-area-inset-top, 0px)))"
-                    : "calc(1rem + max(5.2rem, constant(safe-area-inset-top), env(safe-area-inset-top, 0px)))",
+                  paddingTop: compactTop
+                    ? "calc(0.5rem + max(0px, env(safe-area-inset-top, 0px)))"
+                    : chromeCompact
+                      ? "max(3.35rem, calc(0.35rem + env(safe-area-inset-top, 0px)))"
+                      : "calc(1rem + max(5.2rem, constant(safe-area-inset-top), env(safe-area-inset-top, 0px)))",
                   overscrollBehavior: "contain",
                 }}
               >

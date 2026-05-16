@@ -73,6 +73,7 @@ export function ConfrontoCard({ item }: { item: PublicConfronto }) {
           href={detailHref}
           fullscreen
           topMode="backOnly"
+          compactTop
           openingDelayMs={0}
           title={`Detalhes do confronto entre ${item.ladoA.name} e ${item.ladoB.name}`}
           className="absolute inset-0 z-0 outline-none ring-offset-2 ring-offset-eid-bg focus-visible:ring-2 focus-visible:ring-eid-primary-500"

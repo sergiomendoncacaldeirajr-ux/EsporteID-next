@@ -185,8 +185,8 @@ const MANAGEMENT_SECTIONS = [
   },
   {
     title: "Configuração da plataforma",
-    description: "Financeiro, integrações, regras, EID e funcionalidades liberadas.",
-    links: ["/admin/financeiro", "/admin/integracoes-pagamento", "/admin/regras", "/admin/eid", "/admin/funcionalidades-do-app"],
+    description: "Financeiro, integrações, regras, EID, sorteio e funcionalidades liberadas.",
+    links: ["/admin/financeiro", "/admin/integracoes-pagamento", "/admin/regras", "/admin/eid", "/admin/sorteio-rank", "/admin/funcionalidades-do-app"],
   },
 ] as const;
 

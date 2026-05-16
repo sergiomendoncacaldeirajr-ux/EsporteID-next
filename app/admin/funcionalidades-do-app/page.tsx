@@ -59,6 +59,7 @@ export default async function AdminFuncionalidadesDoAppPage({ searchParams }: Pa
     "torneios",
     "professores",
     "organizador_torneios",
+    "sorteio_rank",
   ];
   const rawFeatures =
     featureModesRow?.value_json &&

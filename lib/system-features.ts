@@ -5,7 +5,8 @@ export type SystemFeatureKey =
   | "locais"
   | "torneios"
   | "professores"
-  | "organizador_torneios";
+  | "organizador_torneios"
+  | "sorteio_rank";
 
 export type SystemFeatureMode = "ativo" | "em_breve" | "desenvolvimento" | "teste";
 
@@ -20,6 +21,7 @@ export const SYSTEM_FEATURE_LABEL: Record<SystemFeatureKey, string> = {
   torneios: "Torneios",
   professores: "Professores",
   organizador_torneios: "Organizador de torneios",
+  sorteio_rank: "Sorteio de Ranking Mensal",
 };
 
 export const ALL_SYSTEM_FEATURE_KEYS: SystemFeatureKey[] = [
@@ -28,6 +30,7 @@ export const ALL_SYSTEM_FEATURE_KEYS: SystemFeatureKey[] = [
   "torneios",
   "professores",
   "organizador_torneios",
+  "sorteio_rank",
 ];
 
 const DEFAULT_MODE: Record<SystemFeatureKey, SystemFeatureMode> = {
@@ -36,6 +39,7 @@ const DEFAULT_MODE: Record<SystemFeatureKey, SystemFeatureMode> = {
   torneios: "desenvolvimento",
   professores: "desenvolvimento",
   organizador_torneios: "desenvolvimento",
+  sorteio_rank: "teste", // disponível apenas para pilotos selecionados
 };
 
 function normalizeMode(v: unknown): SystemFeatureMode {
@@ -66,6 +70,7 @@ export async function getSystemFeatureConfig(
     torneios: defaultEntry("torneios"),
     professores: defaultEntry("professores"),
     organizador_torneios: defaultEntry("organizador_torneios"),
+    sorteio_rank: defaultEntry("sorteio_rank"),
   };
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return base;
   const features = (raw as { features?: Record<string, unknown> }).features;

@@ -5,6 +5,8 @@ import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/li
 import { createClient } from "@/lib/supabase/server";
 import { listarPapeis } from "@/lib/roles";
 import { ContaPerfilForm } from "./conta-perfil-form";
+import { SorteioRankToggle } from "@/components/sorteio-rank/sorteio-rank-toggle";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 
 export const metadata = {
   title: "Editar perfil · EsporteID",
@@ -20,7 +22,7 @@ export default async function ContaPerfilPage() {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      `nome, username, localizacao, avatar_url, altura_cm, peso_kg, lado, genero, bio, estilo_jogo, disponibilidade_semana_json, perfil_completo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`
+      `nome, username, localizacao, avatar_url, altura_cm, peso_kg, lado, genero, bio, estilo_jogo, disponibilidade_semana_json, perfil_completo, sorteio_rank_ativo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`
     )
     .eq("id", user.id)
     .maybeSingle();
@@ -38,6 +40,9 @@ export default async function ContaPerfilPage() {
     .eq("usuario_id", user.id);
   const hasAthleteSports = (athleteSportsCount ?? 0) > 0;
   const hasProfessor = papeis.includes("professor");
+
+  const [featureCfg] = await Promise.all([getSystemFeatureConfig(supabase)]);
+  const canSeeSorteio = canAccessSystemFeature(featureCfg, "sorteio_rank", user.id, false);
 
   return (
     <main className="mx-auto w-full max-w-xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
@@ -71,6 +76,18 @@ export default async function ContaPerfilPage() {
             .
           </p>
         ) : null}
+
+        {/* Toggle sorteio mensal (visível apenas para pilotos do sorteio_rank) */}
+        {canSeeSorteio && hasAthleteSports && (
+          <div className="mb-6">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-eid-text-muted">
+              Sorteio de Ranking
+            </p>
+            <SorteioRankToggle
+              ativo={Boolean((profile as { sorteio_rank_ativo?: boolean | null }).sorteio_rank_ativo ?? true)}
+            />
+          </div>
+        )}
 
         <ContaPerfilForm
           userId={user.id}

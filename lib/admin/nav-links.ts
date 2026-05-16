@@ -23,5 +23,6 @@ export const ADMIN_NAV_LINKS: { href: string; label: string; hint: string }[] = 
     hint: "Quem vê cada módulo (produção / teste)",
   },
   { href: "/admin/regras", label: "Ranking & desafio", hint: "Pontos, carência e pendências" },
+  { href: "/admin/sorteio-rank", label: "Sorteio de Ranking", hint: "Sorteio mensal (modo teste)" },
   { href: "/admin/admins", label: "Admins", hint: "Acesso e testes" },
 ];

@@ -108,6 +108,23 @@ function safeInitial(name: string) {
   return name.trim().slice(0, 1).toUpperCase() || "E";
 }
 
+function localLookupName(value: string | null | undefined) {
+  return String(value ?? "").split(" — ")[0].trim();
+}
+
+function localLookupLocation(value: string | null | undefined) {
+  const str = String(value ?? "").trim();
+  return str.includes(" — ") ? str.slice(str.indexOf(" — ") + 3).trim() : null;
+}
+
+function normalizeLocalLookup(value: string | null | undefined) {
+  return String(value ?? "")
+    .trim()
+    .toLocaleLowerCase("pt-BR")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+}
+
 function sideFromProfile(profile: ProfileRow | undefined, id: string | null, esporteId: number | null, eid: number | null, winner: boolean): ConfrontoSide {
   const realId = id ?? "";
   const name = profile?.nome?.trim() || "Atleta";
@@ -206,15 +223,29 @@ export async function loadPublicConfrontos({
   const localIds = [
     ...new Set(rows.map((p) => p.local_espaco_id).filter((id): id is number => typeof id === "number" && id > 0)),
   ];
+  const localStrNames = [
+    ...new Set(
+      rows
+        .filter((p) => p.local_str && !(p.local_espaco_id && Number(p.local_espaco_id) > 0))
+        .map((p) => localLookupName(p.local_str))
+        .filter((name) => name.length >= 2)
+    ),
+  ];
   const esporteIds = [
     ...new Set(rows.map((p) => p.esporte_id).filter((id): id is number => typeof id === "number" && id > 0)),
   ];
 
-  const [{ data: profiles }, { data: teams }, { data: locais }, { data: eidRows }] = await Promise.all([
+  const [{ data: profiles }, { data: teams }, { data: locais }, { data: localStrLocais }, { data: eidRows }] = await Promise.all([
     profileIds.length ? supabase.from("profiles").select("id, nome, avatar_url").in("id", profileIds) : Promise.resolve({ data: [] }),
     teamIds.length ? supabase.from("times").select("id, nome, escudo, eid_time, tipo").in("id", teamIds) : Promise.resolve({ data: [] }),
     localIds.length
       ? supabase.from("espacos_genericos").select(includeDetails ? "id, nome_publico, localizacao, logo_arquivo, lat, lng" : "id, nome_publico, localizacao, logo_arquivo").in("id", localIds)
+      : Promise.resolve({ data: [] }),
+    localStrNames.length
+      ? supabase
+          .from("espacos_genericos")
+          .select(includeDetails ? "id, nome_publico, localizacao, logo_arquivo, lat, lng" : "id, nome_publico, localizacao, logo_arquivo")
+          .in("nome_publico", localStrNames)
       : Promise.resolve({ data: [] }),
     includeDetails && profileIds.length && esporteIds.length
       ? supabase.from("usuario_eid").select("usuario_id, esporte_id, nota_eid").in("usuario_id", profileIds).in("esporte_id", esporteIds)
@@ -224,6 +255,24 @@ export async function loadPublicConfrontos({
   const profileMap = new Map((profiles as ProfileRow[] | null ?? []).map((p) => [p.id, p]));
   const teamMap = new Map((teams as TeamRow[] | null ?? []).map((t) => [Number(t.id), t]));
   const localMap = new Map((locais as LocalRow[] | null ?? []).map((l) => [Number(l.id), l]));
+  const localStrMap = new Map<string, LocalRow>();
+  const localStrRows = new Map<number, LocalRow>();
+  for (const local of (locais as LocalRow[] | null) ?? []) localStrRows.set(Number(local.id), local);
+  for (const local of (localStrLocais as LocalRow[] | null) ?? []) localStrRows.set(Number(local.id), local);
+  const localStrCandidates = [...localStrRows.values()];
+  for (const row of rows.filter((p) => p.local_str && !(p.local_espaco_id && Number(p.local_espaco_id) > 0))) {
+    const str = String(row.local_str ?? "").trim();
+    if (!str || localStrMap.has(str)) continue;
+    const namePart = normalizeLocalLookup(localLookupName(str));
+    const locPart = normalizeLocalLookup(localLookupLocation(str));
+    const candidates = localStrCandidates.filter((local) => normalizeLocalLookup(local.nome_publico) === namePart);
+    let match = candidates[0];
+    if (candidates.length > 1 && locPart) {
+      const precise = candidates.find((local) => normalizeLocalLookup(local.localizacao).includes(locPart));
+      if (precise) match = precise;
+    }
+    if (match) localStrMap.set(str, match);
+  }
   const eidMap = new Map(
     ((eidRows ?? []) as Array<{ usuario_id: string; esporte_id: number; nota_eid: number | null }>).map((r) => [
       `${r.usuario_id}:${Number(r.esporte_id)}`,
@@ -234,7 +283,8 @@ export async function loadPublicConfrontos({
   const items = rows
     .map((row): PublicConfronto | null => {
       const esporteNome = firstRelation(row.esportes)?.nome?.trim() || "Esporte";
-      const localRow = row.local_espaco_id ? localMap.get(Number(row.local_espaco_id)) : undefined;
+      const localStr = String(row.local_str ?? "").trim();
+      const localRow = (row.local_espaco_id ? localMap.get(Number(row.local_espaco_id)) : undefined) ?? (localStr ? localStrMap.get(localStr) : undefined);
       const lat = Number(localRow?.lat ?? NaN);
       const lng = Number(localRow?.lng ?? NaN);
       const dist = hasCoords && Number.isFinite(lat) && Number.isFinite(lng) ? distanciaKm(myLat, myLng, lat, lng) : null;
@@ -271,7 +321,7 @@ export async function loadPublicConfrontos({
         dataHora: fmtDate(row.data_partida ?? row.data_resultado ?? row.data_registro),
         dataHoraIso: row.data_partida ?? row.data_resultado ?? row.data_registro ?? null,
         local,
-        localHref: row.local_espaco_id ? `/local/${Number(row.local_espaco_id)}` : null,
+        localHref: localRow?.id ? `/local/${Number(localRow.id)}` : null,
         localLogoUrl: localRow?.logo_arquivo?.trim() || null,
         distanciaKm: dist,
         placar,
