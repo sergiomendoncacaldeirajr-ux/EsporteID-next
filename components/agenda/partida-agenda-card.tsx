@@ -326,9 +326,7 @@ export function PartidaAgendaCard({
                 title={formacao ? `Estatísticas EID da formação ${titulo}` : `Estatísticas EID de ${titulo}`}
                 fullscreen
                 topMode="backOnly"
-                className={`relative block appearance-none overflow-hidden border-0 bg-transparent p-0 shadow-none ${
-                  isTime ? "h-14 w-14 rounded-xl md:h-16 md:w-16" : "h-14 w-14 rounded-full md:h-16 md:w-16"
-                }`}
+                className="relative block h-14 w-14 appearance-none border-0 bg-transparent p-0 shadow-none md:h-16 md:w-16"
               >
                 {formacao?.escudoUrl ? (
                   <Image
@@ -346,7 +344,7 @@ export function PartidaAgendaCard({
                     alt=""
                     fill
                     unoptimized
-                    className="h-full w-full rounded-full border-0 !object-cover object-center shadow-none"
+                    className="h-full w-full rounded-full !object-cover object-center"
                   />
                 ) : (
                   <div
@@ -358,8 +356,8 @@ export function PartidaAgendaCard({
                   </div>
                 )}
               </ProfileEditDrawerTrigger>
-              <div className="-mt-0.5">
-                <ProfileEidPerformanceSeal notaEid={notaEid} compact className="scale-150" />
+              <div className="mt-1">
+                <ProfileEidPerformanceSeal notaEid={notaEid} compact />
               </div>
             </div>
           ) : null}
