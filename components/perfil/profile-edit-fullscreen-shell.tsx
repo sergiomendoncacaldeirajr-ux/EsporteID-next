@@ -16,6 +16,7 @@ export function ProfileEditFullscreenShell({ title, subtitle, backHref, children
     <main
       data-eid-no-route-enter
       data-eid-touch-ui
+      data-eid-touch-ui-compact
       className="eid-profile-edit-screen mx-auto w-full max-w-3xl px-3 pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] pt-1.5 sm:px-5 sm:pt-2.5"
     >
       {!hideHeader ? (

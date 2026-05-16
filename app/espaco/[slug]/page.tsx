@@ -205,20 +205,21 @@ export default async function EspacoPublicLandingPage({ params, searchParams }: 
   return (
     <main data-eid-no-route-enter className={`${PROFILE_PUBLIC_MAIN_WIDE_CLASS} eid-progressive-enter space-y-4`}>
 
-      {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section className="overflow-hidden rounded-2xl border border-white/8 shadow-[0_20px_48px_-20px_rgba(15,23,42,0.65)]">
+      {/* ── HERO — mesmo padrão do local genérico ────────────────────── */}
+      <section className="overflow-hidden rounded-2xl border border-eid-primary-500/20 bg-eid-card/95 shadow-[0_20px_48px_-20px_rgba(15,23,42,0.65)]">
 
-        {/* Capa */}
-        <div className="relative h-36 bg-eid-surface/60 sm:h-52">
+        {/* Foto full-bleed com logo + nome sobrepostos */}
+        <div className="relative min-h-[220px] sm:min-h-[260px]">
           {espaco.cover_arquivo ? (
-            <Image src={espaco.cover_arquivo} alt="" fill unoptimized priority className="object-cover opacity-75" />
+            <Image src={espaco.cover_arquivo} alt="" fill unoptimized priority className="object-cover" />
           ) : (
-            <div className="absolute inset-0 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-900)_60%,transparent),color-mix(in_srgb,var(--eid-brand-ink)_80%,transparent))]" />
+            <div className="absolute inset-0 bg-[linear-gradient(140deg,var(--eid-brand-ink),color-mix(in_srgb,var(--eid-primary-500)_22%,var(--eid-brand-ink)),#080d13)]" />
           )}
-          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(11,29,46,0.1)_0%,rgba(11,29,46,0.85)_100%)]" />
+          {/* Gradiente de baixo para cima */}
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,29,46,0.08)_0%,rgba(11,29,46,0.92)_100%)]" />
 
-          {/* Share no canto */}
-          <div className="absolute right-3 top-3">
+          {/* Share button */}
+          <div className="absolute right-3 top-3 flex gap-2">
             <NativeShareButton
               title={`${espaco.nome_publico} no EsporteID`}
               text={descricao ?? "Veja este espaço no EsporteID"}
@@ -226,39 +227,51 @@ export default async function EspacoPublicLandingPage({ params, searchParams }: 
               className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur-sm transition hover:bg-black/50"
             />
           </div>
-        </div>
 
-        {/* Corpo do hero */}
-        <div className="bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_98%,var(--eid-primary-500)_2%),var(--eid-card))] px-4 pb-5 pt-0 sm:px-6">
+          {/* Logo + badge + nome — sobrepostos na foto, alinhados à esquerda/baixo */}
+          <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+            <div className="flex flex-wrap items-end gap-3">
+              {/* Logo */}
+              <div className="relative grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-2xl border border-white/15 bg-eid-surface/90 shadow-xl">
+                {espaco.logo_arquivo ? (
+                  <Image src={espaco.logo_arquivo} alt="" fill unoptimized className="object-contain p-2" />
+                ) : (
+                  <span className="text-2xl font-black text-eid-primary-300">
+                    {(espaco.nome_publico ?? "E").slice(0, 1).toUpperCase()}
+                  </span>
+                )}
+              </div>
 
-          {/* Logo + nome — sobrepõe a capa */}
-          <div className="-mt-10 flex items-end gap-4 sm:-mt-14">
-            <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-2xl border-2 border-eid-card bg-eid-card shadow-[0_8px_24px_-8px_rgba(0,0,0,0.5)] sm:h-24 sm:w-24">
-              {espaco.logo_arquivo ? (
-                <Image src={espaco.logo_arquivo} alt="" width={96} height={96} unoptimized className="max-h-full max-w-full object-contain p-2" />
-              ) : (
-                <span className="text-lg font-black text-eid-primary-400">
-                  {(espaco.nome_publico ?? "E").slice(0, 1).toUpperCase()}
-                </span>
-              )}
-            </div>
-            <div className="min-w-0 pb-1">
-              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-eid-primary-400">Espaço esportivo</p>
-              <h1 className="mt-0.5 text-xl font-black leading-tight tracking-tight text-eid-fg sm:text-2xl">
-                {espaco.nome_publico}
-              </h1>
-              {cidadeUf && (
-                <p className="mt-0.5 flex items-center gap-1 text-xs text-eid-text-secondary">
-                  <MapPin className="h-3 w-3 shrink-0" aria-hidden />
-                  {cidadeUf}
-                </p>
-              )}
+              {/* Nome + localização */}
+              <div className="min-w-0 flex-1">
+                <div className="mb-2 flex flex-wrap gap-1.5">
+                  <span className="rounded-full border border-white/15 bg-black/25 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-white/80 backdrop-blur-sm">
+                    Espaço esportivo
+                  </span>
+                  {isMembroAtivo && (
+                    <span className="rounded-full border border-emerald-500/50 bg-emerald-500/20 px-2.5 py-1 text-[10px] font-black text-emerald-200 backdrop-blur-sm">
+                      Você é membro ✓
+                    </span>
+                  )}
+                </div>
+                <h1 className="text-2xl font-black leading-tight tracking-tight text-white sm:text-3xl">
+                  {espaco.nome_publico}
+                </h1>
+                {(cidadeUf || espaco.localizacao) && (
+                  <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-white/75">
+                    <MapPin className="h-4 w-4 shrink-0 text-eid-primary-200" aria-hidden />
+                    {cidadeUf || espaco.localizacao}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
+        </div>
 
+        {/* Badges + botões de ação */}
+        <div className="space-y-3 px-4 py-4 sm:px-5">
           {/* Badges de status */}
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            {/* Modo de reserva */}
+          <div className="flex flex-wrap items-center gap-2">
             <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-black ${
               isPago
                 ? "border-eid-action-500/35 bg-eid-action-500/12 text-eid-action-300 eid-light:text-eid-action-600"
@@ -267,12 +280,6 @@ export default async function EspacoPublicLandingPage({ params, searchParams }: 
               {isPago ? "Reservas pagas" : "Reservas gratuitas p/ membros"}
             </span>
 
-            {isMembroAtivo && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-black text-emerald-300 eid-light:text-emerald-700">
-                Você é membro ✓
-              </span>
-            )}
-
             {espaco.aceita_socios && !isMembroAtivo && (
               <span className="inline-flex items-center gap-1 rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2.5 py-1 text-[11px] font-bold text-eid-primary-300 eid-light:text-eid-primary-700">
                 <Users className="h-3 w-3" />
@@ -280,14 +287,13 @@ export default async function EspacoPublicLandingPage({ params, searchParams }: 
               </span>
             )}
 
-            {/* Distância via browser geolocation */}
             {temCoords && (
               <EspacoDistanceBadge lat={espacoLat} lng={espacoLng} />
             )}
           </div>
 
           {/* Botões de ação */}
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
             {espaco.whatsapp_contato && (
               <a
                 href={`https://wa.me/${String(espaco.whatsapp_contato).replace(/\D/g, "")}`}

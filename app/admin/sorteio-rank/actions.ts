@@ -53,7 +53,7 @@ export async function adminSimularSorteio(
     return { ok: false, message: "Service role não configurada." };
   }
 
-  const mesRef = new Date(mesRefStr + "-01");
+  const mesRef = new Date(mesRefStr + "-01T12:00:00Z");
   if (Number.isNaN(mesRef.getTime())) {
     return { ok: false, message: "Mês de referência inválido." };
   }

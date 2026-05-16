@@ -30,7 +30,7 @@ export async function buscarCandidatosIndividual(
        pontos_ranking,
        profiles!inner(
          id, nome, genero, lat, lng, localizacao,
-         sorteio_rank_ativo, interesse_rank_match
+         sorteio_rank_ativo, interesse_rank_match, match_maioridade_confirmada
        )`
     )
     .eq("esporte_id", esporteId)
@@ -45,7 +45,8 @@ export async function buscarCandidatosIndividual(
     const prof = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
     if (!prof) continue;
     if (!prof.sorteio_rank_ativo) continue;
-    if (prof.interesse_rank_match === false) continue; // excluir quem desativou interesse
+    if (!prof.match_maioridade_confirmada) continue;
+    if (prof.interesse_rank_match === false) continue;
 
     const lat = Number(prof.lat);
     const lng = Number(prof.lng);
@@ -91,7 +92,7 @@ export async function buscarCandidatosFormacao(
     .select(
       `id, nome, tipo, lat, lng, localizacao, genero,
        pontos_ranking, eid_time, interesse_rank_match, criador_id,
-       profiles!times_criador_id_fkey(id, sorteio_rank_ativo)`
+       profiles!times_criador_id_fkey(id, sorteio_rank_ativo, match_maioridade_confirmada)`
     )
     .eq("esporte_id", esporteId)
     .ilike("tipo", tipo)
@@ -114,7 +115,7 @@ export async function buscarCandidatosFormacao(
     const liderProf = Array.isArray(row.profiles)
       ? row.profiles[0]
       : row.profiles;
-    if (liderProf && liderProf.sorteio_rank_ativo === false) continue;
+    if (liderProf && (liderProf.sorteio_rank_ativo === false || liderProf.match_maioridade_confirmada === false)) continue;
 
     const genero =
       String(row.genero ?? "").trim().toLowerCase() || "misto";
@@ -250,7 +251,7 @@ export async function salvarSorteioSimulacao(
   args: SalvarSorteioArgs
 ): Promise<number> {
   const mesRefStr = toIsoDate(
-    new Date(args.mesRef.getFullYear(), args.mesRef.getMonth(), 1)
+    new Date(Date.UTC(args.mesRef.getUTCFullYear(), args.mesRef.getUTCMonth(), 1))
   );
   const dataLimite = toIsoDate(ultimoDiaDoMes(args.mesRef));
 

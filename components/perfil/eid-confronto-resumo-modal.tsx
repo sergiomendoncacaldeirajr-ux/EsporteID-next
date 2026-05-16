@@ -382,6 +382,7 @@ function drawShareSetsTable(
   const colW = (width - nameW) / cols;
   const isLight = text === colors.ink;
 
+  ctx.beginPath();
   ctx.fillStyle = isLight ? "rgba(11,29,46,0.10)" : "rgba(255,255,255,0.08)";
   ctx.roundRect(x, y, width, tableH, 22 * scale);
   ctx.fill();
@@ -389,6 +390,7 @@ function drawShareSetsTable(
   ctx.lineWidth = 1.5 * scale;
   ctx.stroke();
 
+  ctx.beginPath();
   ctx.fillStyle = isLight ? "rgba(37, 99, 235, 0.14)" : "rgba(37, 99, 235, 0.18)";
   ctx.roundRect(x, y, width, headH, 22 * scale);
   ctx.fill();
@@ -449,6 +451,7 @@ function drawShareGoalsTvScore(
   const penB = Number(goals?.penaltiesB ?? 0) || 0;
   const hasPen = penA > 0 || penB > 0;
 
+  ctx.beginPath();
   ctx.fillStyle = "rgba(6, 37, 22, 0.78)";
   ctx.roundRect(x, y, width, 136 * scale, 28 * scale);
   ctx.fill();
@@ -504,9 +507,11 @@ function drawShareSlimResultCard(
   const text = overlayTextColor(payload.cardVariant, colors);
   const muted = payload.cardVariant === "light" ? "rgba(11, 29, 46, 0.70)" : colors.muted;
 
+  ctx.beginPath();
   ctx.fillStyle = "rgba(5, 14, 25, 0.36)";
   ctx.roundRect(x + 12 * scale, y + 16 * scale, cardWidth, cardHeight, 40 * scale);
   ctx.fill();
+  ctx.beginPath();
   ctx.fillStyle =
     payload.cardVariant === "light"
       ? "rgba(226, 239, 255, 0.82)"
@@ -553,6 +558,7 @@ function drawShareSlimResultCard(
   const scoreX = x + 30 * scale;
   const scoreW = cardWidth - 60 * scale;
   const scoreH = isSets ? 148 * scale : 92 * scale;
+  ctx.beginPath();
   ctx.fillStyle = payload.cardVariant === "light" ? "rgba(11, 29, 46, 0.12)" : "rgba(8, 15, 24, 0.86)";
   ctx.roundRect(scoreX, scoreTop, scoreW, scoreH, 16 * scale);
   ctx.fill();
@@ -565,6 +571,7 @@ function drawShareSlimResultCard(
     const headerH = 38 * scale;
     const rowH = 55 * scale;
     const colW = (scoreW - nameW) / Math.max(1, setRows.length);
+    ctx.beginPath();
     ctx.fillStyle = payload.cardVariant === "light" ? "rgba(37,99,235,0.10)" : "rgba(255,255,255,0.035)";
     ctx.roundRect(scoreX, scoreTop, scoreW, headerH, 16 * scale);
     ctx.fill();
@@ -718,9 +725,11 @@ function drawShareResultCard(
   const text = overlayTextColor(payload.cardVariant, colors);
   const muted = payload.cardVariant === "light" ? "rgba(11, 29, 46, 0.72)" : colors.muted;
 
+  ctx.beginPath();
   ctx.fillStyle = "rgba(5, 14, 25, 0.42)";
   ctx.roundRect(x + 16, y + 20, cardWidth, cardHeight, 54);
   ctx.fill();
+  ctx.beginPath();
   ctx.fillStyle =
     payload.cardVariant === "light"
       ? "rgba(226, 239, 255, 0.80)"
@@ -782,6 +791,7 @@ function drawShareResultCard(
     }
   }
 
+  ctx.beginPath();
   ctx.fillStyle = payload.cardVariant === "light" ? "rgba(37, 99, 235, 0.12)" : "rgba(37, 99, 235, 0.20)";
   ctx.roundRect(center - 225 * scale, y + (payload.showBrand ? 126 : 52) * scale, 450 * scale, 52 * scale, 26 * scale);
   ctx.fill();
@@ -813,6 +823,7 @@ function drawShareResultCard(
   } else if (isGoals) {
     drawShareGoalsTvScore(ctx, payload, center - 300 * scale, scoreY - 70 * scale, 600 * scale, scale, colors, text, muted);
   } else {
+    ctx.beginPath();
     ctx.fillStyle = payload.cardVariant === "light" ? "rgba(249, 115, 22, 0.11)" : "rgba(249, 115, 22, 0.14)";
     ctx.roundRect(center - 230 * scale, scoreY - 50 * scale, 460 * scale, 122 * scale, 34 * scale);
     ctx.fill();

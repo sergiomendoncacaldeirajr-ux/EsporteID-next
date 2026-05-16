@@ -306,9 +306,9 @@ export function resolverModoGeneroEdicao(
   return temMisto ? "misto" : "mesmo_genero";
 }
 
-/** Retorna o último dia do mês de uma data de referência. */
+/** Retorna o último dia do mês de uma data de referência (sempre em UTC). */
 export function ultimoDiaDoMes(mesRef: Date): Date {
-  return new Date(mesRef.getFullYear(), mesRef.getMonth() + 1, 0);
+  return new Date(Date.UTC(mesRef.getUTCFullYear(), mesRef.getUTCMonth() + 1, 0));
 }
 
 /** Formata data ISO para "YYYY-MM-DD". */

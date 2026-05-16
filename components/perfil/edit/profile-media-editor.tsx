@@ -34,21 +34,19 @@ export function ProfileMediaEditor({ avatarUrl, coverUrl }: Props) {
       <section className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/65 p-3">
         <p className="text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg">Foto de perfil</p>
         <div className="mt-2 flex items-center gap-3">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="" className="h-16 w-16 rounded-full border border-[color:var(--eid-border-subtle)] object-cover" />
-          ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded-full border border-dashed border-[color:var(--eid-border-subtle)] text-[9px] text-eid-text-secondary">
-              Sem foto
-            </div>
-          )}
-          <div className="flex min-w-0 flex-1 flex-col gap-2">
-            <div className="relative inline-flex h-8 w-8">
-              <ProfileAvatarControl hasAvatar={Boolean(avatarUrl)} />
-            </div>
-            <p className="text-[10px] text-eid-text-secondary">
-              Toque no icone da camera para trocar, ajustar ou remover sua foto.
-            </p>
+          <div className="relative h-16 w-16 shrink-0">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" className="h-16 w-16 rounded-full border border-[color:var(--eid-border-subtle)] object-cover" />
+            ) : (
+              <div className="flex h-16 w-16 items-center justify-center rounded-full border border-dashed border-[color:var(--eid-border-subtle)] text-[9px] text-eid-text-secondary">
+                Sem foto
+              </div>
+            )}
+            <ProfileAvatarControl hasAvatar={Boolean(avatarUrl)} />
           </div>
+          <p className="text-[10px] text-eid-text-secondary">
+            Toque no ícone da câmera para trocar, ajustar ou remover sua foto.
+          </p>
         </div>
       </section>
     </div>
