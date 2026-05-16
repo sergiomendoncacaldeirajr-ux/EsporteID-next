@@ -59,7 +59,6 @@ export async function DashboardStreamLocais({
         (sportMatch ? 4 : 0) + (aceitaSocios ? 2 : 0) + (mensalidadePlataforma ? 2 : 0) + (reservaPaga ? 2 : 0);
       return { ...loc, sportMatch, aceitaSocios, mensalidadePlataforma, reservaPaga, score, dist };
     })
-    .filter((loc) => loc.score > 0)
     .filter((loc) => {
       if (!q) return true;
       return (

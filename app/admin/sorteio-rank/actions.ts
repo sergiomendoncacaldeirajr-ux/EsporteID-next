@@ -393,6 +393,22 @@ export async function processarWosAutomaticos(): Promise<{
   return { processados, erros };
 }
 
+// ── Admin: reativar participação de um usuário ───────────────
+export async function adminReativarParticipante(formData: FormData) {
+  await assertAdmin();
+  const db = createServiceRoleClient();
+
+  const usuarioId = String(formData.get("usuario_id") ?? "").trim();
+  if (!usuarioId) return;
+
+  await db
+    .from("profiles")
+    .update({ sorteio_rank_ativo: true })
+    .eq("id", usuarioId);
+
+  revalidatePath("/admin/sorteio-rank");
+}
+
 // ── Toggle sorteio_rank_ativo (usuário) ──────────────────────
 export async function toggleSorteioRankAtivo(formData: FormData) {
   const supabase = await createClient();

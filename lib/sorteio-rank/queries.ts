@@ -401,3 +401,119 @@ export async function listarConfrontosEdicao(
 
   return data ?? [];
 }
+
+export type ConfrontoComPerfis = {
+  id: number;
+  edicao_id: number;
+  lado1_usuario_id: string | null;
+  lado1_time_id: number | null;
+  lado2_usuario_id: string | null;
+  lado2_time_id: number | null;
+  partida_id: number | null;
+  data_limite: string;
+  status: string;
+  modo_genero: string;
+  distancia_km: number | null;
+  delta_rank: number | null;
+  delta_eid: number | null;
+  lado1_tentou_agendar: boolean;
+  lado2_tentou_agendar: boolean;
+  lado1_tentou_em: string | null;
+  lado2_tentou_em: string | null;
+  lado1_nome: string;
+  lado1_avatar: string | null;
+  lado2_nome: string;
+  lado2_avatar: string | null;
+};
+
+// ── Opt-outs (sorteio_rank_ativo = false) ────────────────────
+
+export type OptOutPerfil = {
+  id: string;
+  nome: string;
+  avatar_url: string | null;
+  localizacao: string | null;
+  email: string | null;
+};
+
+export async function buscarOptOuts(
+  supabase: SupabaseClient,
+  limite = 200
+): Promise<OptOutPerfil[]> {
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, nome, avatar_url, localizacao, email")
+    .eq("sorteio_rank_ativo", false)
+    .order("nome")
+    .limit(limite);
+
+  return (data ?? []).map((p) => ({
+    id: String(p.id),
+    nome: String(p.nome ?? "Atleta"),
+    avatar_url: p.avatar_url ?? null,
+    localizacao: p.localizacao ?? null,
+    email: p.email ?? null,
+  }));
+}
+
+export async function listarConfrontosEdicaoComPerfis(
+  supabase: SupabaseClient,
+  edicaoId: number,
+  modalidade: string
+): Promise<ConfrontoComPerfis[]> {
+  const confrontos = await listarConfrontosEdicao(supabase, edicaoId);
+  if (confrontos.length === 0) return [];
+
+  // Collect unique user + time IDs
+  const userIds = new Set<string>();
+  const timeIds = new Set<number>();
+  for (const c of confrontos) {
+    if (c.lado1_usuario_id) userIds.add(c.lado1_usuario_id);
+    if (c.lado2_usuario_id) userIds.add(c.lado2_usuario_id);
+    if (c.lado1_time_id) timeIds.add(c.lado1_time_id);
+    if (c.lado2_time_id) timeIds.add(c.lado2_time_id);
+  }
+
+  const profileMap = new Map<string, { nome: string; avatar_url: string | null }>();
+  const timeMap = new Map<number, { nome: string; escudo: string | null }>();
+
+  const [profilesRes, timesRes] = await Promise.all([
+    userIds.size > 0
+      ? supabase.from("profiles").select("id, nome, avatar_url").in("id", [...userIds])
+      : Promise.resolve({ data: [] }),
+    timeIds.size > 0
+      ? supabase.from("times").select("id, nome, escudo").in("id", [...timeIds])
+      : Promise.resolve({ data: [] }),
+  ]);
+
+  for (const p of (profilesRes.data ?? []) as { id: string; nome: string | null; avatar_url: string | null }[]) {
+    profileMap.set(p.id, { nome: p.nome ?? "Atleta", avatar_url: p.avatar_url });
+  }
+  for (const t of (timesRes.data ?? []) as { id: number; nome: string | null; escudo: string | null }[]) {
+    timeMap.set(Number(t.id), { nome: t.nome ?? "Time", escudo: t.escudo });
+  }
+
+  function resolverLado(usuarioId: string | null, timeId: number | null) {
+    if (usuarioId) {
+      const p = profileMap.get(usuarioId);
+      return { nome: p?.nome ?? `Atleta ${usuarioId.slice(0, 6)}`, avatar: p?.avatar_url ?? null };
+    }
+    if (timeId) {
+      const t = timeMap.get(timeId);
+      return { nome: t?.nome ?? `Time #${timeId}`, avatar: t?.escudo ?? null };
+    }
+    return { nome: "—", avatar: null };
+  }
+
+  return confrontos.map((c) => {
+    const l1 = resolverLado(c.lado1_usuario_id, c.lado1_time_id);
+    const l2 = resolverLado(c.lado2_usuario_id, c.lado2_time_id);
+    return {
+      ...c,
+      lado1_nome: l1.nome,
+      lado1_avatar: l1.avatar,
+      lado2_nome: l2.nome,
+      lado2_avatar: l2.avatar,
+    };
+  });
+}

@@ -1,5 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { MapPin, Navigation } from "lucide-react";
 import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-local-overlay-trigger";
 import { LocalAutocompleteInput } from "@/components/locais/local-autocomplete-input";
 import {
@@ -26,13 +28,16 @@ type LocalCard = {
   slug: string | null;
   nome_publico: string | null;
   localizacao: string | null;
+  cidade: string | null;
+  uf: string | null;
   status: string | null;
   ownership_status: string | null;
   logo_arquivo: string | null;
+  cover_arquivo: string | null;
   aceita_reserva: boolean | null;
+  aceita_socios: boolean | null;
+  modo_reserva: string | null;
   tipo_quadra: string | null;
-  cidade: string | null;
-  uf: string | null;
   lat: string | number | null;
   lng: string | number | null;
   venue_config_json: unknown;
@@ -40,61 +45,6 @@ type LocalCard = {
 
 function localHref(l: LocalCard) {
   return l.slug ? `/espaco/${l.slug}` : `/local/${l.id}?from=/locais`;
-}
-
-function LocalRow({ l, dist }: { l: LocalCard; dist?: number }) {
-  const verified = l.ownership_status === "verificado";
-  return (
-    <Link
-      href={localHref(l)}
-      className="group flex items-center gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2.5 transition hover:border-eid-primary-500/35 hover:bg-[color:color-mix(in_srgb,var(--eid-card)_80%,var(--eid-primary-500)_6%)]"
-    >
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/70">
-        {l.logo_arquivo ? (
-          <img
-            src={l.logo_arquivo}
-            alt=""
-            className="max-h-[80%] max-w-[80%] object-contain transition duration-200 group-hover:scale-105"
-          />
-        ) : (
-          <span className="text-[10px] font-black text-eid-primary-500/35">EID</span>
-        )}
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-bold text-eid-fg transition group-hover:text-eid-primary-300">
-          {l.nome_publico}
-        </p>
-        <p className="truncate text-[11px] leading-snug text-eid-text-secondary">
-          {l.localizacao ?? "Endereço não informado"}
-        </p>
-      </div>
-
-      <div className="flex shrink-0 flex-col items-end gap-1">
-        {Number.isFinite(dist) && (dist ?? 0) < 9000 ? (
-          <span className="text-[9px] font-bold tabular-nums text-eid-text-secondary">
-            {Number(dist).toFixed(1).replace(".", ",")} km
-          </span>
-        ) : null}
-        <div className="flex gap-1">
-          {l.aceita_reserva ? (
-            <span className="rounded-full border border-emerald-500/35 bg-emerald-500/10 px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wide text-emerald-300">
-              Reserva
-            </span>
-          ) : null}
-          <span
-            className={`rounded-full border px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wide ${
-              verified
-                ? "border-eid-action-500/30 bg-eid-action-500/10 text-eid-action-400"
-                : "border-[color:var(--eid-border-subtle)] bg-eid-surface/50 text-eid-text-secondary"
-            }`}
-          >
-            {verified ? "Verificado" : "Genérico"}
-          </span>
-        </div>
-      </div>
-    </Link>
-  );
 }
 
 function parseCoord(value: unknown) {
@@ -125,11 +75,116 @@ function coordFromLocal(l: LocalCard, key: "lat" | "lng") {
   return Number.isFinite(fallback) ? fallback : NaN;
 }
 
+// ─── Card Component ──────────────────────────────────────────────────────────
+
+function EspacoCard({ l, dist }: { l: LocalCard; dist?: number }) {
+  const verified = l.ownership_status === "verificado";
+  const isPago = String(l.modo_reserva ?? "").toLowerCase() === "paga";
+  const isGratuito = String(l.modo_reserva ?? "").toLowerCase() === "gratuita";
+  const temDist = Number.isFinite(dist) && (dist ?? 9999) < 9000;
+  const distLabel = temDist
+    ? (dist! < 1
+        ? `${Math.round(dist! * 1000)} m`
+        : `${dist!.toFixed(1).replace(".", ",")} km`)
+    : null;
+  const cidadeUf = [l.cidade, l.uf].filter(Boolean).join(" - ") || l.localizacao || null;
+
+  return (
+    <Link
+      href={localHref(l)}
+      className="group flex flex-col overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-sm transition hover:border-eid-primary-500/40 hover:shadow-[0_4px_20px_-8px_rgba(37,99,235,0.18)]"
+    >
+      {/* Photo header */}
+      <div className="relative h-28 overflow-hidden bg-gradient-to-br from-eid-primary-900/30 to-eid-brand-ink">
+        {l.cover_arquivo ? (
+          <Image
+            src={l.cover_arquivo}
+            alt=""
+            fill
+            unoptimized
+            className="object-cover opacity-80 transition duration-300 group-hover:scale-105"
+          />
+        ) : l.logo_arquivo ? (
+          <Image
+            src={l.logo_arquivo}
+            alt=""
+            fill
+            unoptimized
+            className="object-contain p-4 opacity-30"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <MapPin className="h-8 w-8 text-eid-primary-500/30" />
+          </div>
+        )}
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-eid-brand-ink/70 via-transparent to-transparent" />
+
+        {/* Logo circle */}
+        {l.logo_arquivo && (
+          <div className="absolute bottom-3 left-3 h-10 w-10 overflow-hidden rounded-xl border-2 border-white/15 bg-eid-card shadow-lg">
+            <Image src={l.logo_arquivo} alt="" fill unoptimized className="object-cover" />
+          </div>
+        )}
+
+        {/* Distance badge */}
+        {distLabel && (
+          <div className="absolute right-2.5 top-2.5 flex items-center gap-1 rounded-full border border-eid-action-500/30 bg-eid-brand-ink/70 px-2 py-0.5 backdrop-blur-sm">
+            <Navigation className="h-2.5 w-2.5 text-eid-action-300" />
+            <span className="text-[9px] font-black tabular-nums text-eid-action-300">{distLabel}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Card body */}
+      <div className="flex flex-1 flex-col gap-1.5 p-3">
+        <p className="line-clamp-1 text-sm font-black text-eid-fg transition group-hover:text-eid-primary-200">
+          {l.nome_publico ?? "Local sem nome"}
+        </p>
+        {cidadeUf && (
+          <p className="line-clamp-1 text-[11px] text-eid-text-secondary">{cidadeUf}</p>
+        )}
+
+        {/* Badges */}
+        <div className="mt-auto flex flex-wrap gap-1 pt-1">
+          {isPago && (
+            <span className="rounded-full border border-eid-action-500/30 bg-eid-action-500/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-eid-action-300">
+              Reservas pagas
+            </span>
+          )}
+          {isGratuito && (
+            <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-emerald-300">
+              Reservas grátis
+            </span>
+          )}
+          {l.aceita_socios && (
+            <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-eid-primary-300">
+              Aceitando sócios
+            </span>
+          )}
+          {verified && (
+            <span className="rounded-full border border-eid-action-500/25 bg-eid-action-500/8 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-eid-action-400">
+              Verificado
+            </span>
+          )}
+          {!verified && !isPago && !isGratuito && !l.aceita_socios && (
+            <span className="rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-1.5 py-0.5 text-[9px] font-bold text-eid-text-secondary">
+              Genérico
+            </span>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// ─── Page ────────────────────────────────────────────────────────────────────
+
 export default async function LocaisPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const q = (sp.q ?? "").trim().toLowerCase();
   const page = Math.max(1, Number(sp.page ?? 1) || 1);
-  const pageSize = 15;
+  const pageSize = 18;
   const supabase = await createClient();
   const {
     data: { user },
@@ -146,7 +201,9 @@ export default async function LocaisPage({ searchParams }: Props) {
 
   const { data: locaisRaw } = await supabase
     .from("espacos_genericos")
-    .select("id, slug, nome_publico, localizacao, status, ownership_status, logo_arquivo, aceita_reserva, tipo_quadra, cidade, uf, lat, lng, venue_config_json")
+    .select(
+      "id, slug, nome_publico, localizacao, cidade, uf, status, ownership_status, logo_arquivo, cover_arquivo, aceita_reserva, aceita_socios, modo_reserva, tipo_quadra, lat, lng, venue_config_json"
+    )
     .eq("ativo_listagem", true)
     .eq("admin_suspenso", false)
     .order("id", { ascending: false });
@@ -168,7 +225,8 @@ export default async function LocaisPage({ searchParams }: Props) {
     if (!q) return true;
     return (
       String(l.nome_publico ?? "").toLowerCase().includes(q) ||
-      String(l.localizacao ?? "").toLowerCase().includes(q)
+      String(l.localizacao ?? "").toLowerCase().includes(q) ||
+      String(l.cidade ?? "").toLowerCase().includes(q)
     );
   });
   locaisFiltrados.sort((a, b) => a.dist - b.dist);
@@ -211,7 +269,7 @@ export default async function LocaisPage({ searchParams }: Props) {
   const seusLocais = locaisComDist
     .filter(({ l }) => seusLocaisIds.has(l.id))
     .sort((a, b) => a.dist - b.dist)
-    .slice(0, 12);
+    .slice(0, 6);
 
   const from = (page - 1) * pageSize;
   const to = from + pageSize;
@@ -251,7 +309,7 @@ export default async function LocaisPage({ searchParams }: Props) {
             <LocalAutocompleteInput
               name="q"
               defaultValue={sp.q ?? ""}
-              placeholder="Buscar por nome ou endereço…"
+              placeholder="Buscar por nome, cidade ou endereço…"
               minChars={3}
               className="eid-input-dark h-11 w-full flex-1 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-4 text-sm text-eid-fg placeholder:text-eid-text-secondary/80"
             />
@@ -272,24 +330,24 @@ export default async function LocaisPage({ searchParams }: Props) {
           </form>
         </div>
 
-        {/* Seus locais (only when non-empty and no search active) */}
+        {/* Seus locais */}
         {seusLocais.length > 0 && !q ? (
-          <div className="mb-6 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(160deg,color-mix(in_srgb,var(--eid-card)_96%,var(--eid-primary-700)_4%),color-mix(in_srgb,var(--eid-surface)_98%,transparent))] shadow-[0_8px_28px_-16px_rgba(15,23,42,0.4)]">
-            <div className="flex items-center justify-between border-b border-[rgba(255,255,255,0.045)] px-4 py-2.5">
+          <section className="mb-6">
+            <div className="mb-3 flex items-center justify-between">
               <h2 className="text-[10px] font-black uppercase tracking-[0.18em] text-eid-primary-400">Seus locais</h2>
               <span className="text-[9px] font-bold text-eid-text-secondary">{seusLocais.length} vínculo(s)</span>
             </div>
-            <div className="flex flex-col gap-1.5 p-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {seusLocais.map(({ l, dist }) => (
-                <LocalRow key={l.id} l={l} dist={dist} />
+                <EspacoCard key={l.id} l={l} dist={dist} />
               ))}
             </div>
-          </div>
+          </section>
         ) : null}
 
         {/* All locals */}
-        <div className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(160deg,color-mix(in_srgb,var(--eid-card)_96%,var(--eid-primary-700)_4%),color-mix(in_srgb,var(--eid-surface)_98%,transparent))] shadow-[0_8px_28px_-16px_rgba(15,23,42,0.4)]">
-          <div className="flex items-center justify-between border-b border-[rgba(255,255,255,0.045)] px-4 py-2.5">
+        <section>
+          <div className="mb-3 flex items-center justify-between">
             <h2 className="text-[10px] font-black uppercase tracking-[0.18em] text-eid-primary-400">
               {q ? "Resultados" : "Todos os locais"}
             </h2>
@@ -300,27 +358,30 @@ export default async function LocaisPage({ searchParams }: Props) {
           </div>
 
           {listaPaginada.length ? (
-            <div className="flex flex-col gap-1.5 p-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {listaPaginada.map(({ l, dist }) => (
-                <LocalRow key={l.id} l={l} dist={dist} />
+                <EspacoCard key={l.id} l={l} dist={dist} />
               ))}
             </div>
           ) : (
-            <div className="px-4 py-10 text-center text-sm text-eid-text-secondary">
-              Nenhum local encontrado{q ? ` para "${sp.q}"` : ""}.
+            <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 px-4 py-10 text-center">
+              <p className="text-sm font-bold text-eid-fg">Nenhum local encontrado{q ? ` para "${sp.q}"` : ""}.</p>
+              <p className="mt-1 text-xs text-eid-text-secondary">
+                Tente outro nome ou cadastre um espaço.
+              </p>
             </div>
           )}
-        </div>
+        </section>
 
         {/* Pagination */}
         {(hasPrev || hasNext) ? (
-          <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2.5">
+          <div className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2.5">
             <Link
               href={`/locais?${queryBase}&page=${page - 1}`}
               aria-disabled={!hasPrev}
               className={
                 hasPrev
-                  ? "inline-flex h-9 items-center justify-center rounded-lg border border-[color:color-mix(in_srgb,var(--eid-primary-500)_22%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_8%,transparent)] px-3 text-[10px] font-bold uppercase tracking-wide text-eid-fg transition hover:bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,transparent)]"
+                  ? "inline-flex h-9 items-center justify-center rounded-lg border border-eid-primary-500/22 bg-eid-primary-500/8 px-3 text-[10px] font-bold uppercase tracking-wide text-eid-fg transition hover:bg-eid-primary-500/14"
                   : "pointer-events-none inline-flex h-9 items-center justify-center rounded-lg border border-[color:var(--eid-border-subtle)] px-3 text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary opacity-40"
               }
             >
@@ -334,7 +395,7 @@ export default async function LocaisPage({ searchParams }: Props) {
               aria-disabled={!hasNext}
               className={
                 hasNext
-                  ? "inline-flex h-9 items-center justify-center rounded-lg border border-[color:color-mix(in_srgb,var(--eid-primary-500)_22%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_8%,transparent)] px-3 text-[10px] font-bold uppercase tracking-wide text-eid-fg transition hover:bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,transparent)]"
+                  ? "inline-flex h-9 items-center justify-center rounded-lg border border-eid-primary-500/22 bg-eid-primary-500/8 px-3 text-[10px] font-bold uppercase tracking-wide text-eid-fg transition hover:bg-eid-primary-500/14"
                   : "pointer-events-none inline-flex h-9 items-center justify-center rounded-lg border border-[color:var(--eid-border-subtle)] px-3 text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary opacity-40"
               }
             >
@@ -342,6 +403,19 @@ export default async function LocaisPage({ searchParams }: Props) {
             </Link>
           </div>
         ) : null}
+
+        {/* CTA cadastrar */}
+        <div className="mt-6 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/70 p-4 text-center">
+          <p className="text-[11px] text-eid-text-secondary">
+            Não encontrou seu espaço? Cadastre-o e faça parte da rede EsporteID.
+          </p>
+          <CadastrarLocalOverlayTrigger
+            href="/locais/cadastrar?return_to=/locais"
+            className="eid-btn-primary mt-3 inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl px-5 text-[11px] font-extrabold uppercase tracking-wide"
+          >
+            + Cadastrar local genérico
+          </CadastrarLocalOverlayTrigger>
+        </div>
 
       </main>
     </div>

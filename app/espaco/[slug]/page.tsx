@@ -106,7 +106,7 @@ export default async function EspacoPublicLandingPage({ params, searchParams }: 
     { data: torneios },
   ] = await Promise.all([
     supabase.from("espaco_unidades")
-      .select("id, nome, tipo_unidade, superficie, coberta, indoor, iluminacao, status_operacao, esporte_id")
+      .select("id, nome, tipo_unidade, logo_arquivo, superficie, coberta, indoor, iluminacao, status_operacao, esporte_id")
       .eq("espaco_generico_id", espaco.id).eq("ativo", true).order("ordem", { ascending: true }),
     supabase.from("espaco_planos_socio")
       .select("id, nome, descricao, mensalidade_centavos, reservas_gratuitas_semana, percentual_desconto_avulso, beneficios_json")
@@ -149,7 +149,10 @@ export default async function EspacoPublicLandingPage({ params, searchParams }: 
 
   // Shape data
   const unidades: UnidadePublica[] = (unidadesRaw ?? []).map((u) => ({
-    id: u.id, nome: u.nome, tipo_unidade: u.tipo_unidade,
+    id: u.id,
+    nome: u.nome,
+    tipo_unidade: u.tipo_unidade,
+    logo_arquivo: (u as { logo_arquivo?: string | null }).logo_arquivo ?? null,
   }));
   const horarios: HorarioSemanal[] = (horariosRaw ?? []).map((h) => ({
     id: h.id, espaco_unidade_id: h.espaco_unidade_id,

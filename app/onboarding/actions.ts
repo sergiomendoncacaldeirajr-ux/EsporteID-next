@@ -33,6 +33,7 @@ import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { createClient } from "@/lib/supabase/server";
 import { normalizePtBrNameCase, normalizePtBrNameCaseLoose } from "@/lib/text/pt-br-name-case";
 import { LEGAL_VERSIONS } from "@/lib/legal/versions";
+import { geocodeAddressServer } from "@/lib/geocode/server-geocode";
 
 const ESTRUTURAS_VALIDAS = ["quadra", "campo", "piscina", "sala", "estadio"] as const;
 const RESERVA_MODELOS = ["livre", "socios", "pago", "misto"] as const;
@@ -730,8 +731,8 @@ export async function salvarExtrasOnboarding(
       const localCidade = normalizePtBrNameCase(String(formData.get("org_novo_local_cidade") ?? ""));
       const localEstado = String(formData.get("org_novo_local_estado") ?? "").trim();
       const localCep = String(formData.get("org_novo_local_cep") ?? "").trim();
-      const localLat = String(formData.get("org_novo_local_lat") ?? "").trim();
-      const localLng = String(formData.get("org_novo_local_lng") ?? "").trim();
+      let localLat = String(formData.get("org_novo_local_lat") ?? "").trim();
+      let localLng = String(formData.get("org_novo_local_lng") ?? "").trim();
       const localLogo = formData.get("org_novo_local_logo");
       const localDoc = formData.get("org_novo_local_documento");
       if (
@@ -742,6 +743,22 @@ export async function salvarExtrasOnboarding(
         localEstado.length < 2
       ) {
         return { ok: false, message: "Preencha os dados mínimos do novo local (nome, endereço, número, cidade e estado)." };
+      }
+
+      // Fallback server-side: geocodifica se o cliente não preencheu lat/lng
+      if ((!localLat || !localLng) && localEndereco && localCidade && localEstado) {
+        const geocoded = await geocodeAddressServer({
+          endereco: localEndereco,
+          numero: localNumero,
+          bairro: localBairro,
+          cidade: localCidade,
+          estado: localEstado,
+          cep: localCep,
+        });
+        if (geocoded) {
+          localLat = String(geocoded.lat);
+          localLng = String(geocoded.lng);
+        }
       }
 
       const dupNomeGlobal = await findLocalDuplicadoByNome(
@@ -928,14 +945,30 @@ export async function salvarExtrasOnboarding(
     const estado = String(formData.get("espaco_estado") ?? "").trim().toUpperCase();
     const cep = String(formData.get("espaco_cep") ?? "").trim();
     const complemento = normalizePtBrNameCaseLoose(String(formData.get("espaco_complemento") ?? ""));
-    const lat = String(formData.get("espaco_lat") ?? "").trim();
-    const lng = String(formData.get("espaco_lng") ?? "").trim();
+    let lat = String(formData.get("espaco_lat") ?? "").trim();
+    let lng = String(formData.get("espaco_lng") ?? "").trim();
     const docMensagem = String(formData.get("espaco_doc_msg") ?? "").trim();
     const documento = formData.get("espaco_documento");
 
     if (espacoNome.length < 3) return { ok: false, message: "Informe o nome do espaço." };
     if (cidade.length < 2 || estado.length < 2 || endereco.length < 3 || numero.length < 1) {
       return { ok: false, message: "Preencha endereço completo do espaço (rua, cidade e estado)." };
+    }
+
+    // Fallback server-side: se o cliente não geocodificou, tenta via Nominatim
+    if ((!lat || !lng) && endereco && cidade && estado) {
+      const geocoded = await geocodeAddressServer({
+        endereco,
+        numero,
+        bairro,
+        cidade,
+        estado,
+        cep,
+      });
+      if (geocoded) {
+        lat = String(geocoded.lat);
+        lng = String(geocoded.lng);
+      }
     }
 
     const localizacao = [cidade, estado].filter(Boolean).join(" - ");
