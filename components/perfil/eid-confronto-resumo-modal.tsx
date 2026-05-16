@@ -70,6 +70,8 @@ type Props = {
   ladoBTimeId?: number | null;
   /** `formacao`: escudo time/dupla com cantos mais quadrados, alinhado ao restante do app. */
   avatarVariant?: "circle" | "formacao";
+  /** Quando true, abre o painel de compartilhamento imediatamente ao abrir o modal. */
+  defaultSharePanelOpen?: boolean;
   /**
    * Quando true, inverte set.a ↔ set.b no placar por sets.
    * Necessário quando o "self" (ladoA) é jogador2 na partida — os dados brutos
@@ -78,7 +80,7 @@ type Props = {
   swapSets?: boolean;
 };
 
-type ResultadoSharePayload = {
+export type ResultadoSharePayload = {
   ladoA: string;
   ladoB: string;
   placar: string;
@@ -602,8 +604,15 @@ function drawShareSlimResultCard(
     });
   } else {
     ctx.fillStyle = text;
-    ctx.font = `900 ${48 * scale}px Arial, sans-serif`;
-    ctx.fillText(score.headline.replace(/\s*x\s*/i, " × "), center, scoreTop + scoreH / 2 + 2 * scale);
+    const slimHeadline = score.headline.replace(/\s*x\s*/i, " × ");
+    let slimFontSz = 48 * scale;
+    const slimMaxW = scoreW - 40 * scale;
+    ctx.font = `900 ${slimFontSz}px Arial, sans-serif`;
+    while (ctx.measureText(slimHeadline).width > slimMaxW && slimFontSz > 18 * scale) {
+      slimFontSz -= 2;
+      ctx.font = `900 ${slimFontSz}px Arial, sans-serif`;
+    }
+    ctx.fillText(slimHeadline, center, scoreTop + scoreH / 2 + 2 * scale);
   }
 }
 
@@ -814,7 +823,13 @@ function drawShareResultCard(
     ctx.font = `900 ${16 * scale}px Arial, sans-serif`;
     ctx.fillText("PLACAR FINAL", center, scoreY - 24 * scale);
     ctx.fillStyle = text;
-    ctx.font = `900 ${56 * scale}px Arial, sans-serif`;
+    let scoreFontSz = 56 * scale;
+    const scoreMaxW = 400 * scale;
+    ctx.font = `900 ${scoreFontSz}px Arial, sans-serif`;
+    while (ctx.measureText(score.headline).width > scoreMaxW && scoreFontSz > 20 * scale) {
+      scoreFontSz -= 2;
+      ctx.font = `900 ${scoreFontSz}px Arial, sans-serif`;
+    }
     ctx.fillText(score.headline, center, scoreY + 24 * scale);
   }
   if (score.extra && payload.cardVariant !== "compact" && !isSets) {
@@ -1171,6 +1186,7 @@ export function EidConfrontoResumoModal({
   asListItem = false,
   rowClassName,
   sportLabel,
+  defaultSharePanelOpen = false,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -1188,6 +1204,9 @@ export function EidConfrontoResumoModal({
   const [shareShowMeta, setShareShowMeta] = useState(true);
   const [shareShowBrand, setShareShowBrand] = useState(true);
   const [sharePanelOpen, setSharePanelOpen] = useState(false);
+  useEffect(() => {
+    if (open && defaultSharePanelOpen) setSharePanelOpen(true);
+  }, [open, defaultSharePanelOpen]);
   const sharePreviewRef = useRef<HTMLDivElement | null>(null);
   const sharePreviewCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const sharePreviewRenderFrameRef = useRef<number | null>(null);
@@ -1294,7 +1313,7 @@ export function EidConfrontoResumoModal({
     }
     sharePreviewRenderFrameRef.current = window.requestAnimationFrame(() => {
       sharePreviewRenderFrameRef.current = null;
-      void renderResultadoShareCanvas(sharePayload, 0.22)
+      void renderResultadoShareCanvas(sharePayload, 0.30)
         .then((renderedCanvas) => {
           if (sharePreviewRenderSeqRef.current !== renderSeq) return;
           canvas.width = renderedCanvas.width;

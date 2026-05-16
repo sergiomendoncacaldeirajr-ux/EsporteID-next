@@ -6105,54 +6105,32 @@ body.eid-app-shell :where(
   );
 }
 
-/* ============================================================
-   TOAST / SNACKBAR SYSTEM
-   ============================================================ */
-
-@keyframes eid-toast-in {
-  from { opacity: 0; transform: translateY(16px) scale(0.94); }
-  to   { opacity: 1; transform: translateY(0)   scale(1); }
-}
-@keyframes eid-toast-out {
-  from { opacity: 1; transform: translateY(0)   scale(1); }
-  to   { opacity: 0; transform: translateY(8px)  scale(0.96); }
-}
-
+/* ── TOAST SYSTEM ──────────────────────────────────────────────────────── */
 .eid-toast-item {
   opacity: 0;
   transform: translateY(16px) scale(0.94);
-  transition: opacity 280ms cubic-bezier(0.22,1,0.36,1), transform 280ms cubic-bezier(0.22,1,0.36,1);
+  transition:
+    opacity 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .eid-toast-item[data-visible="1"] {
   opacity: 1;
   transform: translateY(0) scale(1);
 }
 
-/* ============================================================
-   PODIUM — STAGGER ENTRANCE ANIMATION
-   ============================================================ */
-
+/* ── PODIUM STAGGER ────────────────────────────────────────────────────── */
 @keyframes eid-podium-face-in {
   from { opacity: 0; transform: translateY(22px) scale(0.88); }
-  to   { opacity: 1; transform: translateY(0)    scale(1); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-
 .eid-podium-face {
-  animation: eid-podium-face-in 420ms cubic-bezier(0.22,1,0.36,1) both;
+  animation: eid-podium-face-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .eid-podium-face[data-place="3"] { animation-delay: 80ms; }
 .eid-podium-face[data-place="2"] { animation-delay: 200ms; }
 .eid-podium-face[data-place="1"] { animation-delay: 350ms; }
 
-@media (prefers-reduced-motion: reduce) {
-  .eid-podium-face { animation: none; }
-  .eid-toast-item  { transition: none; }
-}
-
-/* ============================================================
-   PAGE TRANSITIONS — slide-in from right on sub-routes
-   ============================================================ */
-
+/* ── PAGE TRANSITIONS ──────────────────────────────────────────────────── */
 @keyframes eid-page-slide-in {
   from { opacity: 0; transform: translateX(18px); }
   to   { opacity: 1; transform: translateX(0); }
@@ -6161,15 +6139,10 @@ body.eid-app-shell :where(
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-
 .eid-page-enter {
-  animation: eid-page-slide-in 320ms cubic-bezier(0.22,1,0.36,1) both;
+  animation: eid-page-slide-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .eid-page-fade {
   animation: eid-page-fade-in 220ms ease-out both;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .eid-page-enter, .eid-page-fade { animation: none; }
 }
 

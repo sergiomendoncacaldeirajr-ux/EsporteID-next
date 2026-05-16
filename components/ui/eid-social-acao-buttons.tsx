@@ -15,6 +15,7 @@
 
 import { Check, Loader2, X } from "lucide-react";
 import type { ButtonHTMLAttributes } from "react";
+import { hapticImpact } from "@/lib/haptics";
 import { EID_SOCIAL_ACAO_BTN_ATTR } from "@/lib/comunidade/social-panel-layout";
 import {
   PEDIDO_MATCH_RECEBIDO_SOCIAL_ACEITAR_BTN_CLASS,
@@ -40,6 +41,7 @@ export function EidSocialAceitarButton({
   actionLabel = "aceitar",
   className = "",
   type = "submit",
+  onClick,
   ...props
 }: EidSocialAceitarButtonProps) {
   const idle = actionLabel === "aprovar" ? "Aprovar" : "Aceitar";
@@ -50,6 +52,7 @@ export function EidSocialAceitarButton({
       disabled={pending}
       {...EID_SOCIAL_ACAO_BTN_ATTR}
       className={`${PEDIDO_MATCH_RECEBIDO_SOCIAL_ACEITAR_BTN_CLASS} ${className}`.trim()}
+      onClick={(e) => { void hapticImpact("Medium"); onClick?.(e); }}
       {...props}
     >
       {busy ? (
@@ -79,6 +82,7 @@ export function EidSocialRecusarButton({
   withDesafioRecusarMarker = false,
   className = "",
   type = "submit",
+  onClick,
   ...props
 }: EidSocialRecusarButtonProps) {
   return (
@@ -88,6 +92,7 @@ export function EidSocialRecusarButton({
       {...EID_SOCIAL_ACAO_BTN_ATTR}
       {...(withDesafioRecusarMarker ? { "data-eid-recusar-btn": "true" as const } : {})}
       className={`${PEDIDO_MATCH_RECEBIDO_SOCIAL_RECUSAR_BTN_CLASS} ${className}`.trim()}
+      onClick={(e) => { void hapticImpact("Light"); onClick?.(e); }}
       {...props}
     >
       {busy ? (

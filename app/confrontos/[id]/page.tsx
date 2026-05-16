@@ -4,7 +4,7 @@ import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, CalendarClock, ChevronRight, MapPin, Trophy } from "lucide-react";
 import { ConfrontoDetalheResultado } from "@/components/confrontos/confronto-detalhe-resultado";
-import { ConfrontoShareButton } from "@/components/confrontos/confronto-share-button";
+import { ConfrontoDetalheCompartilhar } from "@/components/confrontos/confronto-detalhe-compartilhar";
 import { loadPublicConfrontos, normalizeConfrontoTipo, sideInitial, type ConfrontoTipo, type ConfrontoSide, type PublicConfronto } from "@/lib/confrontos/public-feed";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
@@ -140,12 +140,23 @@ function ResumoCard({ item }: { item: PublicConfronto }) {
           </div>
         ) : null}
 
-        {/* Share button */}
+        {/* Share button — Arte para Stories */}
         {scoreText ? (
-          <ConfrontoShareButton
-            title={`${item.ladoA.name} ${scoreText} ${item.ladoB.name}`}
-            text={`Resultado de ${item.esporteNome ?? "esporte"} no EsporteID: ${item.ladoA.name} ${scoreText} ${item.ladoB.name}`}
-            path={`/confrontos/${item.id}`}
+          <ConfrontoDetalheCompartilhar
+            ladoA={item.ladoA.name}
+            ladoB={item.ladoB.name}
+            ladoAAvatarUrl={item.ladoA.avatarUrl}
+            ladoBAvatarUrl={item.ladoB.avatarUrl}
+            ladoAProfileHref={item.ladoA.eidHref}
+            ladoBProfileHref={item.ladoB.eidHref}
+            placar={scoreText}
+            esporteNome={item.esporteNome}
+            modalidadeLabel={item.tipo === "dupla" ? "Duplas" : item.tipo === "time" ? "Times" : "Individual"}
+            mensagem={item.mensagem}
+            dataHora={item.dataHora}
+            local={item.local}
+            localLogoUrl={item.localLogoUrl}
+            origem={item.origem}
           />
         ) : null}
       </div>
@@ -198,7 +209,7 @@ export default async function ConfrontoDetalhePage({
     item.tipo === "dupla" ? "Duplas" : item.tipo === "time" ? "Times" : "Individual";
 
   return (
-    <main className={`eid-page-enter mx-auto flex w-full max-w-lg flex-col gap-3 px-3 pb-[calc(var(--eid-shell-content-bottom-pad)+2rem)] sm:max-w-2xl sm:px-6 sm:pb-[var(--eid-shell-content-bottom-pad)] ${embed ? "pt-1" : "pt-3"}`}>
+    <main className={`mx-auto flex w-full max-w-lg flex-col gap-3 px-3 pb-[calc(var(--eid-shell-content-bottom-pad)+2rem)] sm:max-w-2xl sm:px-6 sm:pb-[var(--eid-shell-content-bottom-pad)] ${embed ? "pt-1" : "pt-3"}`}>
       {/* Page header — only when accessed directly (drawer provides its own nav) */}
       {!embed ? (
         <div className="flex items-center gap-3">

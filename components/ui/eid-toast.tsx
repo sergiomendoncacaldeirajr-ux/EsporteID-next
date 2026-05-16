@@ -37,7 +37,6 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    // Trigger entrance animation
     requestAnimationFrame(() => el.setAttribute("data-visible", "1"));
     const timer = setTimeout(() => {
       el.removeAttribute("data-visible");
@@ -78,6 +77,15 @@ export function EidToastProvider({ children }: { children: ReactNode }) {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     setToasts((prev) => [...prev.slice(-3), { id, message, kind }]);
   }, []);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { message, kind } = (e as CustomEvent<{ message: string; kind: ToastKind }>).detail;
+      toast(message, kind);
+    };
+    window.addEventListener("eid:toast", handler);
+    return () => window.removeEventListener("eid:toast", handler);
+  }, [toast]);
 
   return (
     <ToastContext.Provider value={{ toast }}>

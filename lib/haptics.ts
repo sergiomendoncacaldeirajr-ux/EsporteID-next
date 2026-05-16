@@ -1,7 +1,5 @@
 "use client";
 
-/** Lightweight haptics wrapper — no-op on web, uses @capacitor/haptics on native. */
-
 export async function hapticImpact(style: "Light" | "Medium" | "Heavy" = "Medium"): Promise<void> {
   try {
     const { Capacitor } = await import("@capacitor/core");
