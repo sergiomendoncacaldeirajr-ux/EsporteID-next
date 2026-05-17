@@ -26,10 +26,11 @@ type PushDeliveryRow = {
   status: string;
 };
 
-type AndroidFcmTokenRow = {
+type NativeFcmTokenRow = {
   id: number;
   usuario_id: string;
   token: string;
+  platform?: string | null;
 };
 
 type PushSendError = Error & {
@@ -228,8 +229,8 @@ function androidChannelIdForPushTipo(tipo: string | null | undefined) {
   return "eid_geral";
 }
 
-function buildFcmMessage(n: NotificacaoRow, token: string) {
-  const payload = JSON.parse(buildNotificationPayload(n, "Android/App")) as {
+function buildFcmMessage(n: NotificacaoRow, token: string, platform: "android" | "ios") {
+  const payload = JSON.parse(buildNotificationPayload(n, platform === "ios" ? "iOS/App" : "Android/App")) as {
     title?: string;
     body?: string;
     url?: string;
@@ -254,7 +255,7 @@ function buildFcmMessage(n: NotificacaoRow, token: string) {
       actionLabel: String(payload.actionLabel || "Abrir"),
       referenceId: String(payload.referenceId || n.referencia_id || ""),
     },
-    android: {
+    android: platform === "android" ? {
       priority: "high" as const,
       notification: {
         channelId: androidChannelIdForPushTipo(payload.tipo || n.tipo),
@@ -262,11 +263,23 @@ function buildFcmMessage(n: NotificacaoRow, token: string) {
         color: "#2563EB",
         tag: `notif-${String(payload.notifId || n.id)}`,
       },
-    },
+    } : undefined,
+    apns: platform === "ios" ? {
+      headers: {
+        "apns-priority": "10",
+      },
+      payload: {
+        aps: {
+          sound: "default",
+          category: String(payload.tipo || n.tipo || "geral"),
+          threadId: `notif-${String(payload.tipo || n.tipo || "geral")}`,
+        },
+      },
+    } : undefined,
   };
 }
 
-async function dispatchFcmToAndroidApp(
+async function dispatchFcmToNativeApps(
   admin: SupabaseClient,
   list: NotificacaoRow[],
   userIds: string[]
@@ -274,13 +287,14 @@ async function dispatchFcmToAndroidApp(
   if (!isFcmConfigured()) return { sent: 0, failed: 0 };
   const { data, error } = await admin
     .from("android_fcm_tokens")
-    .select("id, usuario_id, token")
+    .select("id, usuario_id, token, platform")
     .eq("ativo", true)
-    .in("usuario_id", userIds);
-  if (error) throw new Error(`Falha ao buscar tokens FCM Android: ${error.message}`);
+    .in("usuario_id", userIds)
+    .in("platform", ["android", "ios"]);
+  if (error) throw new Error(`Falha ao buscar tokens FCM nativos: ${error.message}`);
 
-  const tokensByUser = new Map<string, AndroidFcmTokenRow[]>();
-  for (const row of (data ?? []) as AndroidFcmTokenRow[]) {
+  const tokensByUser = new Map<string, NativeFcmTokenRow[]>();
+  for (const row of (data ?? []) as NativeFcmTokenRow[]) {
     const arr = tokensByUser.get(row.usuario_id) ?? [];
     arr.push(row);
     tokensByUser.set(row.usuario_id, arr);
@@ -293,11 +307,12 @@ async function dispatchFcmToAndroidApp(
     const results = await Promise.all(
       rows.map(async (row) => {
         try {
-          await sendFcmMessage(buildFcmMessage(n, row.token));
+          const platform = String(row.platform ?? "android").trim().toLowerCase() === "ios" ? "ios" : "android";
+          await sendFcmMessage(buildFcmMessage(n, row.token, platform));
           return { sent: 1, failed: 0, stale: false };
         } catch (err) {
           const code = String((err as { code?: string })?.code ?? "");
-          return { sent: 0, failed: 1, stale: /registration-token-not-registered|invalid-registration-token/.test(code) };
+          return { sent: 0, failed: 1, stale: /registration-token-not-registered|invalid-registration-token|UNREGISTERED|NOT_FOUND/.test(code) };
         }
       })
     );
@@ -349,7 +364,7 @@ async function dispatchNotificationsToSubscriptions(
   let sent = 0;
   let failed = 0;
   let noDevice = 0;
-  const fcmResult = await dispatchFcmToAndroidApp(admin, list, userIds);
+  const fcmResult = await dispatchFcmToNativeApps(admin, list, userIds);
   sent += fcmResult.sent;
   failed += fcmResult.failed;
 

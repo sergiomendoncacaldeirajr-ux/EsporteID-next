@@ -20,6 +20,19 @@ type FcmMessage = {
       tag?: string;
     };
   };
+  apns?: {
+    headers?: Record<string, string>;
+    payload?: {
+      aps?: {
+        sound?: string;
+        badge?: number;
+        category?: string;
+        threadId?: string;
+        contentAvailable?: number;
+      };
+      [key: string]: unknown;
+    };
+  };
 };
 
 let cachedToken: { accessToken: string; expiresAt: number } | null = null;

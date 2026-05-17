@@ -10,10 +10,12 @@ import { getNativeLocalStore, listNativeLocalStore, pruneNativeLocalStore, setNa
 import {
   EID_NATIVE_APP_VERSION,
   getAndroidNativePushOptOut,
+  getNativePushOptOut,
   getRememberedAndroidFcmToken,
+  getRememberedNativeFcmToken,
   isNativeAndroidApp,
-  rememberAndroidFcmToken,
-  syncAndroidNativePushToken,
+  rememberNativeFcmToken,
+  syncNativeFcmToken,
 } from "@/lib/pwa/push-client";
 
 const NATIVE_PREFETCH_ROUTES = ["/dashboard", "/agenda", "/comunidade", "/ranking", "/match", "/desafio", "/times"] as const;
@@ -146,6 +148,10 @@ function isCapacitorNativeApp() {
 
 function isCapacitorAndroidApp() {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
+}
+
+function isCapacitorIosApp() {
+  return Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
 }
 
 function isAnyNativeApp() {
@@ -886,32 +892,35 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
   }, []);
 
   useEffect(() => {
-    if (!isCapacitorAndroidApp()) return;
+    if (!isCapacitorAndroidApp() && !isCapacitorIosApp()) return;
     let disposed = false;
     const handles: Array<{ remove: () => Promise<void> }> = [];
 
     async function configureNativePush() {
       const { PushNotifications } = await import("@capacitor/push-notifications");
       let registrationInFlight: Promise<boolean> | null = null;
+      const nativePlatform = isCapacitorIosApp() ? "ios" : "android";
 
-      await Promise.allSettled(
-        EID_ANDROID_PUSH_CHANNELS.map((channel) =>
-          PushNotifications.createChannel({
-            ...channel,
-            visibility: 1,
-            lights: true,
-            lightColor: "#2563EB",
-            vibration: true,
-          })
-        )
-      );
+      if (nativePlatform === "android") {
+        await Promise.allSettled(
+          EID_ANDROID_PUSH_CHANNELS.map((channel) =>
+            PushNotifications.createChannel({
+              ...channel,
+              visibility: 1,
+              lights: true,
+              lightColor: "#2563EB",
+              vibration: true,
+            })
+          )
+        );
+      }
 
       const [registrationHandle, registrationErrorHandle, receivedHandle, actionHandle] = await Promise.all([
         PushNotifications.addListener("registration", (token) => {
-          rememberAndroidFcmToken(token.value);
-          if (!getAndroidNativePushOptOut()) {
-            void syncAndroidNativePushToken().then((ok) => {
-              if (!ok) window.setTimeout(() => void syncAndroidNativePushToken().catch(() => false), 2500);
+          rememberNativeFcmToken(nativePlatform, token.value);
+          if (!getNativePushOptOut(nativePlatform)) {
+            void syncNativeFcmToken(nativePlatform).then((ok) => {
+              if (!ok) window.setTimeout(() => void syncNativeFcmToken(nativePlatform).catch(() => false), 2500);
             });
           }
         }),
@@ -940,12 +949,12 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
             if (allowed === false) return false;
             receive = (await PushNotifications.requestPermissions()).receive;
           }
-          if (disposed || receive !== "granted" || getAndroidNativePushOptOut()) return false;
+          if (disposed || receive !== "granted" || getNativePushOptOut(nativePlatform)) return false;
 
           await PushNotifications.register();
-          const synced = await syncAndroidNativePushToken().catch(() => false);
+          const synced = await syncNativeFcmToken(nativePlatform).catch(() => false);
           await PushNotifications.removeAllDeliveredNotifications();
-          return synced || Boolean(getRememberedAndroidFcmToken());
+          return synced || Boolean(getRememberedNativeFcmToken(nativePlatform));
         })().finally(() => {
           registrationInFlight = null;
         });
@@ -954,7 +963,7 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
 
       window.eidNativeRegisterPush = registerNativePush;
       const retryNativePush = () => {
-        if (!getAndroidNativePushOptOut()) void registerNativePush().catch(() => false);
+        if (!getNativePushOptOut(nativePlatform)) void registerNativePush().catch(() => false);
       };
       window.addEventListener("eid:pwa-resume", retryNativePush);
       window.addEventListener("online", retryNativePush);

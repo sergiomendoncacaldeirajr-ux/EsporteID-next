@@ -7,12 +7,12 @@ import { createClient } from "@/lib/supabase/client";
 import {
   disablePushNotifications,
   enablePushNotifications,
-  hasAndroidNativePushEnabled,
   hasActivePushSubscription,
+  hasNativePushEnabled,
   isNativeAndroidApp,
   isNativeIosApp,
   isStandaloneAndroidApp,
-  setAndroidNativePushEnabled,
+  setNativePushEnabled,
 } from "@/lib/pwa/push-client";
 import { isAmistosoAceiteInformativoNotif } from "@/lib/notificacoes/amistoso-aceite-informativo";
 import { resolveNotificationHref } from "@/lib/notificacoes/resolve-notification-href";
@@ -530,8 +530,8 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     let cancelled = false;
     void (async () => {
       try {
-        if (isStandaloneAndroidApp()) {
-          const active = await hasAndroidNativePushEnabled();
+        if (isStandaloneAndroidApp() || isNativeIosApp()) {
+          const active = await hasNativePushEnabled(isNativeIosApp() ? "ios" : "android");
           if (!cancelled) setPushEnabled(active);
           return;
         }
@@ -550,9 +550,9 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     if (pushBusy) return;
     setPushBusy(true);
     try {
-      if (isStandaloneAndroidApp()) {
+      if (isStandaloneAndroidApp() || isNativeIosApp()) {
         const nextEnabled = !pushEnabled;
-        await setAndroidNativePushEnabled(nextEnabled);
+        await setNativePushEnabled(isNativeIosApp() ? "ios" : "android", nextEnabled);
         setPushEnabled(nextEnabled);
         return;
       }
@@ -673,8 +673,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
               </button>
             </div>
 
-            {isNativeIosApp() ? null : (
-              <div className={`mt-2.5 flex items-center gap-2 rounded-lg border px-2 py-1.5 ${pushEnabled ? "border-emerald-500/20 bg-[linear-gradient(90deg,color-mix(in_srgb,rgb(16,185,129)_8%,var(--eid-surface)),var(--eid-surface))]" : "border-[rgba(37,99,235,0.14)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-primary-500)_7%,var(--eid-surface)),var(--eid-surface))]"}`}>
+            <div className={`mt-2.5 flex items-center gap-2 rounded-lg border px-2 py-1.5 ${pushEnabled ? "border-emerald-500/20 bg-[linear-gradient(90deg,color-mix(in_srgb,rgb(16,185,129)_8%,var(--eid-surface)),var(--eid-surface))]" : "border-[rgba(37,99,235,0.14)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-primary-500)_7%,var(--eid-surface)),var(--eid-surface))]"}`}>
               <span className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${pushEnabled ? "bg-emerald-500/15 text-emerald-400" : "bg-eid-primary-500/12 text-eid-primary-400"}`}>
                 <svg viewBox="0 0 24 24" width={12} height={12} fill="none" aria-hidden>
                   {pushEnabled ? (
@@ -703,8 +702,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
               >
                 {pushBusy ? "…" : pushEnabled ? "✓ Ativo" : "Ativar"}
               </button>
-              </div>
-            )}
+            </div>
 
             <p className="mt-2 text-[9px] font-black uppercase tracking-[0.08em] text-eid-fg">Resumo rápido</p>
             <ul className="mt-1.5 space-y-1.5">

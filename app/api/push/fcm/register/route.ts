@@ -7,6 +7,7 @@ type RegisterFcmBody = {
   device?: string;
   appVersion?: string;
   active?: boolean;
+  platform?: string;
 };
 
 export async function POST(request: Request) {
@@ -25,6 +26,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Token FCM invalido." }, { status: 400 });
   }
 
+  const platform = String(body.platform ?? "android").trim().toLowerCase() === "ios" ? "ios" : "android";
+
   const admin = createServiceRoleClient();
   const { error } = await admin.from("android_fcm_tokens").upsert(
     {
@@ -33,6 +36,7 @@ export async function POST(request: Request) {
       device: String(body.device ?? "").slice(0, 120) || null,
       app_version: String(body.appVersion ?? "").slice(0, 40) || null,
       ativo: body.active === false ? false : true,
+      platform,
     },
     { onConflict: "token" }
   );

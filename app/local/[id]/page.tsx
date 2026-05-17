@@ -178,13 +178,23 @@ export default async function LocalPublicPage({ params }: Props) {
 
       <main data-eid-touch-ui className={SPACE_PUBLIC_MAIN_CLASS}>
         <section className={SPACE_HERO_CLASS}>
-          <div className="relative min-h-[220px]">
+          <div className="relative min-h-[220px] sm:min-h-[250px]">
             {heroPhoto ? (
               <Image src={heroPhoto} alt="" fill unoptimized priority className="object-cover" />
             ) : (
               <div className="absolute inset-0 bg-[linear-gradient(140deg,var(--eid-brand-ink),color-mix(in_srgb,var(--eid-primary-500)_22%,var(--eid-brand-ink)),#080d13)]" />
             )}
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,29,46,0.08),rgba(11,29,46,0.9))]" />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,29,46,0.08),rgba(11,29,46,0.92))]" />
+
+            <div className="absolute right-3 top-3 flex gap-2">
+              <NativeShareButton
+                title={`${loc.nome_publico} no EsporteID`}
+                text="Veja este local no EsporteID"
+                path={`/local/${id}`}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur-sm transition hover:bg-black/50"
+              />
+            </div>
+
             <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
               <div className="flex flex-wrap items-end gap-3">
                 <div className="relative grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-2xl border border-white/15 bg-eid-surface/90 shadow-xl">
@@ -202,14 +212,15 @@ export default async function LocalPublicPage({ params }: Props) {
                         Verificado
                       </span>
                     ) : claimEmAnalise ? (
-                      <span className={`rounded-full border border-amber-500/35 bg-amber-500/15 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-amber-200`}>
+                      <span className="rounded-full border border-amber-500/35 bg-amber-500/15 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-amber-200">
                         Em análise
                       </span>
                     ) : (
-                      <span className={SPACE_PILL_GHOST_CLASS}>
-                        Local público
-                      </span>
+                      <span className={SPACE_PILL_GHOST_CLASS}>Local público</span>
                     )}
+                    <span className="rounded-full border border-white/14 bg-black/22 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-white/74">
+                      Cadastro da comunidade
+                    </span>
                   </div>
                   <h1 className="text-2xl font-black leading-tight tracking-tight text-white sm:text-3xl">
                     {loc.nome_publico}
@@ -226,9 +237,9 @@ export default async function LocalPublicPage({ params }: Props) {
           <div className="space-y-4 p-4 sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/65 eid-light:text-eid-primary-400">Perfil do espaço</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/65 eid-light:text-eid-primary-400">Perfil do local</p>
                 <p className="mt-1 text-sm font-medium text-white/75 eid-light:text-eid-text-secondary">
-                  Veja estrutura, contato, serviços disponíveis e canais de posse oficial deste espaço.
+                  Estrutura, serviços e canais de posse oficial com a mesma experiência premium dos perfis públicos do EsporteID.
                 </p>
               </div>
             </div>
@@ -264,12 +275,6 @@ export default async function LocalPublicPage({ params }: Props) {
                   Abrir mapa
                 </a>
               ) : null}
-              <NativeShareButton
-                title={`${loc.nome_publico} no EsporteID`}
-                text="Veja este local no EsporteID"
-                path={`/local/${id}`}
-                className="inline-flex min-h-10 items-center justify-center rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-4 text-sm font-bold text-eid-fg transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/10"
-              />
               {isGestor ? (
                 <Link
                   href={`${contaEditarLocalHref(id)}?from=${encodeURIComponent(`/local/${id}`)}`}

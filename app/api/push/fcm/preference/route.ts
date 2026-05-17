@@ -4,6 +4,7 @@ import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/se
 
 type PreferenceBody = {
   active?: boolean;
+  platform?: string;
 };
 
 export async function GET() {
@@ -21,6 +22,7 @@ export async function GET() {
     .from("android_fcm_tokens")
     .select("id, ativo")
     .eq("usuario_id", user.id)
+    .in("platform", ["android", "ios"])
     .order("criado_em", { ascending: false })
     .limit(20);
   if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 400 });
@@ -45,13 +47,16 @@ export async function POST(request: Request) {
 
   const body = (await request.json().catch(() => ({}))) as PreferenceBody;
   const active = body.active === true;
+  const platform = String(body.platform ?? "").trim().toLowerCase();
 
   const admin = createServiceRoleClient();
-  const { data, error } = await admin
-    .from("android_fcm_tokens")
-    .update({ ativo: active })
-    .eq("usuario_id", user.id)
-    .select("id");
+  let query = admin.from("android_fcm_tokens").update({ ativo: active }).eq("usuario_id", user.id);
+  if (platform === "android" || platform === "ios") {
+    query = query.eq("platform", platform);
+  } else {
+    query = query.in("platform", ["android", "ios"]);
+  }
+  const { data, error } = await query.select("id");
   if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 400 });
 
   if (active && !(data ?? []).length) {

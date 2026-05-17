@@ -129,6 +129,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   const pathname = usePathname() ?? "";
   const router = useRouter();
   const pathnameRef = useRef(pathname);
+  const [mounted, setMounted] = useState(false);
   const [resolvedUserId, setResolvedUserId] = useState<string | null>(userId);
   const [agendaBadge, setAgendaBadge] = useState(0);
   const [socialBadge, setSocialBadge] = useState(0);
@@ -139,10 +140,24 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   const onAuthPage = AUTH_PATH_PREFIXES.some((p) =>
     p.endsWith("/") ? pathname.startsWith(p) : pathname === p || pathname.startsWith(p + "/")
   );
+  const isEspacoPainelRoute =
+    pathname === "/espaco" ||
+    pathname.startsWith("/espaco/agenda") ||
+    pathname.startsWith("/espaco/configuracao") ||
+    pathname.startsWith("/espaco/financeiro") ||
+    pathname.startsWith("/espaco/grade") ||
+    pathname.startsWith("/espaco/integracao-asaas") ||
+    pathname.startsWith("/espaco/lanchonete") ||
+    pathname.startsWith("/espaco/notas-fiscais") ||
+    pathname.startsWith("/espaco/onboarding") ||
+    pathname.startsWith("/espaco/socios") ||
+    pathname.startsWith("/espaco/taxas");
   const showBottomChrome =
+    mounted &&
     Boolean(resolvedUserId) &&
     !onAuthPage &&
-    !pathname.startsWith("/admin");
+    !pathname.startsWith("/admin") &&
+    !isEspacoPainelRoute;
 
   /** Altura da barra inferior fixa (#eid-mobile-bottom-nav) → `--eid-shell-footer-offset-measured` no :root. */
   useLayoutEffect(() => {
@@ -255,6 +270,10 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       releaseTimerRef.current = undefined;
     }
   }, [pathname]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     pathnameRef.current = pathname;
@@ -555,23 +574,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     };
   }, [resolvedUserId, router]);
 
-  if (!resolvedUserId) return null;
-
-  if (onAuthPage) return null;
-
-  const isEspacoPainelRoute =
-    pathname === "/espaco" ||
-    pathname.startsWith("/espaco/agenda") ||
-    pathname.startsWith("/espaco/configuracao") ||
-    pathname.startsWith("/espaco/financeiro") ||
-    pathname.startsWith("/espaco/grade") ||
-    pathname.startsWith("/espaco/integracao-asaas") ||
-    pathname.startsWith("/espaco/notas-fiscais") ||
-    pathname.startsWith("/espaco/onboarding") ||
-    pathname.startsWith("/espaco/socios") ||
-    pathname.startsWith("/espaco/taxas");
-
-  if (pathname.startsWith("/admin") || isEspacoPainelRoute) return null;
+  if (!mounted || !showBottomChrome || !resolvedUserId) return null;
 
   const isHome =
     activeContext === "organizador"

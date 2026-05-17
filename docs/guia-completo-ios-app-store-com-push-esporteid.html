@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Guia Completo iPhone com Push - EsporteID</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; line-height: 1.55; color: #111827; max-width: 980px; margin: 0 auto; padding: 32px 24px 64px; }
+    h1,h2,h3 { color: #0f172a; }
+    h1 { font-size: 30px; margin-bottom: 8px; }
+    h2 { font-size: 22px; margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 18px; }
+    h3 { font-size: 18px; margin-top: 20px; }
+    code, pre { font-family: Consolas, monospace; }
+    pre { background: #f3f4f6; padding: 14px; border-radius: 8px; overflow-x: auto; }
+    ul, ol { padding-left: 22px; }
+    .lead { background: #eff6ff; border: 1px solid #bfdbfe; padding: 14px 16px; border-radius: 10px; }
+    .warn { background: #fff7ed; border: 1px solid #fdba74; padding: 14px 16px; border-radius: 10px; }
+    .check { background: #f9fafb; border: 1px solid #e5e7eb; padding: 16px; border-radius: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Guia 100% Mastigado: publicar o EsporteID no iPhone com push funcionando</h1>
+  <p class="lead">Este guia já está preenchido com seus dados: <strong>EsporteID</strong>, bundle <strong>com.esporteid.app</strong>, suporte em <strong>https://esporteid.com.br/suporte</strong> e privacidade em <strong>https://esporteid.com.br/privacidade</strong>.</p>
+  <p class="warn"><strong>Importante:</strong> você não precisa comprar um Mac, mas vai precisar de um <strong>Mac remoto</strong> ou alguém com Mac para fechar o push do iPhone.</p>
+
+  <h2>PARTE 1 — O que já foi preparado</h2>
+  <ul>
+    <li>suporte público criado</li>
+    <li>privacidade pública criada</li>
+    <li>termos públicos criados</li>
+    <li>app iOS simplificado para iPhone only</li>
+    <li>app iOS simplificado para portrait only</li>
+    <li>backend preparado para aceitar token nativo do iPhone</li>
+    <li>dispatcher preparado para payload iOS via FCM</li>
+    <li>AppDelegate preparado para Firebase Messaging</li>
+    <li>UI de push pronta para iPhone</li>
+  </ul>
+
+  <h2>PARTE 2 — O que você precisa ter</h2>
+  <ol>
+    <li>Conta Apple Developer</li>
+    <li>Conta App Store Connect</li>
+    <li>Projeto Firebase do Android</li>
+    <li>Mac remoto</li>
+    <li>iPhone real</li>
+  </ol>
+
+  <h2>PARTE 3 — Dados oficiais</h2>
+  <ul>
+    <li><strong>App Name:</strong> EsporteID</li>
+    <li><strong>Bundle ID:</strong> com.esporteid.app</li>
+    <li><strong>Website:</strong> https://esporteid.com.br</li>
+    <li><strong>Support URL:</strong> https://esporteid.com.br/suporte</li>
+    <li><strong>Privacy Policy URL:</strong> https://esporteid.com.br/privacidade</li>
+  </ul>
+
+  <h2>PARTE 4 — Publicar o site antes do app</h2>
+  <ol>
+    <li>https://esporteid.com.br/suporte</li>
+    <li>https://esporteid.com.br/privacidade</li>
+    <li>https://esporteid.com.br/termos</li>
+  </ol>
+
+  <h2>PARTE 5 — Criar o app no App Store Connect</h2>
+  <ol>
+    <li>criar novo app</li>
+    <li>nome: EsporteID</li>
+    <li>plataforma: iOS</li>
+    <li>idioma: Português (Brasil)</li>
+    <li>Bundle ID: com.esporteid.app</li>
+  </ol>
+
+  <h2>PARTE 6 — Preparar o Firebase para iPhone</h2>
+  <ol>
+    <li>abrir o Firebase Console</li>
+    <li>adicionar app iOS</li>
+    <li>bundle: com.esporteid.app</li>
+    <li>baixar GoogleService-Info.plist</li>
+  </ol>
+
+  <h2>PARTE 7 — Preparar APNs na Apple</h2>
+  <ol>
+    <li>abrir Apple Developer</li>
+    <li>abrir o App ID com.esporteid.app</li>
+    <li>habilitar Push Notifications</li>
+    <li>criar chave APNs .p8</li>
+  </ol>
+  <p>Guarde:</p>
+  <ul>
+    <li>Key ID</li>
+    <li>Team ID</li>
+    <li>arquivo .p8</li>
+  </ul>
+
+  <h2>PARTE 8 — Ligar APNs no Firebase</h2>
+  <p>No Firebase Cloud Messaging do app iOS, subir a chave .p8 e preencher:</p>
+  <ul>
+    <li>Key ID</li>
+    <li>Team ID</li>
+    <li>Bundle ID = com.esporteid.app</li>
+  </ul>
+
+  <h2>PARTE 9 — Abrir o projeto no Mac remoto</h2>
+  <pre><code>npm install
+npm run cap:sync:ios
+npm run cap:open:ios</code></pre>
+
+  <h2>PARTE 10 — O que fazer no Xcode</h2>
+  <ol>
+    <li>adicionar GoogleService-Info.plist ao target</li>
+    <li>abrir Signing &amp; Capabilities</li>
+    <li>selecionar sua conta Apple</li>
+    <li>confirmar Push Notifications</li>
+    <li>garantir FirebaseCore e FirebaseMessaging</li>
+    <li>confirmar bundle com.esporteid.app</li>
+  </ol>
+
+  <h2>PARTE 11 — Gerar o primeiro build</h2>
+  <p>Primeiro mande para <strong>TestFlight</strong>.</p>
+
+  <h2>PARTE 12 — Testar o push no iPhone real</h2>
+  <ol>
+    <li>instalar no iPhone</li>
+    <li>abrir e logar</li>
+    <li>ativar o push</li>
+    <li>aceitar a permissão</li>
+    <li>testar recebimento</li>
+    <li>testar app aberto, em background e fechado</li>
+  </ol>
+
+  <h2>PARTE 13 — O que testar além do push</h2>
+  <ul>
+    <li>login</li>
+    <li>cadastro</li>
+    <li>suporte</li>
+    <li>termos</li>
+    <li>privacidade</li>
+    <li>câmera/foto</li>
+    <li>localização com app aberto</li>
+    <li>compartilhamento</li>
+  </ul>
+
+  <h2>PARTE 14 — O que preencher na App Store</h2>
+  <ul>
+    <li>nome do app</li>
+    <li>descrição</li>
+    <li>categoria</li>
+    <li>classificação etária</li>
+    <li>screenshots de iPhone</li>
+    <li>Support URL: https://esporteid.com.br/suporte</li>
+    <li>Privacy Policy URL: https://esporteid.com.br/privacidade</li>
+  </ul>
+
+  <h2>PARTE 15 — Review Notes</h2>
+  <pre><code>O app EsporteID permite cadastro, perfil esportivo, acompanhamento de partidas, ranking, torneios e notificações push no iPhone.
+Suporte público: https://esporteid.com.br/suporte
+Política de privacidade: https://esporteid.com.br/privacidade
+Exclusão de conta e pedidos LGPD ficam disponíveis para usuários autenticados em “Seus dados (LGPD)”.</code></pre>
+
+  <h2>PARTE 16 — Fluxo certo de publicação</h2>
+  <ol>
+    <li>publicar o site</li>
+    <li>criar app iOS no Firebase</li>
+    <li>baixar GoogleService-Info.plist</li>
+    <li>criar chave APNs na Apple</li>
+    <li>subir APNs no Firebase</li>
+    <li>abrir projeto no Mac remoto</li>
+    <li>adicionar GoogleService-Info.plist no Xcode</li>
+    <li>confirmar Signing &amp; Capabilities</li>
+    <li>gerar build</li>
+    <li>mandar para TestFlight</li>
+    <li>testar no iPhone</li>
+    <li>corrigir se necessário</li>
+    <li>enviar para App Review</li>
+    <li>publicar</li>
+  </ol>
+
+  <h2>PARTE 17 — Checklist final</h2>
+  <div class="check">
+    <ul>
+      <li>[ ] Conta Apple Developer ativa</li>
+      <li>[ ] App criado no App Store Connect</li>
+      <li>[ ] Bundle ID correto: com.esporteid.app</li>
+      <li>[ ] Support URL funcionando</li>
+      <li>[ ] Privacy Policy URL funcionando</li>
+      <li>[ ] Projeto Firebase do Android localizado</li>
+      <li>[ ] App iOS criado no Firebase</li>
+      <li>[ ] GoogleService-Info.plist baixado</li>
+      <li>[ ] Push Notifications ativado no Apple Developer</li>
+      <li>[ ] Chave APNs .p8 criada</li>
+      <li>[ ] Key ID anotado</li>
+      <li>[ ] Team ID anotado</li>
+      <li>[ ] APNs configurado no Firebase</li>
+      <li>[ ] Projeto abriu no Xcode</li>
+      <li>[ ] GoogleService-Info.plist adicionado ao target iOS</li>
+      <li>[ ] Signing configurado</li>
+      <li>[ ] Capability Push Notifications confirmada</li>
+      <li>[ ] Build enviado para TestFlight</li>
+      <li>[ ] Testado em iPhone real</li>
+      <li>[ ] Push funcionando com app aberto</li>
+      <li>[ ] Push funcionando com app em segundo plano</li>
+      <li>[ ] Push funcionando ao tocar na notificação</li>
+      <li>[ ] Screenshots prontas</li>
+      <li>[ ] Review Notes preenchidas</li>
+      <li>[ ] Login de teste separado, se necessário</li>
+      <li>[ ] Enviado para revisão</li>
+    </ul>
+  </div>
+
+  <h2>PARTE 18 — Se der erro</h2>
+  <ul>
+    <li><strong>Erro de signing:</strong> conta Apple / team / provisioning</li>
+    <li><strong>Erro de push iPhone:</strong> APNs, Firebase, GoogleService-Info.plist ou FirebaseMessaging</li>
+    <li><strong>Android funciona e iPhone não:</strong> normalmente é problema Apple/Firebase, não do backend Android</li>
+  </ul>
+
+  <h2>Resumo final</h2>
+  <p>O Android já estava pronto. Para o iPhone funcionar com push, você precisa ligar corretamente <strong>Apple + Firebase + Xcode</strong>, testar no <strong>iPhone real</strong> e só depois publicar.</p>
+</body>
+</html>

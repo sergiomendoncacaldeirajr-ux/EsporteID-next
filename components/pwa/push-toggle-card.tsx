@@ -5,11 +5,11 @@ import {
   disablePushNotifications,
   enablePushNotifications,
   getPushClientOptOut,
-  hasAndroidNativePushEnabled,
   hasActivePushSubscription,
+  hasNativePushEnabled,
   isNativeIosApp,
   isStandaloneAndroidApp,
-  setAndroidNativePushEnabled,
+  setNativePushEnabled,
 } from "@/lib/pwa/push-client";
 
 export function PushToggleCard({ defaultEnabled = true }: { defaultEnabled?: boolean }) {
@@ -27,13 +27,8 @@ export function PushToggleCard({ defaultEnabled = true }: { defaultEnabled?: boo
       const isIosApp = isNativeIosApp();
       setAndroidApp(isAndroidApp);
       setIosApp(isIosApp);
-      if (isIosApp) {
-        setEnabled(false);
-        setMsg("As notificações do iPhone serão liberadas em uma próxima versão.");
-        return;
-      }
-      if (isAndroidApp) {
-        const nativeEnabled = await hasAndroidNativePushEnabled();
+      if (isIosApp || isAndroidApp) {
+        const nativeEnabled = await hasNativePushEnabled(isIosApp ? "ios" : "android");
         if (!active) return;
         setEnabled(nativeEnabled);
         setMsg(null);
@@ -67,10 +62,10 @@ export function PushToggleCard({ defaultEnabled = true }: { defaultEnabled?: boo
     try {
       setBusy(true);
       setMsg(null);
-      if (androidApp) {
+      if (androidApp || iosApp) {
         nativeHaptic();
         const nextEnabled = !enabled;
-        await setAndroidNativePushEnabled(nextEnabled);
+        await setNativePushEnabled(iosApp ? "ios" : "android", nextEnabled);
         setEnabled(nextEnabled);
         nativeHaptic(true);
         setMsg(nextEnabled ? "Notificações ativadas." : "Notificações desativadas neste aparelho.");
@@ -91,8 +86,6 @@ export function PushToggleCard({ defaultEnabled = true }: { defaultEnabled?: boo
       setBusy(false);
     }
   }
-
-  if (iosApp) return null;
 
   return (
     <section className="eid-surface-panel rounded-2xl px-3 py-2.5">

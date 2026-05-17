@@ -6,8 +6,10 @@ import {
   ensurePushReady,
   rememberAndroidFcmToken,
   isNativeAndroidApp,
+  isNativeIosApp,
   syncAndroidNativePushToken,
   syncExistingPushSubscription,
+  syncIosNativePushToken,
 } from "@/lib/pwa/push-client";
 
 const PUSH_SYNC_COOLDOWN_MS = 5 * 60 * 1000;
@@ -83,6 +85,9 @@ export function PwaBootstrap() {
     void syncAndroidNativePushToken().catch(() => {
       // best-effort: se o login ainda nao estiver pronto, tentamos de novo na proxima retomada.
     });
+    void syncIosNativePushToken().catch(() => {
+      // best-effort: se o login ainda nao estiver pronto, tentamos de novo na proxima retomada.
+    });
     void fetch("/api/push/flush-user", { method: "POST" }).catch(() => {
       // best-effort: falhas aqui não devem quebrar o bootstrap.
     });
@@ -95,7 +100,7 @@ export function PwaBootstrap() {
         // O token sera reenviado pelo app em uma proxima abertura.
       });
       void navigator.serviceWorker.register(`/sw.js?v=${encodeURIComponent(EID_SW_VERSION)}`).then((reg) => {
-        if (!isNativeAndroidApp()) {
+        if (!isNativeAndroidApp() && !isNativeIosApp()) {
           void reg.update().catch(() => {
             // best-effort: o navegador também atualiza sozinho.
           });

@@ -5,6 +5,8 @@ import { Capacitor } from "@capacitor/core";
 const EID_PUSH_OPT_OUT_KEY = "eid_push_opt_out";
 const EID_ANDROID_FCM_TOKEN_KEY = "eid_android_fcm_token";
 const EID_ANDROID_FCM_OPT_OUT_KEY = "eid_android_fcm_opt_out";
+const EID_IOS_FCM_TOKEN_KEY = "eid_ios_fcm_token";
+const EID_IOS_FCM_OPT_OUT_KEY = "eid_ios_fcm_opt_out";
 export const EID_NATIVE_APP_VERSION = "7.0.18";
 let enablePushInFlight: Promise<PushSubscription> | null = null;
 
@@ -95,28 +97,48 @@ export function isNativeIosApp() {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
 }
 
-export function rememberAndroidFcmToken(token: string): void {
+function nativeFcmTokenKey(platform: "android" | "ios") {
+  return platform === "ios" ? EID_IOS_FCM_TOKEN_KEY : EID_ANDROID_FCM_TOKEN_KEY;
+}
+
+function nativeFcmOptOutKey(platform: "android" | "ios") {
+  return platform === "ios" ? EID_IOS_FCM_OPT_OUT_KEY : EID_ANDROID_FCM_OPT_OUT_KEY;
+}
+
+export function rememberNativeFcmToken(platform: "android" | "ios", token: string): void {
   if (typeof window === "undefined") return;
   const cleanToken = token.trim();
   if (!cleanToken) return;
   try {
-    window.localStorage.setItem(EID_ANDROID_FCM_TOKEN_KEY, cleanToken);
+    window.localStorage.setItem(nativeFcmTokenKey(platform), cleanToken);
   } catch {
     /* ignore */
   }
 }
 
-export function getRememberedAndroidFcmToken(): string {
+export function rememberAndroidFcmToken(token: string): void {
+  rememberNativeFcmToken("android", token);
+}
+
+export function getRememberedNativeFcmToken(platform: "android" | "ios"): string {
   if (typeof window === "undefined") return "";
   try {
-    return window.localStorage.getItem(EID_ANDROID_FCM_TOKEN_KEY)?.trim() ?? "";
+    return window.localStorage.getItem(nativeFcmTokenKey(platform))?.trim() ?? "";
   } catch {
     return "";
   }
 }
 
-export async function syncAndroidNativePushToken(): Promise<boolean> {
-  const token = getRememberedAndroidFcmToken();
+export function getRememberedAndroidFcmToken(): string {
+  return getRememberedNativeFcmToken("android");
+}
+
+export function getRememberedIosFcmToken(): string {
+  return getRememberedNativeFcmToken("ios");
+}
+
+export async function syncNativeFcmToken(platform: "android" | "ios"): Promise<boolean> {
+  const token = getRememberedNativeFcmToken(platform);
   if (!token) return false;
   const resp = await fetch("/api/push/fcm/register", {
     method: "POST",
@@ -125,47 +147,75 @@ export async function syncAndroidNativePushToken(): Promise<boolean> {
       token,
       device: navigator.userAgent,
       appVersion: EID_NATIVE_APP_VERSION,
-      active: !getAndroidNativePushOptOut(),
+      active: !getNativePushOptOut(platform),
+      platform,
     }),
   });
   return resp.ok;
 }
 
-export function getAndroidNativePushOptOut(): boolean {
+export async function syncAndroidNativePushToken(): Promise<boolean> {
+  return syncNativeFcmToken("android");
+}
+
+export async function syncIosNativePushToken(): Promise<boolean> {
+  return syncNativeFcmToken("ios");
+}
+
+export function getNativePushOptOut(platform: "android" | "ios"): boolean {
   if (typeof window === "undefined") return false;
   try {
-    return window.localStorage.getItem(EID_ANDROID_FCM_OPT_OUT_KEY) === "1";
+    return window.localStorage.getItem(nativeFcmOptOutKey(platform)) === "1";
   } catch {
     return false;
   }
 }
 
-function setAndroidNativePushOptOut(optOut: boolean): void {
+export function getAndroidNativePushOptOut(): boolean {
+  return getNativePushOptOut("android");
+}
+
+export function getIosNativePushOptOut(): boolean {
+  return getNativePushOptOut("ios");
+}
+
+function setNativePushOptOut(platform: "android" | "ios", optOut: boolean): void {
   if (typeof window === "undefined") return;
   try {
-    if (optOut) window.localStorage.setItem(EID_ANDROID_FCM_OPT_OUT_KEY, "1");
-    else window.localStorage.removeItem(EID_ANDROID_FCM_OPT_OUT_KEY);
+    if (optOut) window.localStorage.setItem(nativeFcmOptOutKey(platform), "1");
+    else window.localStorage.removeItem(nativeFcmOptOutKey(platform));
   } catch {
     /* ignore */
   }
 }
 
-export async function hasAndroidNativePushEnabled(): Promise<boolean> {
-  if (getAndroidNativePushOptOut()) return false;
-  if (getRememberedAndroidFcmToken()) return true;
+export async function hasNativePushEnabled(platform: "android" | "ios"): Promise<boolean> {
+  if (getNativePushOptOut(platform)) return false;
+  if (getRememberedNativeFcmToken(platform)) return true;
 
-  const resp = await fetch("/api/push/fcm/preference", { cache: "no-store" });
+  const resp = await fetch("/api/push/fcm/preference", {
+    cache: "no-store",
+    headers: { "Content-Type": "application/json" },
+  });
   if (!resp.ok) return false;
   const data = (await resp.json().catch(() => ({}))) as { enabled?: boolean };
   return data.enabled === true;
 }
 
-export async function setAndroidNativePushEnabled(enabled: boolean): Promise<void> {
-  setAndroidNativePushOptOut(!enabled);
-  if (enabled && !getRememberedAndroidFcmToken()) {
+export async function hasAndroidNativePushEnabled(): Promise<boolean> {
+  return hasNativePushEnabled("android");
+}
+
+export async function hasIosNativePushEnabled(): Promise<boolean> {
+  return hasNativePushEnabled("ios");
+}
+
+export async function setNativePushEnabled(platform: "android" | "ios", enabled: boolean): Promise<void> {
+  setNativePushOptOut(platform, !enabled);
+  if (enabled && !getRememberedNativeFcmToken(platform)) {
     await window.eidNativeRegisterPush?.().catch(() => false);
   }
-  const token = getRememberedAndroidFcmToken();
+  const token = getRememberedNativeFcmToken(platform);
   const resp = token
     ? await fetch("/api/push/fcm/register", {
         method: "POST",
@@ -175,18 +225,27 @@ export async function setAndroidNativePushEnabled(enabled: boolean): Promise<voi
           device: navigator.userAgent,
           appVersion: EID_NATIVE_APP_VERSION,
           active: enabled,
+          platform,
         }),
       })
     : await fetch("/api/push/fcm/preference", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ active: enabled }),
+        body: JSON.stringify({ active: enabled, platform }),
       });
   const data = (await resp.json().catch(() => ({}))) as { message?: string };
   if (!resp.ok) {
-    setAndroidNativePushOptOut(enabled);
+    setNativePushOptOut(platform, enabled);
     throw new Error(data.message || "Não foi possível alterar as notificações.");
   }
+}
+
+export async function setAndroidNativePushEnabled(enabled: boolean): Promise<void> {
+  return setNativePushEnabled("android", enabled);
+}
+
+export async function setIosNativePushEnabled(enabled: boolean): Promise<void> {
+  return setNativePushEnabled("ios", enabled);
 }
 
 function subscribeWithVapidKey(reg: ServiceWorkerRegistration, vapidPublicKey: string) {
@@ -319,7 +378,7 @@ export async function hasActivePushSubscription() {
 export async function syncExistingPushSubscription(vapidPublicKey = "") {
   if (!("serviceWorker" in navigator)) return false;
   if (!("Notification" in window)) return false;
-  if (isStandaloneAndroidApp()) return false;
+  if (isStandaloneAndroidApp() || isNativeIosApp()) return false;
   if (getPushClientOptOut()) return false;
   if (!vapidPublicKey) return false;
   if (Notification.permission !== "granted") return false;
@@ -333,7 +392,7 @@ export async function syncExistingPushSubscription(vapidPublicKey = "") {
 export async function ensurePushReady(vapidPublicKey: string) {
   if (!("serviceWorker" in navigator)) return false;
   if (!("Notification" in window)) return false;
-  if (isStandaloneAndroidApp()) return false;
+  if (isStandaloneAndroidApp() || isNativeIosApp()) return false;
   if (!vapidPublicKey) return false;
   if (getPushClientOptOut()) return false;
   if (Notification.permission !== "granted") return false;

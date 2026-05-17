@@ -6,7 +6,7 @@ import {
   isNativeAndroidApp,
   isNativeIosApp,
   isStandaloneAndroidApp,
-  setAndroidNativePushEnabled,
+  setNativePushEnabled,
 } from "@/lib/pwa/push-client";
 
 type BeforeInstallPromptEvent = Event & {
@@ -24,15 +24,14 @@ function isAndroidBrowser() {
 export function PwaQuickActions() {
   const [installEvt, setInstallEvt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installReady, setInstallReady] = useState(false);
-  const [showPlayInstall, setShowPlayInstall] = useState(false);
   const [pushStatus, setPushStatus] = useState<"idle" | "enabling" | "enabled" | "error">("idle");
   const [pushMsg, setPushMsg] = useState<string | null>(null);
 
   const vapidPublicKey = useMemo(() => String(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").trim(), []);
+  const showPlayInstall = isAndroidBrowser();
 
   useEffect(() => {
     if (isNativeAndroidApp()) return;
-    setShowPlayInstall(isAndroidBrowser());
     const onBeforeInstallPrompt = (ev: Event) => {
       ev.preventDefault();
       if (isAndroidBrowser()) return;
@@ -62,8 +61,8 @@ export function PwaQuickActions() {
         setPushMsg("Seu navegador não suporta notificações push.");
         return;
       }
-      if (isStandaloneAndroidApp()) {
-        await setAndroidNativePushEnabled(true);
+      if (isStandaloneAndroidApp() || isNativeIosApp()) {
+        await setNativePushEnabled(isNativeIosApp() ? "ios" : "android", true);
         setPushStatus("enabled");
         setPushMsg("Notificações ativadas.");
         return;
@@ -107,8 +106,7 @@ export function PwaQuickActions() {
           Instalar
         </button>
       )}
-      {isNativeIosApp() ? null : (
-        <button
+      <button
           type="button"
           onClick={onEnablePush}
           disabled={pushStatus === "enabling" || pushStatus === "enabled"}
@@ -120,7 +118,6 @@ export function PwaQuickActions() {
         >
           {pushStatus === "enabling" ? "Ativando..." : pushStatus === "enabled" ? "Push ativo" : "Ativar push"}
         </button>
-      )}
       {pushMsg ? <p className={`basis-full text-[11px] ${pushStatus === "error" ? "text-red-300" : "text-eid-primary-300"}`}>{pushMsg}</p> : null}
     </div>
   );
