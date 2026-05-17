@@ -7,6 +7,7 @@ import {
   getPushClientOptOut,
   hasAndroidNativePushEnabled,
   hasActivePushSubscription,
+  isNativeIosApp,
   isStandaloneAndroidApp,
   setAndroidNativePushEnabled,
 } from "@/lib/pwa/push-client";
@@ -17,12 +18,20 @@ export function PushToggleCard({ defaultEnabled = true }: { defaultEnabled?: boo
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [androidApp, setAndroidApp] = useState(false);
+  const [iosApp, setIosApp] = useState(false);
 
   useEffect(() => {
     let active = true;
     async function bootstrap() {
       const isAndroidApp = isStandaloneAndroidApp();
+      const isIosApp = isNativeIosApp();
       setAndroidApp(isAndroidApp);
+      setIosApp(isIosApp);
+      if (isIosApp) {
+        setEnabled(false);
+        setMsg("As notificações do iPhone serão liberadas em uma próxima versão.");
+        return;
+      }
       if (isAndroidApp) {
         const nativeEnabled = await hasAndroidNativePushEnabled();
         if (!active) return;
@@ -82,6 +91,8 @@ export function PushToggleCard({ defaultEnabled = true }: { defaultEnabled?: boo
       setBusy(false);
     }
   }
+
+  if (iosApp) return null;
 
   return (
     <section className="eid-surface-panel rounded-2xl px-3 py-2.5">

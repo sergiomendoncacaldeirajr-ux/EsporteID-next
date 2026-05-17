@@ -90,6 +90,11 @@ export function isNativeAndroidApp() {
   return /EsporteIDAndroidApp\//i.test(navigator.userAgent || "");
 }
 
+export function isNativeIosApp() {
+  if (typeof navigator === "undefined") return false;
+  return Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
+}
+
 export function rememberAndroidFcmToken(token: string): void {
   if (typeof window === "undefined") return;
   const cleanToken = token.trim();

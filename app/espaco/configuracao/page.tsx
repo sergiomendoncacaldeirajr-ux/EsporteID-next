@@ -7,8 +7,10 @@ import {
   atualizarFormasPagamentoAction,
   atualizarPlanoSocioEspacoAction,
   atualizarUnidadeEspacoAction,
+  convidarEspacoStaffOperacionalSubmit,
   criarPlanoSocioEspacoAction,
   criarUnidadeEspacoAction,
+  revogarEspacoStaffOperacionalAction,
 } from "@/app/espaco/actions";
 import { FORMA_PAGAMENTO_LABEL } from "@/lib/espacos/espaco-constants";
 import { EspacoConfigForm } from "@/components/espaco/espaco-config-form";
@@ -178,12 +180,20 @@ function SettingsSection({
 export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const espacoId = Number(sp.espaco ?? 0) || null;
-  const { supabase, selectedSpace } = await getEspacoSelecionado({
+  const { supabase, selectedSpace, staffAccess } = await getEspacoSelecionado({
     nextPath: "/espaco/configuracao",
     espacoId,
   });
 
-  const [{ data: unidades }, { data: planos }, { data: horariosOperadores }, unidadeGate] = await Promise.all([
+  if (staffAccess && !staffAccess.canEditConfiguration) {
+    return (
+      <div className="rounded-2xl border border-amber-500/25 bg-amber-500/10 p-5 text-sm text-amber-100">
+        Somente o dono do espaço pode alterar as configurações estruturais.
+      </div>
+    );
+  }
+
+  const [{ data: unidades }, { data: planos }, { data: horariosOperadores }, { data: staffOperacional }, unidadeGate] = await Promise.all([
     supabase
       .from("espaco_unidades")
       .select(
@@ -203,6 +213,12 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
       .or("liberar_professor.eq.true,liberar_torneio.eq.true,liberar_para_usuario_id.not.is.null")
       .order("dia_semana", { ascending: true })
       .order("hora_inicio", { ascending: true }),
+    supabase
+      .from("espaco_staff")
+      .select("id, usuario_id, status, observacoes, profiles(nome, username)")
+      .eq("espaco_generico_id", selectedSpace.id)
+      .eq("papel", "operacao_reservas")
+      .order("id", { ascending: false }),
     getPaaSUnidadeGateInfo(supabase, selectedSpace.id),
   ]);
 
@@ -499,15 +515,61 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
 
       <SettingsSection
         Icon={ShieldCheck}
-        title="Professores e organizadores"
-        description="Libere perfis específicos para aulas ou torneios com quadra, dia, horário e regras próprias."
+        title="Professores, organizadores e equipe operacional"
+        description="Gerencie quem dá aula, quem usa horários de torneio e quem só acompanha reservas e pagamentos do dia."
         meta={`${permissoesOperadores.filter((item) => item.ativo).length} permissão(ões) ativa(s)`}
       >
-        <EspacoOperadoresPermissoes
-          espacoId={selectedSpace.id}
-          unidades={(unidades ?? []).map((unidade) => ({ id: Number(unidade.id), nome: unidade.nome ?? null }))}
-          permissoes={permissoesOperadores}
-        />
+        <div className="space-y-6">
+          <EspacoOperadoresPermissoes
+            espacoId={selectedSpace.id}
+            unidades={(unidades ?? []).map((unidade) => ({ id: Number(unidade.id), nome: unidade.nome ?? null }))}
+            permissoes={permissoesOperadores}
+          />
+
+          <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-4">
+            <p className="text-sm font-black text-eid-fg">Colaborador operacional</p>
+            <p className="mt-1 text-xs leading-relaxed text-eid-text-secondary">
+              Esse perfil acompanha reservas, pagamentos e conferência do dia, mas não altera as configurações estruturais do espaço.
+            </p>
+            <form action={convidarEspacoStaffOperacionalSubmit} className="mt-4 space-y-3">
+              <input type="hidden" name="espaco_id" value={selectedSpace.id} />
+              <input name="query" placeholder="Buscar por nome ou @username" className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm" />
+              <textarea name="observacoes" rows={2} placeholder="Observações internas sobre a função desse colaborador" className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm" />
+              <button className="rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/12 px-4 py-3 text-sm font-bold text-eid-primary-200">
+                Adicionar colaborador operacional
+              </button>
+            </form>
+            <div className="mt-4 space-y-2">
+              {(staffOperacional ?? []).length ? (
+                (staffOperacional ?? []).map((staff) => {
+                  const profile = Array.isArray(staff.profiles) ? staff.profiles[0] : staff.profiles;
+                  return (
+                    <div key={staff.id} className="flex items-start justify-between gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/70 p-3">
+                      <div>
+                        <p className="text-sm font-bold text-eid-fg">{profile?.nome ?? profile?.username ?? "Colaborador"}</p>
+                        <p className="mt-1 text-[11px] text-eid-text-secondary">
+                          {staff.status} · operação de reservas e pagamentos
+                        </p>
+                        {staff.observacoes ? <p className="mt-1 text-[11px] text-eid-text-secondary">{staff.observacoes}</p> : null}
+                      </div>
+                      {staff.status === "ativo" ? (
+                        <form action={revogarEspacoStaffOperacionalAction}>
+                          <input type="hidden" name="espaco_id" value={selectedSpace.id} />
+                          <input type="hidden" name="staff_id" value={staff.id} />
+                          <button className="rounded-xl border border-red-500/35 px-3 py-2 text-[11px] font-bold text-red-300">
+                            Revogar
+                          </button>
+                        </form>
+                      ) : null}
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-sm text-eid-text-secondary">Nenhum colaborador operacional cadastrado ainda.</p>
+              )}
+            </div>
+          </div>
+        </div>
       </SettingsSection>
 
       {/* Formas de pagamento — só para espaços pagos */}

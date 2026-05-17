@@ -59,7 +59,7 @@ type Props = {
   mensagem?: string | null;
   totalConfrontos: number;
   saldoResumo?: string | null;
-  ultimosConfrontos: ResumoHistoricoItem[];
+  ultimosConfrontos: (ResumoHistoricoItem & { swapSets?: boolean })[];
   children: ReactNode;
   asListItem?: boolean;
   rowClassName?: string;
@@ -100,6 +100,7 @@ export type ResultadoSharePayload = {
   backgroundFilter: "normal" | "dim" | "blur";
   showMeta: boolean;
   showBrand: boolean;
+  swapSets?: boolean;
 };
 
 const RESULT_SHARE_STORAGE_KEY = "eid:result-share-editor:v1";
@@ -268,18 +269,47 @@ function sportShareTheme(sportLabel: string | null) {
   return "ink";
 }
 
-function shareScoreSummary(payload: Pick<ResultadoSharePayload, "placar" | "mensagem">) {
+function shouldSwapShareSets(payload: Pick<ResultadoSharePayload, "placar" | "mensagem" | "swapSets">) {
+  const score = parseScorePayloadFromPartidaMensagem(payload.mensagem);
+  if (score?.type !== "sets" || !Array.isArray(score.sets) || score.sets.length === 0) {
+    return Boolean(payload.swapSets);
+  }
+
+  let winsA = 0;
+  let winsB = 0;
+  for (const set of score.sets) {
+    const a = Number(set.a ?? 0) || 0;
+    const b = Number(set.b ?? 0) || 0;
+    if (a > b) winsA += 1;
+    if (b > a) winsB += 1;
+  }
+
+  const placar = cleanShareText(payload.placar, "-");
+  const match = placar.match(/^(\d+)\s*[x×]\s*(\d+)$/i);
+  if (!match) return Boolean(payload.swapSets);
+
+  const shownA = Number(match[1] ?? 0) || 0;
+  const shownB = Number(match[2] ?? 0) || 0;
+  if (shownA === winsA && shownB === winsB) return false;
+  if (shownA === winsB && shownB === winsA) return true;
+  return Boolean(payload.swapSets);
+}
+
+function shareScoreSummary(payload: Pick<ResultadoSharePayload, "placar" | "mensagem" | "swapSets">) {
   const score = parseScorePayloadFromPartidaMensagem(payload.mensagem);
   const fallback = cleanShareText(payload.placar, "-");
   if (score?.type === "sets" && Array.isArray(score.sets) && score.sets.length > 0) {
+    const swapSets = shouldSwapShareSets(payload);
     let winsA = 0;
     let winsB = 0;
     const sets = score.sets.map((set) => {
-      const a = Number(set.a) || 0;
-      const b = Number(set.b) || 0;
+      const a = Number(swapSets ? set.b : set.a) || 0;
+      const b = Number(swapSets ? set.a : set.b) || 0;
+      const tiebreakA = Number(swapSets ? set.tiebreakB : set.tiebreakA) || 0;
+      const tiebreakB = Number(swapSets ? set.tiebreakA : set.tiebreakB) || 0;
       if (a > b) winsA += 1;
       if (b > a) winsB += 1;
-      const tie = set.tiebreakA || set.tiebreakB ? ` (${set.tiebreakA ?? 0}-${set.tiebreakB ?? 0})` : "";
+      const tie = tiebreakA || tiebreakB ? ` (${tiebreakA}-${tiebreakB})` : "";
       return `${a}-${b}${tie}`;
     });
     return {
@@ -326,15 +356,16 @@ function shareScoreSummary(payload: Pick<ResultadoSharePayload, "placar" | "mens
   return { headline: fallback, detail: null as string | null, lines: [] as string[], extra: null as string | null };
 }
 
-function getShareSetRows(payload: Pick<ResultadoSharePayload, "mensagem">) {
+function getShareSetRows(payload: Pick<ResultadoSharePayload, "placar" | "mensagem" | "swapSets">) {
   const score = parseScorePayloadFromPartidaMensagem(payload.mensagem);
   if (score?.type !== "sets" || !Array.isArray(score.sets)) return [];
+  const swapSets = shouldSwapShareSets(payload);
   return score.sets
     .map((set) => {
-      const a = Number(set.a ?? 0) || 0;
-      const b = Number(set.b ?? 0) || 0;
-      const tiebreakA = Number(set.tiebreakA ?? 0) || 0;
-      const tiebreakB = Number(set.tiebreakB ?? 0) || 0;
+      const a = Number(swapSets ? set.b ?? 0 : set.a ?? 0) || 0;
+      const b = Number(swapSets ? set.a ?? 0 : set.b ?? 0) || 0;
+      const tiebreakA = Number(swapSets ? set.tiebreakB ?? 0 : set.tiebreakA ?? 0) || 0;
+      const tiebreakB = Number(swapSets ? set.tiebreakA ?? 0 : set.tiebreakB ?? 0) || 0;
       return { a, b, tiebreakA, tiebreakB, hasTiebreak: tiebreakA > 0 || tiebreakB > 0 };
     })
     .filter((set) => set.a > 0 || set.b > 0 || set.hasTiebreak)
@@ -1310,10 +1341,8 @@ export function EidConfrontoResumoModal({
   const [shareBackgroundFilter, setShareBackgroundFilter] = useState<ResultadoSharePayload["backgroundFilter"]>("dim");
   const [shareShowMeta, setShareShowMeta] = useState(true);
   const [shareShowBrand, setShareShowBrand] = useState(true);
-  const [sharePanelOpen, setSharePanelOpen] = useState(false);
-  useEffect(() => {
-    if (open && defaultSharePanelOpen) setSharePanelOpen(true);
-  }, [open, defaultSharePanelOpen]);
+  const [sharePanelOpenLocal, setSharePanelOpenLocal] = useState(() => Boolean(defaultSharePanelOpen));
+  const sharePanelOpen = open ? sharePanelOpenLocal : false;
   const sharePreviewRef = useRef<HTMLDivElement | null>(null);
   const sharePreviewCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const sharePreviewRenderFrameRef = useRef<number | null>(null);
@@ -1387,6 +1416,7 @@ export function EidConfrontoResumoModal({
       backgroundFilter: shareBackgroundFilter,
       showMeta: shareShowMeta,
       showBrand: shareShowBrand,
+      swapSets,
     }),
     [
       dataHora,
@@ -1408,6 +1438,7 @@ export function EidConfrontoResumoModal({
       shareShowBrand,
       shareShowMeta,
       sportLabel,
+      swapSets,
     ],
   );
   useEffect(() => {
@@ -1819,7 +1850,7 @@ export function EidConfrontoResumoModal({
                 <div className="mt-4">
                   <button
                     type="button"
-                    onClick={() => setSharePanelOpen((current) => !current)}
+                    onClick={() => setSharePanelOpenLocal((current) => !current)}
                     className="inline-flex min-h-[2.45rem] w-full items-center justify-center gap-2 rounded-xl border border-eid-action-500/38 bg-eid-action-500/14 px-3 py-2 text-[11px] font-black text-eid-action-100 shadow-[0_10px_24px_-20px_rgba(249,115,22,0.78)] transition hover:border-eid-action-400/55 hover:bg-eid-action-500/20 active:scale-[0.99]"
                     aria-expanded={sharePanelOpen}
                   >

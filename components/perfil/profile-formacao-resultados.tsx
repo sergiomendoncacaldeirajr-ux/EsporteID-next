@@ -196,6 +196,7 @@ export function ProfileFormacaoResultados({
               }).format(new Date(hp.data_partida ?? hp.data_resultado ?? hp.data_registro ?? Date.now()));
               const [pa, pb] = h.placar.split(/[x×]/i).map((x) => Number(String(x).trim()));
               const placar = Number.isFinite(pa) && Number.isFinite(pb) ? `${pa} × ${pb}` : h.placar.replace("x", " × ");
+              const selfIsTime1 = hp.time1_id != null ? Number(hp.time1_id) === tSelf : false;
               return {
                 id: h.id,
                 dataHora,
@@ -206,6 +207,7 @@ export function ProfileFormacaoResultados({
                 confronto: `${selfLabel} vs ${item.adversarioLabel}`,
                 mensagem: hp.mensagem ?? null,
                 sportLabel: esporteLabel ?? null,
+                swapSets: !selfIsTime1,
               };
             });
             const tSelf =
@@ -282,6 +284,7 @@ export function ProfileFormacaoResultados({
               placarBase={item.placar}
               mensagem={item.mensagem ?? null}
               sportLabel={esporteLabel ?? null}
+              swapSets={false}
               totalConfrontos={confrontoHistorico.length}
               ultimosConfrontos={confrontoHistorico}
               asListItem

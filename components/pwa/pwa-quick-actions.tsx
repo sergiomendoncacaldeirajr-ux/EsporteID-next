@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   enablePushNotifications,
   isNativeAndroidApp,
+  isNativeIosApp,
   isStandaloneAndroidApp,
   setAndroidNativePushEnabled,
 } from "@/lib/pwa/push-client";
@@ -106,18 +107,20 @@ export function PwaQuickActions() {
           Instalar
         </button>
       )}
-      <button
-        type="button"
-        onClick={onEnablePush}
-        disabled={pushStatus === "enabling" || pushStatus === "enabled"}
-        className={`rounded-lg px-3 py-1.5 text-[11px] font-bold ${
-          pushStatus === "enabled"
-            ? "border border-eid-action-500/35 bg-eid-action-500/10 text-eid-action-300"
-            : "border border-[color:var(--eid-border-subtle)] text-eid-fg"
-        }`}
-      >
-        {pushStatus === "enabling" ? "Ativando..." : pushStatus === "enabled" ? "Push ativo" : "Ativar push"}
-      </button>
+      {isNativeIosApp() ? null : (
+        <button
+          type="button"
+          onClick={onEnablePush}
+          disabled={pushStatus === "enabling" || pushStatus === "enabled"}
+          className={`rounded-lg px-3 py-1.5 text-[11px] font-bold ${
+            pushStatus === "enabled"
+              ? "border border-eid-action-500/35 bg-eid-action-500/10 text-eid-action-300"
+              : "border border-[color:var(--eid-border-subtle)] text-eid-fg"
+          }`}
+        >
+          {pushStatus === "enabling" ? "Ativando..." : pushStatus === "enabled" ? "Push ativo" : "Ativar push"}
+        </button>
+      )}
       {pushMsg ? <p className={`basis-full text-[11px] ${pushStatus === "error" ? "text-red-300" : "text-eid-primary-300"}`}>{pushMsg}</p> : null}
     </div>
   );

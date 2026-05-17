@@ -21,6 +21,7 @@ import {
   espacoUsaCatalogoPaaS,
   resolverTipoOperacaoEspaco,
 } from "@/lib/espacos/tipo-operacao";
+import { getEspacoStaffAccess } from "@/lib/espacos/staff";
 import {
   calcularFinanceiroEspaco,
 } from "@/lib/espacos/financeiro";
@@ -94,6 +95,34 @@ async function requireEspacoManager(espacoId: number) {
       espaco.responsavel_usuario_id === user.id);
   if (!canManage) throw new Error("Sem permissão para gerenciar este espaço.");
   return { supabase, user, espaco };
+}
+
+async function requireEspacoPermission(
+  espacoId: number,
+  permission: "agenda" | "pagamentos" | "reservas" | "configuracao" | "lanchonete.ver" | "lanchonete.vender" | "lanchonete.estoque"
+) {
+  const { supabase, user } = await requireUser();
+  const { data: espaco, error } = await supabase
+    .from("espacos_genericos")
+    .select("id, nome_publico, responsavel_usuario_id, criado_por_usuario_id, slug")
+    .eq("id", espacoId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!espaco) throw new Error("Espaço não encontrado.");
+
+  const access = await getEspacoStaffAccess(supabase, espacoId, user.id);
+  const allowed =
+    access.isOwner ||
+    (permission === "agenda" && access.canViewAgenda) ||
+    (permission === "pagamentos" && access.canViewPayments) ||
+    (permission === "reservas" && access.canCheckReservations) ||
+    (permission === "configuracao" && access.canEditConfiguration) ||
+    (permission === "lanchonete.ver" && access.canViewLanchonete) ||
+    (permission === "lanchonete.vender" && access.canSellLanchonete) ||
+    (permission === "lanchonete.estoque" && access.canManageLanchoneteStock);
+
+  if (!allowed) throw new Error("Sem permissão para acessar este módulo do espaço.");
+  return { supabase, user, espaco, access };
 }
 
 async function hasUserRole(
@@ -1052,6 +1081,511 @@ export async function atualizarPermissaoOperadorEspacoAction(formData: FormData)
   revalidatePath("/espaco");
 }
 
+export async function convidarEspacoStaffOperacionalAction(
+  _prev: State | undefined,
+  formData: FormData
+): Promise<State> {
+  try {
+    const espacoId = Number(formData.get("espaco_id") ?? 0);
+    const { supabase, user } = await requireEspacoManager(espacoId);
+    const query = text(formData, "query").replace(/^@/, "").toLowerCase();
+    if (!query || query.length < 3) {
+      return { ok: false, message: "Informe ao menos 3 caracteres para localizar o colaborador." };
+    }
+
+    const admin = createServiceRoleClient();
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("id, nome, username")
+      .or(`username.eq.${query},nome.ilike.%${query}%`)
+      .limit(1)
+      .maybeSingle();
+    if (!profile?.id) {
+      return { ok: false, message: "Perfil não encontrado para convidar como colaborador." };
+    }
+
+    const { error } = await supabase.from("espaco_staff").upsert(
+      {
+        espaco_generico_id: espacoId,
+        usuario_id: profile.id,
+        convite_email: null,
+        papel: "operacao_reservas",
+        status: "ativo",
+        pode_ver_agenda: true,
+        pode_ver_pagamentos: true,
+        pode_conferir_reservas: true,
+        pode_editar_configuracao: false,
+        convidado_por_usuario_id: user.id,
+        aceito_em: new Date().toISOString(),
+        observacoes: text(formData, "observacoes") || null,
+      },
+      { onConflict: "espaco_generico_id,usuario_id,papel" }
+    );
+    if (error) return { ok: false, message: error.message };
+
+    revalidatePath("/espaco/configuracao");
+    revalidatePath("/espaco");
+    return { ok: true, message: "Colaborador operacional adicionado com sucesso." };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Falha ao adicionar colaborador operacional.",
+    };
+  }
+}
+
+export async function convidarEspacoStaffOperacionalSubmit(formData: FormData): Promise<void> {
+  const result = await convidarEspacoStaffOperacionalAction(undefined, formData);
+  if (!result.ok) {
+    throw new Error(result.message);
+  }
+}
+
+export async function revogarEspacoStaffOperacionalAction(formData: FormData) {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const staffId = Number(formData.get("staff_id") ?? 0);
+  if (!espacoId || !staffId) throw new Error("Colaborador inválido.");
+  const { supabase } = await requireEspacoManager(espacoId);
+  const { error } = await supabase
+    .from("espaco_staff")
+    .update({ status: "revogado", revogado_em: new Date().toISOString() })
+    .eq("id", staffId)
+    .eq("espaco_generico_id", espacoId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/espaco/configuracao");
+  revalidatePath("/espaco");
+}
+
+export async function atualizarPermissoesEspacoStaffAction(formData: FormData): Promise<void> {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const staffId = Number(formData.get("staff_id") ?? 0);
+  if (!espacoId || !staffId) throw new Error("Colaborador inválido.");
+  const { supabase } = await requireEspacoManager(espacoId);
+  const permissoes = {
+    agenda: { ver: checkbox(formData, "agenda_ver") },
+    reservas: { conferir: checkbox(formData, "reservas_conferir") },
+    pagamentos: { ver: checkbox(formData, "pagamentos_ver") },
+    lanchonete: {
+      ver: checkbox(formData, "lanchonete_ver"),
+      vender: checkbox(formData, "lanchonete_vender"),
+      estoque: checkbox(formData, "lanchonete_estoque"),
+    },
+    configuracao: { editar: checkbox(formData, "configuracao_editar") },
+  };
+  const { error } = await supabase
+    .from("espaco_staff")
+    .update({
+      pode_ver_agenda: permissoes.agenda.ver,
+      pode_ver_pagamentos: permissoes.pagamentos.ver,
+      pode_conferir_reservas: permissoes.reservas.conferir,
+      pode_editar_configuracao: permissoes.configuracao.editar,
+      permissoes_json: permissoes,
+      atualizado_em: new Date().toISOString(),
+    })
+    .eq("id", staffId)
+    .eq("espaco_generico_id", espacoId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/espaco/configuracao");
+  revalidatePath("/espaco/lanchonete");
+}
+
+export async function criarProdutoLanchoneteEspacoAction(formData: FormData): Promise<void> {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const { supabase, user } = await requireEspacoPermission(espacoId, "lanchonete.estoque");
+  const nome = text(formData, "nome");
+  if (nome.length < 2) throw new Error("Informe o nome do produto.");
+  const { error } = await supabase.from("espaco_produtos").insert({
+    espaco_generico_id: espacoId,
+    nome,
+    descricao: text(formData, "descricao") || null,
+    categoria: text(formData, "categoria") || "geral",
+    preco_centavos: Math.max(0, dinheiroCentavos(formData, "preco_reais")),
+    foto_url: text(formData, "foto_url") || null,
+    ativo: checkbox(formData, "ativo") || true,
+    controla_estoque: checkbox(formData, "controla_estoque"),
+    estoque_atual: Math.max(0, Number(formData.get("estoque_atual") ?? 0) || 0),
+    estoque_minimo: Math.max(0, Number(formData.get("estoque_minimo") ?? 0) || 0),
+    ordem: Math.max(0, Number(formData.get("ordem") ?? 0) || 0),
+  });
+  if (error) throw new Error(error.message);
+  await supabase.rpc("espaco_criar_auditoria", {
+    p_espaco_id: espacoId,
+    p_entidade_tipo: "espaco_produto",
+    p_entidade_id: null,
+    p_acao: "produto_lanchonete_criado",
+    p_payload: { nome },
+    p_autor_usuario_id: user.id,
+  });
+  revalidatePath("/espaco/lanchonete");
+}
+
+export async function atualizarProdutoLanchoneteEspacoAction(formData: FormData): Promise<void> {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const produtoId = Number(formData.get("produto_id") ?? 0);
+  if (!espacoId || !produtoId) throw new Error("Produto inválido.");
+  const { supabase, user } = await requireEspacoPermission(espacoId, "lanchonete.estoque");
+  const nome = text(formData, "nome");
+  if (nome.length < 2) throw new Error("Informe o nome do produto.");
+  const { error } = await supabase
+    .from("espaco_produtos")
+    .update({
+      nome,
+      descricao: text(formData, "descricao") || null,
+      categoria: text(formData, "categoria") || "geral",
+      preco_centavos: Math.max(0, dinheiroCentavos(formData, "preco_reais")),
+      foto_url: text(formData, "foto_url") || null,
+      ativo: checkbox(formData, "ativo"),
+      controla_estoque: checkbox(formData, "controla_estoque"),
+      estoque_minimo: Math.max(0, Number(formData.get("estoque_minimo") ?? 0) || 0),
+      ordem: Math.max(0, Number(formData.get("ordem") ?? 0) || 0),
+      atualizado_em: new Date().toISOString(),
+    })
+    .eq("id", produtoId)
+    .eq("espaco_generico_id", espacoId);
+  if (error) throw new Error(error.message);
+  await supabase.rpc("espaco_criar_auditoria", {
+    p_espaco_id: espacoId,
+    p_entidade_tipo: "espaco_produto",
+    p_entidade_id: produtoId,
+    p_acao: "produto_lanchonete_atualizado",
+    p_payload: { nome },
+    p_autor_usuario_id: user.id,
+  });
+  revalidatePath("/espaco/lanchonete");
+}
+
+export async function registrarMovimentoEstoqueLanchoneteEspacoAction(formData: FormData): Promise<void> {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const produtoId = Number(formData.get("produto_id") ?? 0);
+  if (!espacoId || !produtoId) throw new Error("Produto inválido.");
+  const { supabase, user } = await requireEspacoPermission(espacoId, "lanchonete.estoque");
+  const tipo = text(formData, "tipo");
+  const quantidade = Number(formData.get("quantidade") ?? 0) || 0;
+  if (!new Set(["entrada", "baixa_manual", "ajuste"]).has(tipo) || quantidade <= 0) {
+    throw new Error("Movimento de estoque inválido.");
+  }
+  const { data: produto, error: produtoErr } = await supabase
+    .from("espaco_produtos")
+    .select("id, estoque_atual")
+    .eq("id", produtoId)
+    .eq("espaco_generico_id", espacoId)
+    .maybeSingle();
+  if (produtoErr) throw new Error(produtoErr.message);
+  if (!produto) throw new Error("Produto não encontrado.");
+  const atual = Number(produto.estoque_atual ?? 0);
+  const novoEstoque = tipo === "entrada" ? atual + quantidade : Math.max(0, atual - quantidade);
+  const { error } = await supabase.from("espaco_estoque_movimentos").insert({
+    espaco_produto_id: produtoId,
+    tipo,
+    quantidade,
+    observacoes: text(formData, "observacoes") || null,
+    responsavel_usuario_id: user.id,
+  });
+  if (error) throw new Error(error.message);
+  const { error: updateErr } = await supabase
+    .from("espaco_produtos")
+    .update({ estoque_atual: novoEstoque, atualizado_em: new Date().toISOString() })
+    .eq("id", produtoId)
+    .eq("espaco_generico_id", espacoId);
+  if (updateErr) throw new Error(updateErr.message);
+  revalidatePath("/espaco/lanchonete");
+}
+
+export async function criarPedidoPublicoLanchoneteEspacoAction(
+  _prev: State | undefined,
+  formData: FormData
+): Promise<State> {
+  try {
+    const { supabase, user } = await requireUser();
+    const admin = createServiceRoleClient();
+    const espacoId = Number(formData.get("espaco_id") ?? 0);
+    const produtoId = Number(formData.get("produto_id") ?? 0);
+    const quantidade = Math.max(1, Number(formData.get("quantidade") ?? 1) || 1);
+    const formaRaw = text(formData, "forma_pagamento") || "pix";
+    if (!espacoId || !produtoId) {
+      return { ok: false, message: "Produto inválido para o pedido." };
+    }
+
+    const [{ data: produto, error: produtoErr }, { data: espaco, error: espacoErr }, { data: cfg }] = await Promise.all([
+      supabase
+        .from("espaco_produtos")
+        .select("id, nome, preco_centavos, ativo, controla_estoque, estoque_atual")
+        .eq("id", produtoId)
+        .eq("espaco_generico_id", espacoId)
+        .maybeSingle(),
+      supabase
+        .from("espacos_genericos")
+        .select("id, nome_publico, responsavel_usuario_id, criado_por_usuario_id, formas_pagamento_aceitas")
+        .eq("id", espacoId)
+        .maybeSingle(),
+      supabase
+        .from("ei_financeiro_config")
+        .select("asaas_taxa_percentual, espaco_taxa_fixa, espaco_taxa_fixa_promo, espaco_plataforma_sobre_taxa_gateway, espaco_plataforma_sobre_taxa_gateway_promo, espaco_reserva_comissao_percentual, espaco_promocao_ativa, espaco_promocao_ate")
+        .eq("id", 1)
+        .maybeSingle(),
+    ]);
+    if (produtoErr || !produto) {
+      return { ok: false, message: produtoErr?.message ?? "Produto não encontrado." };
+    }
+    if (espacoErr || !espaco) {
+      return { ok: false, message: espacoErr?.message ?? "Espaço não encontrado." };
+    }
+    if (!produto.ativo) {
+      return { ok: false, message: "Este item não está disponível no momento." };
+    }
+    if (Boolean(produto.controla_estoque) && Number(produto.estoque_atual ?? 0) < quantidade) {
+      return { ok: false, message: "Estoque insuficiente para este item." };
+    }
+
+    const valorTotalCentavos = quantidade * Math.max(0, Number(produto.preco_centavos ?? 0));
+    const { data: pedido, error: pedidoErr } = await supabase
+      .from("espaco_pedidos")
+      .insert({
+        espaco_generico_id: espacoId,
+        usuario_id: user.id,
+        status: "pendente",
+        payment_status: valorTotalCentavos > 0 ? "pending" : "isento",
+        origem: "publico",
+        valor_total_centavos: valorTotalCentavos,
+        observacoes: text(formData, "observacoes") || null,
+      })
+      .select("id")
+      .single();
+    if (pedidoErr || !pedido) {
+      return { ok: false, message: pedidoErr?.message ?? "Falha ao criar o pedido." };
+    }
+
+    const { error: itemErr } = await supabase.from("espaco_pedido_itens").insert({
+      espaco_pedido_id: pedido.id,
+      espaco_produto_id: produtoId,
+      quantidade,
+      preco_unitario_centavos: Math.max(0, Number(produto.preco_centavos ?? 0)),
+      subtotal_centavos: valorTotalCentavos,
+    });
+    if (itemErr) {
+      return { ok: false, message: itemErr.message };
+    }
+
+    const formasAceitas = Array.isArray((espaco as Record<string, unknown>).formas_pagamento_aceitas)
+      ? (espaco as Record<string, unknown>).formas_pagamento_aceitas as string[]
+      : ["pix", "cartao"];
+    const formaValidada = ["pix", "cartao"].includes(formaRaw) ? formaRaw : "pix";
+    if (!formasAceitas.includes(formaValidada)) {
+      return { ok: false, message: "Forma de pagamento não disponível para este espaço." };
+    }
+
+    if (valorTotalCentavos > 0) {
+      const customerId = await ensureProfileAsaasCustomer(user.id);
+      const calculo = calcularFinanceiroEspaco({
+        valorCentavos: valorTotalCentavos,
+        config: cfg,
+        comissaoPercentualPlataforma: Number((cfg as Record<string, unknown> | null)?.espaco_reserva_comissao_percentual ?? 0),
+      });
+      const walletRecebedor = await buscarWalletRecebedorEspaco(admin, espacoId, espaco.responsavel_usuario_id ?? espaco.criado_por_usuario_id);
+      const split = asaasSplitDoEspaco(walletRecebedor, calculo.liquidoEspacoCentavos);
+      if (!split) {
+        return { ok: false, message: "Configure a conta Asaas de recebimentos do espaço antes de vender itens da lanchonete." };
+      }
+
+      const billingType = formaValidada === "cartao" ? "CREDIT_CARD" : "PIX";
+      const paymentPayload: Record<string, unknown> = {
+        customer: customerId,
+        billingType,
+        value: valorTotalCentavos / 100,
+        dueDate: new Date().toISOString().slice(0, 10),
+        description: `Lanchonete ${espaco.nome_publico} · ${produto.nome}`,
+        externalReference: `espaco_pedido:${pedido.id}`,
+        split,
+      };
+      if (formaValidada === "cartao") {
+        const card = readAsaasCardForm(formData, user.email);
+        paymentPayload.creditCard = {
+          holderName: card.holderName,
+          number: card.cardNumber,
+          expiryMonth: card.expiryMonth,
+          expiryYear: card.expiryYear,
+          ccv: card.ccv,
+        };
+        paymentPayload.creditCardHolderInfo = {
+          name: card.holderName,
+          email: card.email,
+          cpfCnpj: card.cpfCnpj,
+          postalCode: card.postalCode,
+          addressNumber: card.addressNumber,
+          phone: card.phone,
+        };
+      }
+      const payment = await createAsaasPayment(paymentPayload);
+      let pixPayload: string | null = null;
+      let pixEncodedImage: string | null = null;
+      let pixExpirationDate: string | null = null;
+      if (formaValidada === "pix") {
+        const pixQr = await getAsaasPaymentPixQrCode(payment.id);
+        pixPayload = pixQr.payload ?? null;
+        pixEncodedImage = pixQr.encodedImage ?? null;
+        pixExpirationDate = pixQr.expirationDate ?? null;
+      }
+
+      await admin.from("espaco_transacoes").insert({
+        espaco_generico_id: espacoId,
+        usuario_id: user.id,
+        tipo: "venda_lanchonete",
+        billing_type: formaValidada,
+        asaas_billing_type: billingType,
+        status: "pending",
+        valor_bruto_centavos: calculo.brutoCentavos,
+        taxa_gateway_centavos: calculo.taxaGatewayCentavos,
+        comissao_plataforma_centavos: calculo.comissaoPlataformaCentavos,
+        valor_liquido_espaco_centavos: calculo.liquidoEspacoCentavos,
+        asaas_customer_id: customerId,
+        asaas_payment_id: payment.id,
+        asaas_charge_url: payment.invoiceUrl ?? payment.bankSlipUrl ?? null,
+        external_reference: `espaco_pedido:${pedido.id}`,
+        vencimento_em: new Date().toISOString().slice(0, 10),
+        detalhes_json: { pedido_id: pedido.id, produto_id: produtoId, quantidade },
+      });
+      await supabase
+        .from("espaco_pedidos")
+        .update({ asaas_payment_id: payment.id, atualizado_em: new Date().toISOString() })
+        .eq("id", pedido.id)
+        .eq("espaco_generico_id", espacoId);
+
+      revalidatePath(`/espaco/${espacoId}`);
+      return {
+        ok: true,
+        message: formaValidada === "pix"
+          ? `Pedido enviado para ${produto.nome}. Finalize o PIX abaixo para confirmar.`
+          : `Pedido enviado para ${produto.nome}. O pagamento por cartão foi iniciado dentro da plataforma.`,
+        payment: {
+          method: formaValidada === "cartao" ? "cartao" : "pix",
+          status: payment.status ?? null,
+          chargeUrl: payment.invoiceUrl ?? payment.bankSlipUrl ?? null,
+          pixPayload,
+          pixEncodedImage,
+          pixExpirationDate,
+        },
+      };
+    }
+
+    revalidatePath(`/espaco/${espacoId}`);
+    return { ok: true, message: `Pedido enviado para ${produto.nome}.` };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Falha ao criar o pedido da lanchonete.",
+    };
+  }
+}
+
+export async function criarPedidoBalcaoLanchoneteEspacoAction(formData: FormData): Promise<void> {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const produtoId = Number(formData.get("produto_id") ?? 0);
+  const quantidade = Math.max(1, Number(formData.get("quantidade") ?? 1) || 1);
+  if (!espacoId || !produtoId) throw new Error("Pedido inválido.");
+  const { supabase, user } = await requireEspacoPermission(espacoId, "lanchonete.vender");
+  const { data: produto, error: produtoErr } = await supabase
+    .from("espaco_produtos")
+    .select("id, preco_centavos, controla_estoque, estoque_atual")
+    .eq("id", produtoId)
+    .eq("espaco_generico_id", espacoId)
+    .maybeSingle();
+  if (produtoErr) throw new Error(produtoErr.message);
+  if (!produto) throw new Error("Produto não encontrado.");
+  if (Boolean(produto.controla_estoque) && Number(produto.estoque_atual ?? 0) < quantidade) {
+    throw new Error("Estoque insuficiente para essa venda.");
+  }
+  const valorTotalCentavos = quantidade * Math.max(0, Number(produto.preco_centavos ?? 0));
+  const { data: pedido, error } = await supabase
+    .from("espaco_pedidos")
+    .insert({
+      espaco_generico_id: espacoId,
+      usuario_id: null,
+      status: "entregue",
+      payment_status: "received",
+      origem: "balcao",
+      valor_total_centavos: valorTotalCentavos,
+      observacoes: text(formData, "observacoes") || null,
+    })
+    .select("id")
+    .single();
+  if (error || !pedido) throw new Error(error?.message ?? "Falha ao criar venda de balcão.");
+  await supabase.from("espaco_pedido_itens").insert({
+    espaco_pedido_id: pedido.id,
+    espaco_produto_id: produtoId,
+    quantidade,
+    preco_unitario_centavos: Math.max(0, Number(produto.preco_centavos ?? 0)),
+    subtotal_centavos: valorTotalCentavos,
+  });
+  if (Boolean(produto.controla_estoque)) {
+    await supabase.from("espaco_estoque_movimentos").insert({
+      espaco_produto_id: produtoId,
+      espaco_pedido_id: pedido.id,
+      tipo: "venda",
+      quantidade,
+      observacoes: "Venda de balcão",
+      responsavel_usuario_id: user.id,
+    });
+    await supabase
+      .from("espaco_produtos")
+      .update({ estoque_atual: Math.max(0, Number(produto.estoque_atual ?? 0) - quantidade), atualizado_em: new Date().toISOString() })
+      .eq("id", produtoId)
+      .eq("espaco_generico_id", espacoId);
+  }
+  revalidatePath("/espaco/lanchonete");
+}
+
+export async function atualizarStatusPedidoLanchoneteEspacoAction(formData: FormData): Promise<void> {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const pedidoId = Number(formData.get("pedido_id") ?? 0);
+  const status = text(formData, "status");
+  const paymentStatus = text(formData, "payment_status");
+  if (!espacoId || !pedidoId) throw new Error("Pedido inválido.");
+  const { supabase, user } = await requireEspacoPermission(espacoId, "lanchonete.vender");
+  const { data: pedido, error: pedidoErr } = await supabase
+    .from("espaco_pedidos")
+    .select("id, status, payment_status")
+    .eq("id", pedidoId)
+    .eq("espaco_generico_id", espacoId)
+    .maybeSingle();
+  if (pedidoErr) throw new Error(pedidoErr.message);
+  if (!pedido) throw new Error("Pedido não encontrado.");
+
+  await supabase
+    .from("espaco_pedidos")
+    .update({ status, payment_status: paymentStatus, atualizado_em: new Date().toISOString() })
+    .eq("id", pedidoId)
+    .eq("espaco_generico_id", espacoId);
+
+  if (status === "entregue" && pedido.status !== "entregue") {
+    const { data: itens } = await supabase
+      .from("espaco_pedido_itens")
+      .select("espaco_produto_id, quantidade, espaco_produtos(espaco_generico_id, controla_estoque, estoque_atual)")
+      .eq("espaco_pedido_id", pedidoId);
+
+    for (const item of itens ?? []) {
+      const produto = Array.isArray(item.espaco_produtos) ? item.espaco_produtos[0] : item.espaco_produtos;
+      if (!produto || !produto.controla_estoque || Number(produto.espaco_generico_id ?? 0) !== espacoId) continue;
+      const quantidade = Math.max(0, Number(item.quantidade ?? 0));
+      const atual = Math.max(0, Number(produto.estoque_atual ?? 0));
+      await supabase.from("espaco_estoque_movimentos").insert({
+        espaco_produto_id: item.espaco_produto_id,
+        espaco_pedido_id: pedidoId,
+        tipo: "venda",
+        quantidade,
+        observacoes: "Baixa automática por pedido entregue",
+        responsavel_usuario_id: user.id,
+      });
+      await supabase
+        .from("espaco_produtos")
+        .update({ estoque_atual: Math.max(0, atual - quantidade), atualizado_em: new Date().toISOString() })
+        .eq("id", item.espaco_produto_id)
+        .eq("espaco_generico_id", espacoId);
+    }
+  }
+
+  revalidatePath("/espaco/lanchonete");
+}
+
 export async function criarGradeAutomaticaEspacoAction(formData: FormData) {
   const espacoId = Number(formData.get("espaco_id") ?? 0);
   const { supabase, user } = await requireEspacoManager(espacoId);
@@ -1720,19 +2254,19 @@ export async function solicitarSocioEspacoAction(
     if (espacoErr || !espaco) {
       return { ok: false, message: espacoErr?.message ?? "Espaço não encontrado." };
     }
-    if (!espaco.aceita_socios) {
+    const tipoOperacao = resolverTipoOperacaoEspaco({
+      modoReserva: espaco.modo_reserva,
+      modoMonetizacao: (espaco as { modo_monetizacao?: string | null }).modo_monetizacao ?? null,
+    });
+    if (!espaco.aceita_socios && tipoOperacao !== "reserva_paga") {
       return {
         ok: false,
         message: "Este espaço não está aceitando novos sócios no momento.",
       };
     }
     const regraAssociacao = normalizeEspacoAssociacaoConfig(espaco.associacao_regra_json);
-    const tipoOperacao = resolverTipoOperacaoEspaco({
-      modoReserva: espaco.modo_reserva,
-      modoMonetizacao: (espaco as { modo_monetizacao?: string | null }).modo_monetizacao ?? null,
-    });
     const entradaModoColuna = String((espaco as Record<string, unknown>).entrada_membro_modo ?? "manual");
-    const entradaAutomatica = false;
+    const entradaAutomatica = tipoOperacao === "reserva_paga";
     const identificadorEntrada = text(formData, "identificador_entrada");
     if (!entradaAutomatica && regraAssociacao.modoEntrada === "matricula" && identificadorEntrada.length < 3) {
       return { ok: false, message: "Informe a matrícula/código exigido pelo espaço." };
@@ -1892,6 +2426,59 @@ export async function solicitarSocioEspacoAction(
       ok: false,
       message:
         error instanceof Error ? error.message : "Falha ao solicitar associação.",
+    };
+  }
+}
+
+export async function deixarMembroEspacoAction(
+  _prev: State | undefined,
+  formData: FormData
+): Promise<State> {
+  try {
+    const { supabase, user } = await requireUser();
+    const espacoId = Number(formData.get("espaco_id") ?? 0);
+    if (!espacoId) {
+      return { ok: false, message: "Espaço inválido." };
+    }
+
+    const { data: socio, error } = await supabase
+      .from("espaco_socios")
+      .select("id, status, membership_request_id")
+      .eq("espaco_generico_id", espacoId)
+      .eq("usuario_id", user.id)
+      .maybeSingle();
+    if (error) return { ok: false, message: error.message };
+    if (!socio?.id) return { ok: false, message: "Você ainda não faz parte deste espaço." };
+
+    await supabase
+      .from("espaco_socios")
+      .update({
+        status: "cancelado",
+        financeiro_status: "cancelado",
+        beneficios_liberados: false,
+        atualizado_em: new Date().toISOString(),
+      })
+      .eq("id", socio.id);
+
+    if (socio.membership_request_id) {
+      await supabase
+        .from("membership_requests")
+        .update({
+          status: "recusado",
+          resolvido_em: new Date().toISOString(),
+          resolvido_por_usuario_id: user.id,
+          atualizado_em: new Date().toISOString(),
+        })
+        .eq("id", socio.membership_request_id);
+    }
+
+    revalidatePath("/comunidade");
+    revalidatePath(`/espaco/${espacoId}`);
+    return { ok: true, message: "Você deixou de ser membro deste espaço." };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Falha ao sair do espaço.",
     };
   }
 }

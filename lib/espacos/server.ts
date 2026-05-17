@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getEspacoStaffAccess } from "@/lib/espacos/staff";
 import { createClient } from "@/lib/supabase/server";
 
 /** Um login = um espaço gerido: apenas responsável oficial (`responsavel_usuario_id`). */
@@ -13,7 +14,7 @@ export async function usuarioJaGerenciaEspaco(userId: string): Promise<boolean> 
   return Boolean(data);
 }
 
-type ManagedSpace = {
+export type ManagedSpace = {
   id: number;
   slug: string | null;
   nome_publico: string;
@@ -140,21 +141,56 @@ export async function requireEspacoManagerUser(nextPath: string) {
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
 
-  const { data: managedSpaces, error } = await supabase
+  const selectFields =
+    "id, slug, nome_publico, status, localizacao, cidade, uf, lat, lng, esportes_ids, criado_por_usuario_id, responsavel_usuario_id, logo_arquivo, cover_arquivo, whatsapp_contato, email_contato, website_url, instagram_url, descricao_curta, descricao_longa, aceita_socios, permite_professores_aprovados, ativo_listagem, operacao_status, venue_config_json, configuracao_reservas_json, categoria_mensalidade, modo_reserva, modo_monetizacao, associacao_regra_json, clube_assinaturas_socios, entrada_membro_modo, entrada_membro_descricao, formas_pagamento_aceitas";
+
+  const { data: ownedSpaces, error: ownedErr } = await supabase
     .from("espacos_genericos")
-    .select(
-      "id, slug, nome_publico, status, localizacao, cidade, uf, lat, lng, esportes_ids, criado_por_usuario_id, responsavel_usuario_id, logo_arquivo, cover_arquivo, whatsapp_contato, email_contato, website_url, instagram_url, descricao_curta, descricao_longa, aceita_socios, permite_professores_aprovados, ativo_listagem, operacao_status, venue_config_json, configuracao_reservas_json, categoria_mensalidade, modo_reserva, modo_monetizacao, associacao_regra_json, clube_assinaturas_socios, entrada_membro_modo, entrada_membro_descricao, formas_pagamento_aceitas"
-    )
+    .select(selectFields)
     .eq("responsavel_usuario_id", user.id)
     .order("id", { ascending: false })
     .limit(1);
-  if (error) throw new Error(error.message);
+  if (ownedErr) throw new Error(ownedErr.message);
 
-  if (!(managedSpaces ?? []).length) {
+  let staffRows: Array<{
+    espaco_generico_id: number | null;
+    papel: string;
+    status: string;
+    pode_ver_agenda: boolean;
+    pode_ver_pagamentos: boolean;
+    pode_conferir_reservas: boolean;
+    pode_editar_configuracao: boolean;
+  }> = [];
+  const { data: staffData, error: staffErr } = await supabase
+    .from("espaco_staff")
+    .select("espaco_generico_id, papel, status, pode_ver_agenda, pode_ver_pagamentos, pode_conferir_reservas, pode_editar_configuracao")
+    .eq("usuario_id", user.id)
+    .eq("status", "ativo")
+    .limit(20);
+  if (!staffErr) {
+    staffRows = (staffData ?? []) as typeof staffRows;
+  }
+
+  let managedSpaces = ownedSpaces ?? [];
+  if (!managedSpaces.length && (staffRows ?? []).length) {
+    const staffSpaceIds = [...new Set((staffRows ?? []).map((row) => Number(row.espaco_generico_id ?? 0)).filter((id) => id > 0))];
+    if (staffSpaceIds.length) {
+      const { data: staffSpaces, error: spacesErr } = await supabase
+        .from("espacos_genericos")
+        .select(selectFields)
+        .in("id", staffSpaceIds)
+        .order("id", { ascending: false })
+        .limit(1);
+      if (spacesErr) throw new Error(spacesErr.message);
+      managedSpaces = staffSpaces ?? [];
+    }
+  }
+
+  if (!managedSpaces.length) {
     redirect("/locais/cadastrar?modo=espaco");
   }
 
-  const spaces = (managedSpaces ?? []).map((space) => ({
+  const spaces = managedSpaces.map((space) => ({
     ...space,
     logo_arquivo: resolveEspacoPublicAssetUrl(supabase, space.logo_arquivo),
     cover_arquivo: resolveEspacoPublicAssetUrl(supabase, space.cover_arquivo),
@@ -164,6 +200,7 @@ export async function requireEspacoManagerUser(nextPath: string) {
     supabase,
     user,
     managedSpaces: spaces as ManagedSpace[],
+    staffRows,
   };
 }
 
@@ -181,5 +218,6 @@ export async function getEspacoSelecionado({
   if (!selected) {
     redirect("/locais/cadastrar?modo=espaco");
   }
-  return { ...ctx, selectedSpace: selected };
+  const staffAccess = await getEspacoStaffAccess(ctx.supabase, Number(selected.id), ctx.user.id);
+  return { ...ctx, selectedSpace: selected, staffAccess };
 }

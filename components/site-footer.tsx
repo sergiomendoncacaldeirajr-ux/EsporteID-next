@@ -67,6 +67,13 @@ export function SiteFooter({ user, isPlatformAdmin }: Props) {
                 Privacidade (LGPD)
               </Link>
               <Link
+                href="/suporte"
+                className="text-[10px] font-medium underline-offset-2 transition hover:underline"
+                style={{ color: "var(--eid-fg)" }}
+              >
+                Suporte
+              </Link>
+              <Link
                 href="/conta/dados-lgpd"
                 className="text-[10px] font-medium underline-offset-2 transition hover:underline"
                 style={{ color: "var(--eid-fg)" }}

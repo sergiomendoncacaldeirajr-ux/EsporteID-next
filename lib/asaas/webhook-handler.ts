@@ -71,7 +71,7 @@ export async function processAsaasWebhookPayload(payload: AsaasWebhookPayload | 
 
   const { data: espacoPagamento } = await admin
     .from("espaco_transacoes")
-    .select("id, espaco_generico_id, usuario_id, espaco_socio_id, reserva_quadra_id, assinatura_plataforma_id, assinatura_socio_id, tipo")
+    .select("id, espaco_generico_id, usuario_id, espaco_socio_id, reserva_quadra_id, assinatura_plataforma_id, assinatura_socio_id, tipo, detalhes_json")
     .eq("asaas_payment_id", paymentId)
     .maybeSingle();
 
@@ -210,6 +210,24 @@ export async function processAsaasWebhookPayload(payload: AsaasWebhookPayload | 
         .eq("id", espacoPagamento.reserva_quadra_id);
     }
 
+    if (espacoPagamento.tipo === "venda_lanchonete") {
+      const pedidoId = Number(
+        ((espacoPagamento as { detalhes_json?: Record<string, unknown> | null }).detalhes_json as Record<string, unknown> | null)?.pedido_id ??
+          (payload as unknown as { pedido_id?: number | null })?.pedido_id ??
+          0
+      );
+      if (pedidoId > 0) {
+        await admin
+          .from("espaco_pedidos")
+          .update({
+            payment_status: mapped.pagamento,
+            atualizado_em: new Date().toISOString(),
+          })
+          .eq("id", pedidoId)
+          .eq("espaco_generico_id", espacoPagamento.espaco_generico_id);
+      }
+    }
+
     if (espacoPagamento.espaco_socio_id) {
       const { data: socioAtual } = await admin
         .from("espaco_socios")
@@ -285,7 +303,9 @@ export async function processAsaasWebhookPayload(payload: AsaasWebhookPayload | 
         usuario_id: parceiroUsuarioId,
         mensagem:
           mapped.pagamento === "received"
-            ? `Pagamento confirmado no espaço ${espaco?.nome_publico ?? "EsporteID"}.`
+            ? espacoPagamento.tipo === "venda_lanchonete"
+              ? `Pagamento confirmado na lanchonete de ${espaco?.nome_publico ?? "EsporteID"}.`
+              : `Pagamento confirmado no espaço ${espaco?.nome_publico ?? "EsporteID"}.`
             : `Cobrança do espaço atualizada para ${mapped.pagamento}.`,
         tipo: "espaco_pagamento",
         referencia_id: espacoPagamento.id,
@@ -298,7 +318,9 @@ export async function processAsaasWebhookPayload(payload: AsaasWebhookPayload | 
         usuario_id: espacoPagamento.usuario_id,
         mensagem:
           mapped.pagamento === "received"
-            ? "Seu pagamento foi confirmado. Agora o admin do espaço ainda precisa aprovar sua entrada."
+            ? espacoPagamento.tipo === "venda_lanchonete"
+              ? "Seu pedido da lanchonete foi pago com sucesso."
+              : "Seu pagamento foi confirmado. Agora o admin do espaço ainda precisa aprovar sua entrada."
             : `Seu pagamento do espaço foi atualizado para ${mapped.pagamento}.`,
         tipo: "espaco_pagamento",
         referencia_id: espacoPagamento.id,

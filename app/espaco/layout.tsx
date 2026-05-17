@@ -5,6 +5,7 @@ import { EspacoPainelChrome } from "@/components/espaco/espaco-painel-chrome";
 import { getMensalidadePainelState } from "@/lib/espacos/mensalidade-acesso";
 import { resolveEspacoPublicAssetUrl } from "@/lib/espacos/server";
 import { contaSomenteDonoEspaco, listarPapeis } from "@/lib/roles";
+import { getEspacoStaffAccess } from "@/lib/espacos/staff";
 import { createClient } from "@/lib/supabase/server";
 
 const ESPACO_SELECT =
@@ -17,6 +18,7 @@ const ROTAS_PAINEL_ESPACO = new Set([
   "financeiro",
   "grade",
   "integracao-asaas",
+  "lanchonete",
   "notas-fiscais",
   "onboarding",
   "socios",
@@ -82,7 +84,32 @@ export default async function EspacoLayout({
 
   if (error) throw new Error(error.message);
 
-  const spaceRow = managedSpaces?.[0] ?? null;
+  let staffRows: Array<{ espaco_generico_id: number | null }> = [];
+  const { data: staffData, error: staffErr } = await supabase
+    .from("espaco_staff")
+    .select("espaco_generico_id")
+    .eq("usuario_id", user.id)
+    .eq("status", "ativo")
+    .eq("papel", "operacao_reservas")
+    .limit(20);
+  if (!staffErr) {
+    staffRows = (staffData ?? []) as Array<{ espaco_generico_id: number | null }>;
+  }
+
+  let spaceRow = managedSpaces?.[0] ?? null;
+  if (!spaceRow && (staffRows ?? []).length) {
+    const ids = [...new Set((staffRows ?? []).map((row) => Number(row.espaco_generico_id ?? 0)).filter((id) => id > 0))];
+    if (ids.length) {
+      const { data: staffSpaces, error: spaceErr } = await supabase
+        .from("espacos_genericos")
+        .select(ESPACO_SELECT)
+        .in("id", ids)
+        .order("id", { ascending: false })
+        .limit(1);
+      if (spaceErr) throw new Error(spaceErr.message);
+      spaceRow = staffSpaces?.[0] ?? null;
+    }
+  }
   if (!spaceRow) {
     return children;
   }
@@ -96,6 +123,8 @@ export default async function EspacoLayout({
   const mensalidadeState = space
     ? await getMensalidadePainelState(supabase, space.id, categoria)
     : null;
+
+  const staffAccess = await getEspacoStaffAccess(supabase, Number(space.id), user.id);
 
   const { data: papeisRows } = await supabase
     .from("usuario_papeis")
@@ -119,6 +148,7 @@ export default async function EspacoLayout({
         asaasStatus: parceiroAsaas?.onboarding_status ?? null,
         asaasAccountId: parceiroAsaas?.asaas_account_id ?? null,
         oferecerCtaPerfilAtleta,
+        mostrarFinanceiro: staffAccess.canViewPayments,
       }
     : { id: 0, nome_publico: "Espaço", slug: null as string | null, asaasStatus: null, asaasAccountId: null, oferecerCtaPerfilAtleta };
 

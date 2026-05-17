@@ -632,6 +632,15 @@ export default async function Home() {
             Privacidade
           </Link>
           <Link
+            href="/suporte"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card/60 px-3.5 py-2 text-[12px] font-medium text-eid-text-secondary transition hover:border-eid-primary-500/35 hover:text-eid-fg"
+          >
+            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Suporte
+          </Link>
+          <Link
             href="/conta/dados-lgpd"
             className="inline-flex items-center gap-1.5 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card/60 px-3.5 py-2 text-[12px] font-medium text-eid-text-secondary transition hover:border-eid-primary-500/35 hover:text-eid-fg"
           >

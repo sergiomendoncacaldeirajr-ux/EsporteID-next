@@ -4,6 +4,7 @@ import { useActionState, useEffect, useMemo, useState } from "react";
 import {
   adicionarEspacoReservaRapidaAction,
   criarReservaEspacoAction,
+  deixarMembroEspacoAction,
   entrarFilaEsperaEspacoAction,
   iniciarAssociacaoPagaEspacoAction,
   solicitarSocioEspacoAction,
@@ -99,15 +100,86 @@ function WeatherPreview({ inicio, latitude, longitude }: WeatherPreviewProps) {
   return <p className="text-[11px] text-eid-text-secondary">Previsão no horário: {summary}</p>;
 }
 
+function JoinActionCard({
+  title,
+  description,
+  accent = "primary",
+  onClick,
+}: {
+  title: string;
+  description: string;
+  accent?: "primary" | "action" | "neutral";
+  onClick: () => void;
+}) {
+  const tone =
+    accent === "action"
+      ? "border-eid-action-500/25 bg-eid-action-500/8 hover:border-eid-action-500/45 hover:bg-eid-action-500/12"
+      : accent === "neutral"
+        ? "border-[color:var(--eid-border-subtle)] bg-eid-surface/40 hover:border-eid-primary-500/25 hover:bg-eid-surface/55"
+        : "border-eid-primary-500/25 bg-eid-primary-500/8 hover:border-eid-primary-500/45 hover:bg-eid-primary-500/12";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full rounded-2xl border p-4 text-left transition ${tone}`}
+    >
+      <p className="text-sm font-black text-eid-fg">{title}</p>
+      <p className="mt-1 text-xs leading-relaxed text-eid-text-secondary">{description}</p>
+      <p className="mt-3 text-[11px] font-bold text-eid-primary-300">Abrir →</p>
+    </button>
+  );
+}
+
+function JoinDrawer({
+  open,
+  onClose,
+  title,
+  subtitle,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-eid-brand-ink/65 backdrop-blur-sm" />
+      <div
+        className="relative z-10 w-full max-w-lg rounded-t-3xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-5 shadow-2xl sm:rounded-3xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-xl text-eid-text-secondary transition hover:bg-eid-surface/60 hover:text-eid-fg"
+          aria-label="Fechar"
+        >
+          ×
+        </button>
+        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-eid-primary-300">Acesso ao espaço</p>
+        <h3 className="mt-1 text-lg font-black text-eid-fg">{title}</h3>
+        <p className="mt-1 text-sm leading-relaxed text-eid-text-secondary">{subtitle}</p>
+        <div className="mt-4 max-h-[72vh] overflow-y-auto pr-1">{children}</div>
+      </div>
+    </div>
+  );
+}
+
 export function EspacoPublicJoinForm({
   espacoId,
   planos,
   regraEntrada,
   modoReserva,
+  isMembroAtivo = false,
 }: {
   espacoId: number;
   planos: Array<{ id: number; nome: string; mensalidade_centavos: number | null }>;
   modoReserva?: string | null;
+  isMembroAtivo?: boolean;
   regraEntrada?: {
     modoEntrada: "somente_perfil" | "matricula" | "cpf";
     rotuloCampo: string;
@@ -116,90 +188,105 @@ export function EspacoPublicJoinForm({
 }) {
   const [manualState, manualAction, manualPending] = useActionState(solicitarSocioEspacoAction, initial);
   const [paidState, paidAction, paidPending] = useActionState(iniciarAssociacaoPagaEspacoAction, initial);
+  const [leaveState, leaveAction, leavePending] = useActionState(deixarMembroEspacoAction, initial);
+  const [openManual, setOpenManual] = useState(false);
+  const [openPaid, setOpenPaid] = useState(false);
   const tipoOperacao = resolverTipoOperacaoEspaco({ modoReserva, modoMonetizacao: null });
   const associacaoOpcional = tipoOperacao === "reserva_paga";
   const temPlanoPago = planos.some((plano) => Number(plano.mensalidade_centavos ?? 0) > 0);
 
   return (
-    <div className="space-y-3 rounded-2xl border border-eid-action-500/25 bg-eid-card/90 p-4">
-      <div>
-        <h3 className="text-sm font-bold text-eid-fg">{associacaoOpcional ? "Clube de benefícios e sócio" : "Solicitar entrada"}</h3>
-        <p className="text-xs text-eid-text-secondary">
-          {associacaoOpcional
-            ? "Neste espaço com reservas pagas, a associação é opcional e serve para benefícios extras, day use e clube do espaço."
-            : regraEntrada?.instrucoes ?? "Envie seus dados para o dono analisar sua entrada no espaço."}
-        </p>
-      </div>
-
-      <form action={manualAction} className="space-y-3">
-        <input type="hidden" name="espaco_id" value={espacoId} />
-        {planos.length > 0 ? (
-          <select
-            name="plano_socio_id"
-            className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
-            defaultValue=""
-          >
-            <option value="">Sem mensalidade agora</option>
-            {planos.map((plano) => (
-              <option key={plano.id} value={plano.id}>
-                {plano.nome} · R$ {((Number(plano.mensalidade_centavos ?? 0) || 0) / 100).toFixed(2).replace(".", ",")}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <input type="hidden" name="plano_socio_id" value="" />
-        )}
-        <textarea
-          name="mensagem"
-          rows={2}
-          placeholder="Conte ao clube o que você procura."
-          className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
-        />
-        {regraEntrada?.modoEntrada !== "somente_perfil" ? (
-          <input
-            name="identificador_entrada"
-            placeholder={regraEntrada?.rotuloCampo || (regraEntrada?.modoEntrada === "cpf" ? "CPF" : "Matrícula")}
-            className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
-          />
-        ) : null}
-        <div className="grid gap-2 sm:grid-cols-3">
-          <input
-            type="file"
-            name="documento_rg"
-            accept=".pdf,image/*"
-            className="eid-input-dark rounded-xl px-3 py-2 text-xs"
-          />
-          <input
-            type="file"
-            name="documento_cpf"
-            accept=".pdf,image/*"
-            className="eid-input-dark rounded-xl px-3 py-2 text-xs"
-          />
-          <input
-            type="file"
-            name="documento_comprovante"
-            accept=".pdf,image/*"
-            className="eid-input-dark rounded-xl px-3 py-2 text-xs"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={manualPending}
-          className="eid-btn-primary w-full rounded-xl px-4 py-3 text-sm font-bold"
-        >
-          {manualPending ? "Enviando..." : "Solicitar associação"}
-        </button>
-        {manualState.message ? (
-          <p className={`text-xs ${manualState.ok ? "text-eid-primary-300" : "text-red-300"}`}>
-            {manualState.message}
+    <div className="space-y-3">
+      {isMembroAtivo ? (
+        <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-4">
+          <p className="text-sm font-black text-emerald-200">Seu acesso já está liberado.</p>
+          <p className="mt-1 text-xs leading-relaxed text-emerald-100/85">
+            Você já faz parte deste espaço e pode usar a grade e as reservas normalmente.
           </p>
-        ) : null}
-      </form>
+          <form action={leaveAction} className="mt-4">
+            <input type="hidden" name="espaco_id" value={espacoId} />
+            <button type="submit" disabled={leavePending} className="w-full rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-4 py-3 text-sm font-bold text-emerald-100">
+              {leavePending ? "Saindo..." : "Deixar de ser membro"}
+            </button>
+          </form>
+          {leaveState.message ? (
+            <p className={`mt-2 text-xs ${leaveState.ok ? "text-eid-primary-300" : "text-red-300"}`}>{leaveState.message}</p>
+          ) : null}
+        </div>
+      ) : (
+        <div className="space-y-3 rounded-2xl border border-eid-action-500/20 bg-eid-card/90 p-4">
+          <div>
+            <p className="text-sm font-black text-eid-fg">Liberar acesso ao espaço</p>
+            <p className="mt-1 text-xs leading-relaxed text-eid-text-secondary">
+              {associacaoOpcional
+                ? "Neste espaço com reservas pagas, virar membro já libera a grade e a reserva imediatamente."
+                : "Escolha como deseja entrar. Depois da aprovação do admin, a área de reservas será liberada para sua conta."}
+            </p>
+          </div>
 
-      {temPlanoPago ? (
-        <form action={paidAction} className="space-y-3 rounded-2xl border border-eid-primary-500/20 bg-eid-primary-500/6 p-4">
+          <JoinActionCard
+            title={associacaoOpcional ? "Continuar como membro" : "Solicitar entrada como membro"}
+            description={associacaoOpcional ? "Entrada rápida para liberar a grade e começar a reservar." : (regraEntrada?.instrucoes ?? "Envie seus dados para o dono analisar sua entrada no espaço.")}
+            onClick={() => setOpenManual(true)}
+          />
+
+          {temPlanoPago ? (
+            <JoinActionCard
+              title="Virar sócio com mensalidade"
+              description="Escolha um plano e conclua o pagamento. O dono do espaço ainda precisa aprovar sua entrada."
+              accent="action"
+              onClick={() => setOpenPaid(true)}
+            />
+          ) : null}
+        </div>
+      )}
+
+      <JoinDrawer
+        open={openManual}
+        onClose={() => setOpenManual(false)}
+        title={associacaoOpcional ? "Tornar-se membro" : "Solicitar entrada como membro"}
+        subtitle={associacaoOpcional ? "Preencha os dados abaixo para liberar o acesso ao espaço." : (regraEntrada?.instrucoes ?? "Envie seus dados para o dono analisar sua entrada no espaço.")}
+      >
+        <form action={manualAction} className="space-y-3">
           <input type="hidden" name="espaco_id" value={espacoId} />
-          <p className="text-sm font-bold text-eid-fg">Virar sócio com mensalidade</p>
+          {!associacaoOpcional && planos.length > 0 ? (
+            <select name="plano_socio_id" className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm" defaultValue="">
+              <option value="">Sem mensalidade agora</option>
+              {planos.map((plano) => (
+                <option key={plano.id} value={plano.id}>
+                  {plano.nome} · R$ {((Number(plano.mensalidade_centavos ?? 0) || 0) / 100).toFixed(2).replace(".", ",")}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input type="hidden" name="plano_socio_id" value="" />
+          )}
+          <textarea name="mensagem" rows={2} placeholder="Conte ao clube o que você procura." className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm" />
+          {regraEntrada?.modoEntrada !== "somente_perfil" ? (
+            <input name="identificador_entrada" placeholder={regraEntrada?.rotuloCampo || (regraEntrada?.modoEntrada === "cpf" ? "CPF" : "Matrícula")} className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm" />
+          ) : null}
+          <div className="grid gap-2 sm:grid-cols-3">
+            <input type="file" name="documento_rg" accept=".pdf,image/*" className="eid-input-dark rounded-xl px-3 py-2 text-xs" />
+            <input type="file" name="documento_cpf" accept=".pdf,image/*" className="eid-input-dark rounded-xl px-3 py-2 text-xs" />
+            <input type="file" name="documento_comprovante" accept=".pdf,image/*" className="eid-input-dark rounded-xl px-3 py-2 text-xs" />
+          </div>
+          <button type="submit" disabled={manualPending} className="eid-btn-primary w-full rounded-xl px-4 py-3 text-sm font-bold">
+            {manualPending ? "Enviando..." : "Solicitar associação"}
+          </button>
+          {manualState.message ? (
+            <p className={`text-xs ${manualState.ok ? "text-eid-primary-300" : "text-red-300"}`}>{manualState.message}</p>
+          ) : null}
+        </form>
+      </JoinDrawer>
+
+      <JoinDrawer
+        open={openPaid}
+        onClose={() => setOpenPaid(false)}
+        title="Virar sócio com mensalidade"
+        subtitle="Escolha o plano e conclua o pagamento. O acesso ainda depende da aprovação do dono do espaço."
+      >
+        <form action={paidAction} className="space-y-3">
+          <input type="hidden" name="espaco_id" value={espacoId} />
           <select
             name="plano_socio_id"
             className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
@@ -211,18 +298,9 @@ export function EspacoPublicJoinForm({
               </option>
             ))}
           </select>
-          <textarea
-            name="mensagem"
-            rows={2}
-            placeholder="Explique o que você busca como sócio."
-            className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
-          />
+          <textarea name="mensagem" rows={2} placeholder="Explique o que você busca como sócio." className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm" />
           {regraEntrada?.modoEntrada !== "somente_perfil" ? (
-            <input
-              name="identificador_entrada"
-              placeholder={regraEntrada?.rotuloCampo || (regraEntrada?.modoEntrada === "cpf" ? "CPF" : "Matrícula")}
-              className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
-            />
+            <input name="identificador_entrada" placeholder={regraEntrada?.rotuloCampo || (regraEntrada?.modoEntrada === "cpf" ? "CPF" : "Matrícula")} className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm" />
           ) : null}
           <div className="grid gap-2 sm:grid-cols-3">
             <input type="file" name="documento_rg" accept=".pdf,image/*" className="eid-input-dark rounded-xl px-3 py-2 text-xs" />
@@ -254,12 +332,10 @@ export function EspacoPublicJoinForm({
             {paidPending ? "Iniciando pagamento..." : "Pagar mensalidade e solicitar aprovação"}
           </button>
           {paidState.message ? (
-            <p className={`text-xs ${paidState.ok ? "text-eid-primary-300" : "text-red-300"}`}>
-              {paidState.message}
-            </p>
+            <p className={`text-xs ${paidState.ok ? "text-eid-primary-300" : "text-red-300"}`}>{paidState.message}</p>
           ) : null}
         </form>
-      ) : null}
+      </JoinDrawer>
     </div>
   );
 }

@@ -3,8 +3,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MapPin } from "lucide-react";
 import { NativeShareButton } from "@/components/native/native-share-button";
-import { PROFILE_PUBLIC_MAIN_WIDE_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { EspacoPublicProfileTabs } from "@/components/espaco/espaco-public-profile-tabs";
+import {
+  SPACE_HERO_CLASS,
+  SPACE_PILL_GHOST_CLASS,
+  SPACE_PILL_SUCCESS_CLASS,
+  SPACE_PUBLIC_MAIN_CLASS,
+  SPACE_STAT_CARD_CLASS,
+} from "@/components/espaco/espaco-visual-tokens";
 import type { ReservaPublica, HorarioSemanal, UnidadePublica, PlanoPublico } from "@/components/espaco/espaco-grade-publica";
 import { EspacoDistanceBadge } from "@/components/espaco/espaco-distance-badge";
 import { createClient } from "@/lib/supabase/server";
@@ -13,7 +19,7 @@ import { normalizeEspacoReservaConfig } from "@/lib/espacos/config";
 
 type Props = {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ semana?: string; tab?: "reservas" | "torneios" | "professores" | "sobre" }>;
+  searchParams?: Promise<{ semana?: string; tab?: "reservas" | "torneios" | "professores" | "sobre" | "bar-lanchonete" }>;
 };
 
 function parseCoord(value: unknown): number {
@@ -85,6 +91,7 @@ export default async function EspacoPublicLandingPage({ params, searchParams }: 
     { data: reservasRaw },
     { data: professores },
     { data: torneios },
+    { data: produtosLanchonete },
     { count: sociosAtivosCount },
   ] = await Promise.all([
     supabase.from("espaco_unidades")
@@ -111,6 +118,13 @@ export default async function EspacoPublicLandingPage({ params, searchParams }: 
       .select("id, nome, status, data_inicio")
       .eq("espaco_generico_id", espaco.id)
       .order("data_inicio", { ascending: true }).limit(6),
+    supabase
+      .from("espaco_produtos")
+      .select("id, nome, categoria, preco_centavos, foto_url, ativo, estoque_atual")
+      .eq("espaco_generico_id", espaco.id)
+      .eq("ativo", true)
+      .order("ordem", { ascending: true })
+      .limit(12),
     supabase
       .from("espaco_socios")
       .select("id", { count: "exact", head: true })
@@ -180,16 +194,16 @@ export default async function EspacoPublicLandingPage({ params, searchParams }: 
     ? (espaco as Record<string, unknown>).formas_pagamento_aceitas as string[]
     : ["pix", "cartao", "boleto"];
 
-  const initialTab = sp.tab ?? "reservas";
+  const initialTab = sp.tab ?? "sobre";
   const sociosAtivos = Number(sociosAtivosCount ?? 0);
 
   const descricao = espaco.descricao_longa || espaco.descricao_curta || null;
 
   return (
-    <main data-eid-no-route-enter className={`${PROFILE_PUBLIC_MAIN_WIDE_CLASS} eid-progressive-enter space-y-4`}>
+    <main data-eid-no-route-enter className={SPACE_PUBLIC_MAIN_CLASS}>
 
       {/* ── HERO / PERFIL — espaço como perfil social ─────────────────── */}
-      <section className="overflow-hidden rounded-[28px] border border-eid-primary-500/20 bg-eid-card/95 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.72)] eid-light:border-eid-primary-500/15 eid-light:bg-white eid-light:shadow-[0_22px_48px_-30px_rgba(15,23,42,0.16)]">
+      <section className={SPACE_HERO_CLASS}>
 
         {/* Foto full-bleed com logo + nome sobrepostos */}
         <div className="relative min-h-[220px] sm:min-h-[260px]">
@@ -228,11 +242,11 @@ export default async function EspacoPublicLandingPage({ params, searchParams }: 
               {/* Nome + localização */}
               <div className="min-w-0 flex-1">
                 <div className="mb-2 flex flex-wrap gap-1.5">
-                  <span className="rounded-full border border-white/15 bg-black/25 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-white/80 backdrop-blur-sm">
+                  <span className={`${SPACE_PILL_GHOST_CLASS} backdrop-blur-sm`}>
                     Espaço esportivo
                   </span>
                   {isMembroAtivo && (
-                    <span className="rounded-full border border-emerald-500/50 bg-emerald-500/20 px-2.5 py-1 text-[10px] font-black text-emerald-200 backdrop-blur-sm">
+                    <span className={`${SPACE_PILL_SUCCESS_CLASS} backdrop-blur-sm`}>
                       Você é membro ✓
                     </span>
                   )}
@@ -263,8 +277,8 @@ export default async function EspacoPublicLandingPage({ params, searchParams }: 
           <div className="flex flex-wrap items-center gap-2">
             <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-black ${
               isPago
-                ? "border-eid-action-500/35 bg-eid-action-500/12 text-eid-action-300 eid-light:text-eid-action-600"
-                : "border-emerald-500/35 bg-emerald-500/10 text-emerald-300 eid-light:text-emerald-700"
+                ? "border-eid-action-500/35 bg-eid-action-500/12 text-eid-action-300 shadow-[0_14px_26px_-20px_rgba(249,115,22,0.52)] eid-light:text-eid-action-600"
+                : "border-emerald-500/35 bg-emerald-500/10 text-emerald-300 shadow-[0_14px_26px_-20px_rgba(16,185,129,0.52)] eid-light:text-emerald-700"
             }`}>
               {isPago ? "Reserva paga" : "Por associação"}
             </span>
@@ -272,15 +286,15 @@ export default async function EspacoPublicLandingPage({ params, searchParams }: 
           </div>
 
           <div className="grid grid-cols-3 gap-2">
-            <div className="rounded-2xl border border-white/10 bg-black/15 px-3 py-3 text-center backdrop-blur-sm eid-light:border-slate-200 eid-light:bg-slate-50/95">
+            <div className={SPACE_STAT_CARD_CLASS}>
               <p className="text-lg font-black text-white eid-light:text-eid-fg">{sociosAtivos}</p>
               <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/70 eid-light:text-eid-text-secondary">Membros</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-black/15 px-3 py-3 text-center backdrop-blur-sm eid-light:border-slate-200 eid-light:bg-slate-50/95">
+            <div className={SPACE_STAT_CARD_CLASS}>
               <p className="text-lg font-black text-white eid-light:text-eid-fg">{unidades.length}</p>
               <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/70 eid-light:text-eid-text-secondary">Quadras</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-black/15 px-3 py-3 text-center backdrop-blur-sm eid-light:border-slate-200 eid-light:bg-slate-50/95">
+            <div className={SPACE_STAT_CARD_CLASS}>
               <p className="text-lg font-black text-white eid-light:text-eid-fg">{(torneios ?? []).length}</p>
               <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/70 eid-light:text-eid-text-secondary">Torneios</p>
             </div>
@@ -289,20 +303,20 @@ export default async function EspacoPublicLandingPage({ params, searchParams }: 
           <div className="flex flex-wrap gap-2">
             <Link
               href={`/espaco/${slug}?tab=${isPago ? "reservas" : "professores"}`}
-              className={`inline-flex items-center justify-center rounded-full px-4 py-2.5 text-sm font-black transition ${
+              className={`inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2.5 text-sm font-black transition ${
                 isPago
-                  ? "bg-eid-action-500 text-white hover:bg-eid-action-600"
-                  : "bg-eid-primary-500 text-white hover:bg-eid-primary-600"
+                  ? "bg-eid-action-500 text-white shadow-[0_18px_34px_-22px_rgba(249,115,22,0.58)] hover:bg-eid-action-600"
+                  : "bg-eid-primary-500 text-white shadow-[0_18px_34px_-22px_rgba(37,99,235,0.58)] hover:bg-eid-primary-600"
               }`}
             >
-              {isPago ? "Reservar agora" : isMembroAtivo ? "Reservar como membro" : "Solicitar entrada / virar sócio"}
+              {isMembroAtivo ? "Reservar agora" : "Virar membro"}
             </Link>
             {espaco.whatsapp_contato ? (
               <a
                 href={`https://wa.me/${String(espaco.whatsapp_contato).replace(/\D/g, "")}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-[#25D366]/30 bg-[#25D366]/10 px-3.5 py-2 text-xs font-bold text-[#25D366] transition hover:bg-[#25D366]/15"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-[#25D366]/30 bg-[#25D366]/10 px-3.5 py-2 text-xs font-bold text-[#25D366] transition hover:bg-[#25D366]/15"
               >
                 WhatsApp
               </a>
@@ -312,7 +326,7 @@ export default async function EspacoPublicLandingPage({ params, searchParams }: 
                 href={mapsHref}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/15 px-3.5 py-2 text-xs font-bold text-white/85 transition hover:bg-black/25"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-white/15 bg-black/15 px-3.5 py-2 text-xs font-bold text-white/85 transition hover:bg-black/25"
               >
                 Mapa
               </a>
@@ -343,6 +357,7 @@ export default async function EspacoPublicLandingPage({ params, searchParams }: 
             nome: u.nome,
             tipo: u.tipo_unidade,
             tags,
+            imageUrl: (u as { logo_arquivo?: string | null }).logo_arquivo ?? null,
           };
         })}
         reservas={reservas}
@@ -377,6 +392,14 @@ export default async function EspacoPublicLandingPage({ params, searchParams }: 
         emailContato={espaco.email_contato}
         websiteUrl={espaco.website_url}
         instagramUrl={espaco.instagram_url ?? null}
+        produtosLanchonete={(produtosLanchonete ?? []).map((produto) => ({
+          id: produto.id,
+          nome: produto.nome,
+          categoria: produto.categoria ?? "Lanchonete",
+          precoFmt: new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format((Number(produto.preco_centavos ?? 0) || 0) / 100),
+          fotoUrl: produto.foto_url ?? null,
+          disponivel: Number(produto.estoque_atual ?? 0) > 0,
+        }))}
       />
 
     </main>

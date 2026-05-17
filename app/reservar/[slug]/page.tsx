@@ -27,7 +27,7 @@ export default async function ReservarEspacoPage({ params }: Props) {
     .maybeSingle();
   if (!espaco) notFound();
 
-  const [{ data: socioAtivo }, { data: atalho }] = await Promise.all([
+  const [{ data: socioAtivo }] = await Promise.all([
     supabase
       .from("espaco_socios")
       .select("id")
@@ -35,15 +35,8 @@ export default async function ReservarEspacoPage({ params }: Props) {
       .eq("usuario_id", user.id)
       .eq("status", "ativo")
       .maybeSingle(),
-    supabase
-      .from("espaco_reserva_atalhos")
-      .select("id")
-      .eq("espaco_generico_id", espaco.id)
-      .eq("usuario_id", user.id)
-      .maybeSingle(),
   ]);
-  const acessoPagoPublico = String(espaco.modo_reserva ?? "").toLowerCase() === "paga";
-  const podeAcessar = Boolean(socioAtivo?.id) || Boolean(atalho?.id) || acessoPagoPublico;
+  const podeAcessar = Boolean(socioAtivo?.id);
   if (!podeAcessar) {
     redirect(`/espaco/${encodeURIComponent(slug)}`);
   }

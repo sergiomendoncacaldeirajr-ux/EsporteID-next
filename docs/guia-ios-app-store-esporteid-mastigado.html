@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Guia 100% Mastigado: publicar o EsporteID no iPhone</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; line-height: 1.55; color: #111827; max-width: 900px; margin: 0 auto; padding: 32px 24px 64px; }
+    h1,h2,h3 { color: #0f172a; }
+    h1 { font-size: 30px; margin-bottom: 8px; }
+    h2 { font-size: 22px; margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 18px; }
+    h3 { font-size: 18px; margin-top: 20px; }
+    code, pre { font-family: Consolas, monospace; }
+    pre { background: #f3f4f6; padding: 14px; border-radius: 8px; overflow-x: auto; }
+    ul, ol { padding-left: 22px; }
+    .lead { background: #eff6ff; border: 1px solid #bfdbfe; padding: 14px 16px; border-radius: 10px; }
+    .check { background: #f9fafb; border: 1px solid #e5e7eb; padding: 16px; border-radius: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Guia 100% Mastigado: publicar o EsporteID no iPhone (App Store)</h1>
+  <p class="lead">Este guia já está preenchido com seus dados: <strong>EsporteID</strong>, bundle <strong>com.esporteid.app</strong>, suporte em <strong>https://esporteid.com.br/suporte</strong> e privacidade em <strong>https://esporteid.com.br/privacidade</strong>.</p>
+
+  <h2>O que já ficou pronto no projeto</h2>
+  <ul>
+    <li>página pública de suporte</li>
+    <li>política de privacidade pública</li>
+    <li>termos públicos</li>
+    <li>app iOS simplificado para <strong>iPhone only</strong></li>
+    <li>app iOS simplificado para <strong>modo retrato</strong></li>
+    <li>push nativo do iPhone escondido nesta primeira versão</li>
+  </ul>
+
+  <h2>PASSO 1 — O que você precisa ter antes de tudo</h2>
+  <h3>1.1 Conta Apple Developer</h3>
+  <p>Você precisa assinar o <strong>Apple Developer Program</strong>. Sem isso, você não consegue publicar.</p>
+  <h3>1.2 Conta App Store Connect</h3>
+  <p>Você também precisa entrar no <strong>App Store Connect</strong> e criar o app lá.</p>
+
+  <h2>PASSO 2 — Dados oficiais que você vai usar</h2>
+  <ul>
+    <li><strong>App Name:</strong> EsporteID</li>
+    <li><strong>Bundle ID:</strong> com.esporteid.app</li>
+    <li><strong>Website:</strong> https://esporteid.com.br</li>
+    <li><strong>Support URL:</strong> https://esporteid.com.br/suporte</li>
+    <li><strong>Privacy Policy URL:</strong> https://esporteid.com.br/privacidade</li>
+  </ul>
+
+  <h2>PASSO 3 — Publicar o site antes do app</h2>
+  <p>Confirme no navegador que estas URLs abrem:</p>
+  <ol>
+    <li>https://esporteid.com.br/suporte</li>
+    <li>https://esporteid.com.br/privacidade</li>
+    <li>https://esporteid.com.br/termos</li>
+  </ol>
+
+  <h2>PASSO 4 — Como publicar sem ter Mac</h2>
+  <p>O caminho mais fácil para você é usar um <strong>Mac remoto</strong> por algumas horas.</p>
+  <ol>
+    <li>abrir o projeto no Xcode</li>
+    <li>configurar assinatura</li>
+    <li>gerar build</li>
+    <li>enviar para TestFlight</li>
+    <li>publicar na App Store</li>
+  </ol>
+
+  <h2>PASSO 5 — Criar o app no App Store Connect</h2>
+  <ol>
+    <li>criar novo app</li>
+    <li>nome: EsporteID</li>
+    <li>plataforma: iOS</li>
+    <li>idioma principal: Português (Brasil)</li>
+    <li>Bundle ID: com.esporteid.app</li>
+  </ol>
+
+  <h2>PASSO 6 — Abrir o projeto iOS no Mac remoto</h2>
+  <pre><code>npm install
+npm run cap:sync:ios
+npm run cap:open:ios</code></pre>
+
+  <h2>PASSO 7 — O que conferir no Xcode</h2>
+  <ul>
+    <li>sua conta/team em Signing &amp; Capabilities</li>
+    <li>bundle id com.esporteid.app</li>
+    <li>app em iPhone only</li>
+    <li>app em portrait only</li>
+  </ul>
+
+  <h2>PASSO 8 — Gerar um build para teste</h2>
+  <p>Primeiro mande para <strong>TestFlight</strong>.</p>
+  <p>Teste no iPhone real:</p>
+  <ul>
+    <li>abrir o app</li>
+    <li>login</li>
+    <li>cadastro</li>
+    <li>abrir suporte</li>
+    <li>abrir termos</li>
+    <li>abrir privacidade</li>
+    <li>editar perfil</li>
+    <li>foto de perfil / câmera / galeria</li>
+    <li>localização</li>
+    <li>compartilhamento</li>
+  </ul>
+
+  <h2>PASSO 9 — Preencher a ficha da App Store</h2>
+  <ul>
+    <li>nome do app</li>
+    <li>descrição</li>
+    <li>categoria</li>
+    <li>classificação etária</li>
+    <li>screenshots de iPhone</li>
+    <li>Support URL: https://esporteid.com.br/suporte</li>
+    <li>Privacy Policy URL: https://esporteid.com.br/privacidade</li>
+  </ul>
+
+  <h2>PASSO 10 — Texto simples para App Review Notes</h2>
+  <pre><code>O app EsporteID permite cadastro, perfil esportivo, acompanhamento de partidas, ranking, torneios e suporte ao usuário.
+Suporte público: https://esporteid.com.br/suporte
+Política de privacidade: https://esporteid.com.br/privacidade
+Exclusão de conta e pedidos LGPD ficam disponíveis para usuários autenticados em “Seus dados (LGPD)”.
+A versão inicial do iPhone não utiliza push nativo iOS.</code></pre>
+
+  <h2>PASSO 11 — Fluxo mais seguro de publicação</h2>
+  <ol>
+    <li>publicar o site</li>
+    <li>abrir no Mac remoto</li>
+    <li>configurar assinatura</li>
+    <li>mandar para TestFlight</li>
+    <li>testar no iPhone</li>
+    <li>corrigir se aparecer algo</li>
+    <li>enviar para App Review</li>
+    <li>publicar</li>
+  </ol>
+
+  <h2>PASSO 12 — Checklist final</h2>
+  <div class="check">
+    <ul>
+      <li>[ ] Conta Apple Developer ativa</li>
+      <li>[ ] App criado no App Store Connect</li>
+      <li>[ ] Support URL funcionando</li>
+      <li>[ ] Privacy Policy URL funcionando</li>
+      <li>[ ] Projeto iOS abre no Xcode</li>
+      <li>[ ] Signing configurado</li>
+      <li>[ ] Build enviado para TestFlight</li>
+      <li>[ ] Testado em iPhone real</li>
+      <li>[ ] Screenshots prontas</li>
+      <li>[ ] Review Notes preenchidas</li>
+      <li>[ ] Login de teste separado, se necessário</li>
+      <li>[ ] Enviado para revisão</li>
+    </ul>
+  </div>
+
+  <h2>Resumo</h2>
+  <p>Você <strong>não precisa comprar um Mac</strong>: o jeito mais fácil é usar um <strong>Mac remoto por algumas horas</strong>, enviar primeiro para <strong>TestFlight</strong>, testar e só depois publicar.</p>
+</body>
+</html>

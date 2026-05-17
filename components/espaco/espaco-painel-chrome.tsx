@@ -10,6 +10,7 @@ import {
   FileText,
   Grid3X3,
   Home,
+  ShoppingBag,
   Landmark,
   Percent,
   Settings,
@@ -17,6 +18,11 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
+import {
+  SPACE_HERO_PANEL_CLASS,
+  SPACE_PILL_ACTION_CLASS,
+  SPACE_PILL_PRIMARY_CLASS,
+} from "@/components/espaco/espaco-visual-tokens";
 
 export type EspacoPainelSpace = {
   id: number;
@@ -46,6 +52,7 @@ function PainelChromeInner({ space }: { space: EspacoPainelSpace }) {
     { href: "/espaco/agenda", label: "Agenda", Icon: CalendarDays },
     { href: "/espaco/grade", label: "Grade", Icon: Grid3X3 },
     { href: "/espaco/socios", label: "Sócios", Icon: Users },
+    { href: "/espaco/lanchonete", label: "Lanch.", Icon: ShoppingBag },
     ...(mostrarFinanceiro ? [{ href: "/espaco/financeiro", label: "Financ.", Icon: Wallet }] : []),
     { href: "/espaco/taxas", label: "Taxas", Icon: Percent },
     { href: "/espaco/notas-fiscais", label: "Notas", Icon: FileText },
@@ -57,12 +64,12 @@ function PainelChromeInner({ space }: { space: EspacoPainelSpace }) {
   return (
     <>
       {/* ── Chrome card ─────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/92 p-4 shadow-[0_18px_44px_-34px_rgba(0,0,0,0.8)] sm:p-5">
+      <div className={`${SPACE_HERO_PANEL_CLASS} p-4 sm:p-5`}>
         <div className="relative">
           {/* Header row */}
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-eid-primary-500/25 bg-eid-primary-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-eid-primary-300">
+              <div className={`inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-black uppercase tracking-wide ${SPACE_PILL_PRIMARY_CLASS}`}>
                 Painel do espaço
               </div>
               <h1 className="mt-2 truncate text-xl font-black tracking-tight text-eid-fg sm:text-2xl">
@@ -74,7 +81,7 @@ function PainelChromeInner({ space }: { space: EspacoPainelSpace }) {
               {space.slug ? (
                 <Link
                   href={`/espaco/${space.slug}`}
-                  className="inline-flex items-center gap-1 rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-3 py-1.5 text-xs font-semibold text-eid-action-400 transition hover:border-eid-action-500/55 hover:bg-eid-action-500/15"
+                  className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-black transition hover:border-eid-action-500/55 hover:bg-eid-action-500/15 ${SPACE_PILL_ACTION_CLASS}`}
                 >
                   Página pública
                   <svg viewBox="0 0 12 12" width={10} height={10} fill="none" aria-hidden>
@@ -105,7 +112,7 @@ function PainelChromeInner({ space }: { space: EspacoPainelSpace }) {
                   href={href}
                   className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-semibold transition ${
                     active
-                      ? "border-eid-primary-500/55 bg-eid-primary-500/15 text-eid-primary-200"
+                      ? "border-eid-primary-500/55 bg-eid-primary-500/15 text-eid-primary-200 shadow-[0_12px_24px_-18px_rgba(37,99,235,0.65)]"
                       : "border-[color:var(--eid-border-subtle)] bg-eid-surface/70 text-eid-fg hover:border-eid-primary-500/45 hover:bg-eid-primary-500/10 hover:text-eid-primary-300"
                   }`}
                 >

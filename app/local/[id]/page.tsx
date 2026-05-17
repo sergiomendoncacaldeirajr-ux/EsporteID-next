@@ -4,12 +4,21 @@ import { notFound, redirect } from "next/navigation";
 import { LocalClaimModal } from "@/components/locais/local-claim-modal";
 import { NativeShareButton } from "@/components/native/native-share-button";
 import {
-  locaisBadgeGhostClass,
-  locaisMainFichaClass,
-  locaisShellBgGradientClass,
-  locaisShellBgRadialClass,
-  locaisShellOuterClass,
-} from "@/components/locais/locais-ui-tokens";
+  SPACE_HERO_CLASS,
+  SPACE_PILL_GHOST_CLASS,
+  SPACE_PILL_PRIMARY_CLASS,
+  SPACE_PILL_SUCCESS_CLASS,
+  SPACE_PUBLIC_MAIN_CLASS,
+  SPACE_SECTION_BODY_CLASS,
+  SPACE_SECTION_CARD_CLASS,
+  SPACE_SECTION_HEAD_CLASS,
+  SPACE_SECTION_TITLE_CLASS,
+  SPACE_SHELL_BG_GRADIENT_CLASS,
+  SPACE_SHELL_BG_RADIAL_CLASS,
+  SPACE_SHELL_OUTER_CLASS,
+  SPACE_STAT_CARD_CLASS,
+} from "@/components/espaco/espaco-visual-tokens";
+import { locaisBadgeGhostClass } from "@/components/locais/locais-ui-tokens";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { createClient } from "@/lib/supabase/server";
 import { contaEditarLocalHref } from "@/lib/routes/conta";
@@ -68,13 +77,11 @@ function PublicSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90">
-      <div className="border-b border-[color:var(--eid-border-subtle)] px-4 py-3">
-        <h2 className="text-[11px] font-black uppercase tracking-[0.16em] text-eid-primary-300">
-          {title}
-        </h2>
+    <section className={SPACE_SECTION_CARD_CLASS}>
+      <div className={SPACE_SECTION_HEAD_CLASS}>
+        <h2 className={SPACE_SECTION_TITLE_CLASS}>{title}</h2>
       </div>
-      <div className="p-4">{children}</div>
+      <div className={SPACE_SECTION_BODY_CLASS}>{children}</div>
     </section>
   );
 }
@@ -83,11 +90,11 @@ function StatCard({ label, value, tone }: { label: string; value: string; tone?:
   const valueClass =
     tone === "ok" ? "text-emerald-300" : tone === "primary" ? "text-eid-primary-300" : "text-eid-fg";
   return (
-    <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 p-3">
-      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-eid-text-secondary">
+    <div className={SPACE_STAT_CARD_CLASS}>
+      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-white/70 eid-light:text-eid-text-secondary">
         {label}
       </p>
-      <p className={`mt-1 text-base font-black ${valueClass}`}>{value}</p>
+      <p className={`mt-1 text-lg font-black ${valueClass} eid-light:text-eid-fg`}>{value}</p>
     </div>
   );
 }
@@ -165,12 +172,12 @@ export default async function LocalPublicPage({ params }: Props) {
   const aceitaReserva = Boolean(loc.aceita_reserva);
 
   return (
-    <div className={locaisShellOuterClass} data-eid-locais-page>
-      <div className={locaisShellBgGradientClass} aria-hidden />
-      <div className={locaisShellBgRadialClass} aria-hidden />
+    <div className={SPACE_SHELL_OUTER_CLASS} data-eid-locais-page>
+      <div className={SPACE_SHELL_BG_GRADIENT_CLASS} aria-hidden />
+      <div className={SPACE_SHELL_BG_RADIAL_CLASS} aria-hidden />
 
-      <main data-eid-touch-ui className={locaisMainFichaClass}>
-        <section className="overflow-hidden rounded-2xl border border-eid-primary-500/20 bg-eid-card/95">
+      <main data-eid-touch-ui className={SPACE_PUBLIC_MAIN_CLASS}>
+        <section className={SPACE_HERO_CLASS}>
           <div className="relative min-h-[220px]">
             {heroPhoto ? (
               <Image src={heroPhoto} alt="" fill unoptimized priority className="object-cover" />
@@ -190,16 +197,16 @@ export default async function LocalPublicPage({ params }: Props) {
                 <div className="min-w-0 flex-1">
                   <div className="mb-2 flex flex-wrap gap-2">
                     {verificado ? (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/35 bg-emerald-500/15 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-emerald-200">
+                      <span className={`inline-flex items-center gap-1 ${SPACE_PILL_SUCCESS_CLASS}`}>
                         <ShieldCheck className="h-3 w-3" aria-hidden />
                         Verificado
                       </span>
                     ) : claimEmAnalise ? (
-                      <span className="rounded-full border border-amber-500/35 bg-amber-500/15 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-amber-200">
+                      <span className={`rounded-full border border-amber-500/35 bg-amber-500/15 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-amber-200`}>
                         Em análise
                       </span>
                     ) : (
-                      <span className="rounded-full border border-white/15 bg-black/25 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-white/70">
+                      <span className={SPACE_PILL_GHOST_CLASS}>
                         Local público
                       </span>
                     )}
@@ -217,6 +224,14 @@ export default async function LocalPublicPage({ params }: Props) {
           </div>
 
           <div className="space-y-4 p-4 sm:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/65 eid-light:text-eid-primary-400">Perfil do espaço</p>
+                <p className="mt-1 text-sm font-medium text-white/75 eid-light:text-eid-text-secondary">
+                  Veja estrutura, contato, serviços disponíveis e canais de posse oficial deste espaço.
+                </p>
+              </div>
+            </div>
             <p className="text-sm leading-relaxed text-eid-text-secondary">{descricao}</p>
 
             <div className="grid gap-2 sm:grid-cols-4">
@@ -243,7 +258,7 @@ export default async function LocalPublicPage({ params }: Props) {
                   href={mapsHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 px-4 text-sm font-bold text-eid-primary-200 transition hover:bg-eid-primary-500/15"
+                  className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-black transition hover:bg-eid-primary-500/15 ${SPACE_PILL_PRIMARY_CLASS}`}
                 >
                   <MapPin className="h-4 w-4" aria-hidden />
                   Abrir mapa
@@ -253,12 +268,12 @@ export default async function LocalPublicPage({ params }: Props) {
                 title={`${loc.nome_publico} no EsporteID`}
                 text="Veja este local no EsporteID"
                 path={`/local/${id}`}
-                className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-4 text-sm font-bold text-eid-fg transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/10"
+                className="inline-flex min-h-10 items-center justify-center rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-4 text-sm font-bold text-eid-fg transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/10"
               />
               {isGestor ? (
                 <Link
                   href={`${contaEditarLocalHref(id)}?from=${encodeURIComponent(`/local/${id}`)}`}
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-eid-action-500/35 bg-eid-action-500/10 px-4 text-sm font-bold text-eid-action-300 transition hover:bg-eid-action-500/15"
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-2xl border border-eid-action-500/35 bg-eid-action-500/10 px-4 text-sm font-bold text-eid-action-300 transition hover:bg-eid-action-500/15"
                 >
                   <Pencil className="h-4 w-4" aria-hidden />
                   Editar local
@@ -274,7 +289,7 @@ export default async function LocalPublicPage({ params }: Props) {
               <PublicSection title="Serviços disponíveis">
                 <div className="grid gap-3 sm:grid-cols-2">
                   {aceitaReserva ? (
-                    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+                    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 shadow-[0_18px_34px_-24px_rgba(16,185,129,0.42)]">
                       <CalendarDays className="h-5 w-5 text-emerald-300" aria-hidden />
                       <p className="mt-3 text-sm font-black text-eid-fg">Reserva de horário</p>
                       <p className="mt-1 text-xs leading-relaxed text-eid-text-secondary">
@@ -283,7 +298,7 @@ export default async function LocalPublicPage({ params }: Props) {
                     </div>
                   ) : null}
                   {aceitaSocios ? (
-                    <div className="rounded-2xl border border-eid-primary-500/20 bg-eid-primary-500/10 p-4">
+                    <div className="rounded-2xl border border-eid-primary-500/20 bg-eid-primary-500/10 p-4 shadow-[0_18px_34px_-24px_rgba(37,99,235,0.42)]">
                       <Users className="h-5 w-5 text-eid-primary-300" aria-hidden />
                       <p className="mt-3 text-sm font-black text-eid-fg">Sócios e membros</p>
                       <p className="mt-1 text-xs leading-relaxed text-eid-text-secondary">
@@ -376,7 +391,7 @@ export default async function LocalPublicPage({ params }: Props) {
             ) : null}
 
             {!isGestor && !minhaClaimPendente ? (
-              <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4">
+              <div className={`${SPACE_SECTION_CARD_CLASS} p-4`}>
                 <p className="mb-3 text-sm font-black text-eid-fg">Este local é seu?</p>
                 <LocalClaimModal espacoId={id} />
               </div>
