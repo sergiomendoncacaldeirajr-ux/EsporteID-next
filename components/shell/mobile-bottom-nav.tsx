@@ -559,9 +559,19 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
 
   if (onAuthPage) return null;
 
-  if (activeContext === "espaco") return null;
+  const isEspacoPainelRoute =
+    pathname === "/espaco" ||
+    pathname.startsWith("/espaco/agenda") ||
+    pathname.startsWith("/espaco/configuracao") ||
+    pathname.startsWith("/espaco/financeiro") ||
+    pathname.startsWith("/espaco/grade") ||
+    pathname.startsWith("/espaco/integracao-asaas") ||
+    pathname.startsWith("/espaco/notas-fiscais") ||
+    pathname.startsWith("/espaco/onboarding") ||
+    pathname.startsWith("/espaco/socios") ||
+    pathname.startsWith("/espaco/taxas");
 
-  if (pathname.startsWith("/admin") || pathname.startsWith("/espaco")) return null;
+  if (pathname.startsWith("/admin") || isEspacoPainelRoute) return null;
 
   const isHome =
     activeContext === "organizador"

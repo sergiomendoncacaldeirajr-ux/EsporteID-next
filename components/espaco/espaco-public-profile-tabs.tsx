@@ -117,7 +117,7 @@ export function EspacoPublicProfileTabs({
 
   return (
     <section id="espaco-profile-tabs" className="space-y-4">
-      <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-2 sm:p-3">
+      <div className="sticky top-2 z-10 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-2 shadow-[0_12px_28px_-20px_rgba(15,23,42,0.45)] backdrop-blur-sm eid-light:border-slate-200/90 eid-light:bg-white/95 eid-light:shadow-[0_16px_36px_-24px_rgba(15,23,42,0.12)] sm:p-3">
         <div className="flex gap-2 overflow-x-auto pb-1">
           {TABS.map((item) => {
             const count =
@@ -135,15 +135,15 @@ export function EspacoPublicProfileTabs({
                 type="button"
                 onClick={() => setTab(item.id)}
                 className={cn(
-                  "inline-flex shrink-0 items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-bold transition",
+                  "inline-flex shrink-0 items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-bold transition whitespace-nowrap",
                   active
-                    ? "border-eid-primary-500/45 bg-eid-primary-500/12 text-eid-fg"
-                    : "border-[color:var(--eid-border-subtle)] bg-eid-surface/45 text-eid-text-secondary hover:text-eid-fg"
+                    ? "border-eid-primary-500/45 bg-eid-primary-500/12 text-eid-fg eid-light:border-eid-primary-500/35 eid-light:bg-eid-primary-500/8"
+                    : "border-[color:var(--eid-border-subtle)] bg-eid-surface/45 text-eid-text-secondary hover:text-eid-fg eid-light:border-slate-200 eid-light:bg-slate-50"
                 )}
               >
                 <span>{item.label}</span>
                 {count != null ? (
-                  <span className="rounded-full bg-black/15 px-2 py-0.5 text-[11px] font-black text-inherit">{count}</span>
+                  <span className="rounded-full bg-black/15 px-2 py-0.5 text-[11px] font-black text-inherit eid-light:bg-slate-200/80">{count}</span>
                 ) : null}
               </button>
             );
@@ -152,7 +152,7 @@ export function EspacoPublicProfileTabs({
       </div>
 
       {tab === "reservas" ? (
-        <div className="space-y-4 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4 sm:p-5">
+        <div className="space-y-4 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4 eid-light:border-slate-200 eid-light:bg-white sm:p-5">
           <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-eid-primary-400" aria-hidden />
             <h2 className="text-sm font-black uppercase tracking-[0.14em] text-eid-primary-300">Reservas</h2>
@@ -176,7 +176,7 @@ export function EspacoPublicProfileTabs({
           ) : null}
 
           {unidadesResumo.length > 1 ? (
-            <div className="space-y-2">
+            <div className="space-y-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-3">
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Escolha a quadra</p>
               <div className="flex gap-2 overflow-x-auto pb-1">
                 {unidadesResumo.map((unidade) => {
@@ -187,7 +187,7 @@ export function EspacoPublicProfileTabs({
                       type="button"
                       onClick={() => setUnidadeId(unidade.id)}
                       className={cn(
-                        "shrink-0 rounded-2xl border px-4 py-2.5 text-left text-sm font-bold transition",
+                        "shrink-0 rounded-2xl border px-4 py-2.5 text-left text-sm font-bold transition min-w-[150px]",
                         active
                           ? "border-eid-action-500/45 bg-eid-action-500/10 text-eid-fg"
                           : "border-[color:var(--eid-border-subtle)] bg-eid-surface/45 text-eid-text-secondary"
@@ -219,7 +219,7 @@ export function EspacoPublicProfileTabs({
       ) : null}
 
       {tab === "torneios" ? (
-        <div className="space-y-4 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4 sm:p-5">
+        <div className="space-y-4 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4 eid-light:border-slate-200 eid-light:bg-white sm:p-5">
           <div className="flex items-center gap-2">
             <Trophy className="h-4 w-4 text-eid-action-300" aria-hidden />
             <h2 className="text-sm font-black uppercase tracking-[0.14em] text-eid-action-300">Torneios no local</h2>
@@ -249,7 +249,7 @@ export function EspacoPublicProfileTabs({
       ) : null}
 
       {tab === "professores" ? (
-        <div className="space-y-4 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4 sm:p-5">
+        <div className="space-y-4 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4 eid-light:border-slate-200 eid-light:bg-white sm:p-5">
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-eid-primary-400" aria-hidden />
             <h2 className="text-sm font-black uppercase tracking-[0.14em] text-eid-primary-300">Professores e aulas</h2>

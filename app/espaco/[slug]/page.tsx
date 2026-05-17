@@ -189,7 +189,7 @@ export default async function EspacoPublicLandingPage({ params, searchParams }: 
     <main data-eid-no-route-enter className={`${PROFILE_PUBLIC_MAIN_WIDE_CLASS} eid-progressive-enter space-y-4`}>
 
       {/* ── HERO / PERFIL — espaço como perfil social ─────────────────── */}
-      <section className="overflow-hidden rounded-3xl border border-eid-primary-500/20 bg-eid-card/95 shadow-[0_20px_48px_-20px_rgba(15,23,42,0.65)]">
+      <section className="overflow-hidden rounded-[28px] border border-eid-primary-500/20 bg-eid-card/95 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.72)] eid-light:border-eid-primary-500/15 eid-light:bg-white eid-light:shadow-[0_22px_48px_-30px_rgba(15,23,42,0.16)]">
 
         {/* Foto full-bleed com logo + nome sobrepostos */}
         <div className="relative min-h-[220px] sm:min-h-[260px]">
@@ -252,6 +252,14 @@ export default async function EspacoPublicLandingPage({ params, searchParams }: 
         </div>
 
         <div className="space-y-4 px-4 py-4 sm:px-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/65 eid-light:text-eid-primary-400">Perfil do espaço</p>
+              <p className="mt-1 text-sm font-medium text-white/75 eid-light:text-eid-text-secondary">
+                {isPago ? "Reserve horários e acompanhe torneios e aulas no local." : "Entre no espaço, acompanhe aulas e libere reservas com aprovação."}
+              </p>
+            </div>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-black ${
               isPago
@@ -263,18 +271,18 @@ export default async function EspacoPublicLandingPage({ params, searchParams }: 
             {temCoords ? <EspacoDistanceBadge lat={espacoLat} lng={espacoLng} /> : null}
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            <div className="rounded-2xl border border-white/10 bg-black/15 px-3 py-3 text-center backdrop-blur-sm">
-              <p className="text-lg font-black text-white">{sociosAtivos}</p>
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/70">Membros</p>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-2xl border border-white/10 bg-black/15 px-3 py-3 text-center backdrop-blur-sm eid-light:border-slate-200 eid-light:bg-slate-50/95">
+              <p className="text-lg font-black text-white eid-light:text-eid-fg">{sociosAtivos}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/70 eid-light:text-eid-text-secondary">Membros</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-black/15 px-3 py-3 text-center backdrop-blur-sm">
-              <p className="text-lg font-black text-white">{unidades.length}</p>
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/70">Quadras</p>
+            <div className="rounded-2xl border border-white/10 bg-black/15 px-3 py-3 text-center backdrop-blur-sm eid-light:border-slate-200 eid-light:bg-slate-50/95">
+              <p className="text-lg font-black text-white eid-light:text-eid-fg">{unidades.length}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/70 eid-light:text-eid-text-secondary">Quadras</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-black/15 px-3 py-3 text-center backdrop-blur-sm sm:block hidden">
-              <p className="text-lg font-black text-white">{(torneios ?? []).length}</p>
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/70">Torneios</p>
+            <div className="rounded-2xl border border-white/10 bg-black/15 px-3 py-3 text-center backdrop-blur-sm eid-light:border-slate-200 eid-light:bg-slate-50/95">
+              <p className="text-lg font-black text-white eid-light:text-eid-fg">{(torneios ?? []).length}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/70 eid-light:text-eid-text-secondary">Torneios</p>
             </div>
           </div>
 
